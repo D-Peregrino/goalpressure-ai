@@ -165,6 +165,9 @@ export function evaluateAllGames(matches: Match[]): Signal[] {
   return evaluateAllGamesWithModel(matches, activeModel);
 }
 
+/** Live quantitative engine (pressure + momentum + EV + anti-spam). */
+export { generateLiveSignals } from "@/lib/engine/signals/liveSignalGenerator";
+
 /** Active model id used by the engine at runtime. */
 export function getActiveModelId(): string {
   return activeModel.modelId;

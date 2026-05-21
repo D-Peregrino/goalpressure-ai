@@ -1,5 +1,6 @@
 import type { LiveMatchesCacheStatus } from "@/lib/cache/liveMatchesCache";
-import type { Match } from "@/types/domain";
+import type { Match, Signal } from "@/types/domain";
+import type { LiveEngineSnapshot } from "@/types/engine";
 import type { SportmonksErrorCode } from "@/lib/utils/sportmonksErrors";
 
 export interface LiveMatchesApiMeta {
@@ -18,6 +19,8 @@ export interface LiveMatchesApiMeta {
 export interface LiveMatchesSuccessResponse {
   ok: true;
   matches: Match[];
+  signals?: Signal[];
+  engine?: LiveEngineSnapshot;
   meta: LiveMatchesApiMeta;
 }
 

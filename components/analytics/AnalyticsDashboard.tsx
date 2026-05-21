@@ -22,7 +22,9 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import EngineTelemetryStrip from "@/components/engine/EngineTelemetryStrip";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { useEngineInsights } from "@/hooks/useEngineInsights";
 import type { SignalAnalyticsSummary } from "@/lib/analytics/signalAnalytics";
 import type { RecentResolvedSignalRow } from "@/types/analyticsApi";
 import { getMarketLabel } from "@/types/domain";
@@ -577,6 +579,11 @@ export default function AnalyticsDashboard() {
     responseTime,
     isInitialLoad,
   } = useAnalytics();
+  const {
+    engine,
+    dispatchQueueSize,
+    loading: engineLoading,
+  } = useEngineInsights();
 
   const feedLabel =
     status === "loading" && isInitialLoad
@@ -617,6 +624,12 @@ export default function AnalyticsDashboard() {
         status={feedLabel}
         responseTime={responseTime}
         error={error}
+      />
+
+      <EngineTelemetryStrip
+        engine={engine}
+        loading={engineLoading}
+        dispatchQueueSize={dispatchQueueSize}
       />
 
       {isInitialLoad && status === "loading" ? (

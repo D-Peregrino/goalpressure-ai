@@ -76,6 +76,10 @@ export interface MatchStats {
   shotsOnTarget: number;
   dangerousAttacks: number;
   corners: number;
+  /** Expected goals (SportMonks or estimated) */
+  xG?: number;
+  /** Offensive possession % proxy (0–100) */
+  possession?: number;
 }
 
 export interface Odds {

@@ -10,6 +10,8 @@ import {
   Shield,
   Terminal,
 } from "lucide-react";
+import EngineTelemetryStrip from "@/components/engine/EngineTelemetryStrip";
+import { useEngineInsights } from "@/hooks/useEngineInsights";
 import { useOps } from "@/hooks/useOps";
 import { getMarketLabel } from "@/types/domain";
 import type { OpsDispatchRecord, OpsLogEntry } from "@/types/opsApi";
@@ -122,6 +124,11 @@ export default function OpsDashboard() {
     responseTime,
     isInitialLoad,
   } = useOps();
+  const {
+    engine,
+    dispatchQueueSize,
+    loading: engineLoading,
+  } = useEngineInsights();
 
   const feedLabel =
     status === "loading" && isInitialLoad
@@ -199,6 +206,12 @@ export default function OpsDashboard() {
           </div>
         )}
       </div>
+
+      <EngineTelemetryStrip
+        engine={engine}
+        loading={engineLoading}
+        dispatchQueueSize={dispatchQueueSize}
+      />
 
       {isInitialLoad && status === "loading" ? (
         <div className="module-panel flex min-h-[200px] items-center justify-center p-8">

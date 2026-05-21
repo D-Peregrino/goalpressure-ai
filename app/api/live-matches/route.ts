@@ -10,7 +10,7 @@ import {
   type LiveMatchesCacheStatus,
 } from "@/lib/cache/liveMatchesCache";
 import { mapSportmonksFixturesToMatches } from "@/lib/mappers/sportmonks";
-import { evaluateAllGames } from "@/lib/signalEngine";
+import { processLiveEngineBatch } from "@/lib/engine/liveEnginePipeline";
 import { fetchInplayFixtures } from "@/lib/services/sportmonks";
 import { appendMatchTimeline } from "@/lib/storage/matchTimelineStorage";
 import { saveLiveSnapshotAsync } from "@/lib/storage/snapshotStorage";
@@ -22,6 +22,7 @@ import {
   isSportmonksServiceError,
   type SportmonksErrorCode,
 } from "@/lib/utils/sportmonksErrors";
+import type { Signal } from "@/types/domain";
 import type {
   LiveMatchesApiResponse,
   LiveMatchesErrorResponse,
@@ -35,7 +36,7 @@ const ROUTE_SCOPE = "api/live-matches";
 
 async function persistTimelineThenOutcomes(
   matches: LiveMatchesSuccessResponse["matches"],
-  signals: ReturnType<typeof evaluateAllGames>,
+  signals: Signal[],
   meta: LiveMatchesSuccessResponse["meta"]
 ): Promise<void> {
   await appendMatchTimeline(matches, signals, meta);
@@ -45,9 +46,9 @@ async function persistTimelineThenOutcomes(
 
 function scheduleHistoricalPersistence(
   matches: LiveMatchesSuccessResponse["matches"],
-  meta: LiveMatchesSuccessResponse["meta"]
+  meta: LiveMatchesSuccessResponse["meta"],
+  signals: Signal[]
 ): void {
-  const signals = evaluateAllGames(matches);
 
   if (matches.length > 0 || signals.length > 0) {
     void persistTimelineThenOutcomes(matches, signals, meta).catch((error) => {
@@ -113,9 +114,15 @@ function buildSuccessFromCache(
   const cacheExpiresInMs = getCacheExpiresInMs(entry, now);
   const totalMs = now - routeStartedAt;
 
+  const engineResult = processLiveEngineBatch(entry.matches, {
+    enqueueTelegram: true,
+  });
+
   const body: LiveMatchesSuccessResponse = {
     ok: true,
-    matches: entry.matches,
+    matches: engineResult.matches,
+    signals: engineResult.signals,
+    engine: engineResult.snapshot,
     meta: {
       count: entry.matches.length,
       responseTimeMs: totalMs,
@@ -148,11 +155,19 @@ function buildSuccessFromCache(
     ...(options?.warning ? { warning: options.warning } : {}),
   });
 
-  scheduleHistoricalPersistence(body.matches, body.meta);
+  scheduleHistoricalPersistence(
+    body.matches,
+    body.meta,
+    engineResult.signals
+  );
 
   return NextResponse.json(body, {
     headers: { "Cache-Control": "no-store" },
   });
+}
+
+function runEngineOnMatches(matches: LiveMatchesSuccessResponse["matches"]) {
+  return processLiveEngineBatch(matches, { enqueueTelegram: true });
 }
 
 async function fetchAndCacheMatches(routeStartedAt: number): Promise<
@@ -191,11 +206,15 @@ async function fetchAndCacheMatches(routeStartedAt: number): Promise<
     cache: "MISS",
   });
 
+  const engineResult = runEngineOnMatches(matches);
+
   const body: LiveMatchesSuccessResponse = {
     ok: true,
-    matches,
+    matches: engineResult.matches,
+    signals: engineResult.signals,
+    engine: engineResult.snapshot,
     meta: {
-      count: matches.length,
+      count: engineResult.matches.length,
       responseTimeMs: totalMs,
       fetchedAt: new Date(fetchedAt).toISOString(),
       source: "sportmonks",
@@ -207,7 +226,11 @@ async function fetchAndCacheMatches(routeStartedAt: number): Promise<
     },
   };
 
-  scheduleHistoricalPersistence(body.matches, body.meta);
+  scheduleHistoricalPersistence(
+    body.matches,
+    body.meta,
+    engineResult.signals
+  );
 
   return NextResponse.json(body, {
     headers: { "Cache-Control": "no-store" },
@@ -217,7 +240,7 @@ async function fetchAndCacheMatches(routeStartedAt: number): Promise<
 /**
  * GET /api/live-matches
  *
- * Sportmonks API → service → mapper → pressureScore → Match[]
+ * Sportmonks API → service → mapper → live engine → Match[] + signals
  * In-memory cache (TTL 20s) reduces external API calls.
  */
 export async function GET(): Promise<NextResponse<LiveMatchesApiResponse>> {

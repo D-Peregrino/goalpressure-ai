@@ -26,12 +26,18 @@ export async function GET(): Promise<NextResponse<RuntimeStatusResponse>> {
 
   const mem = process.memoryUsage();
 
+  const lastCycle = state.lastCycle;
+
   const body: RuntimeStatusResponse = {
     running: state.running,
     lastPolling: state.lastPollAt,
     lastSuccess: state.lastSuccessAt,
+    lastCycle,
     matchesProcessed: state.totalMatchesProcessed,
     signalsGenerated: state.totalSignalsGenerated,
+    matchesInLastCycle: lastCycle?.matchesFetched ?? 0,
+    signalsInLastCycle: lastCycle?.signalsGenerated ?? 0,
+    averageCycleMs: engine?.getAverageCycleMs() ?? lastCycle?.durationMs ?? 0,
     uptime: engine?.getUptimeSec() ?? 0,
     memoryUsage: {
       heapUsedMb: Math.round((mem.heapUsed / 1024 / 1024) * 100) / 100,

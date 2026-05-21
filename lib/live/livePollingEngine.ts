@@ -3,9 +3,9 @@
  * analytics/research/ops feeds. Enterprise singleton on globalThis.__GP_RUNTIME__.
  */
 
-import { evaluateAllGames } from "@/lib/signalEngine";
 import { getActiveModelId } from "@/lib/signalEngine";
-import { fetchLiveMatchesFromApi } from "@/lib/live/liveMatchesClient";
+import { fetchLiveMatchesDirect } from "@/lib/live/fetchLiveMatchesDirect";
+import { syncLiveCycleArtifacts } from "@/lib/live/syncLiveCycleArtifacts";
 import { persistLiveMatches } from "@/lib/live/liveMatchPersistence";
 import { persistLiveSignals } from "@/lib/live/liveSignalPersistence";
 import {
@@ -21,7 +21,7 @@ import type {
 
 const LOG_SCOPE = "live-polling-engine";
 
-const DEFAULT_INTERVAL_MS = 20_000;
+const DEFAULT_INTERVAL_MS = 15_000;
 const MAX_CONSECUTIVE_FAILURES = 5;
 const RETRY_BASE_MS = 2_000;
 
@@ -72,6 +72,7 @@ export class LivePollingEngine {
   private cycleAbort: AbortController | null = null;
   private cycleInFlight = false;
   private readonly startedAtMs = Date.now();
+  private cycleDurationsMs: number[] = [];
 
   constructor(options: LivePollingOptions = {}) {
     this.intervalMs = options.intervalMs ?? DEFAULT_INTERVAL_MS;
@@ -166,54 +167,70 @@ export class LivePollingEngine {
     };
 
     try {
-      const payload = await this.fetchWithRetry(this.cycleAbort.signal);
-      stats.matchesFetched = payload.matches.length;
+      const modelId = getActiveModelId();
+      const fetchResult = await this.fetchWithRetry(modelId);
+
+      stats.matchesFetched = fetchResult.matches.length;
 
       await recordRuntimeOpsLog({
         event: "matches_fetched",
-        message: `Matches fetched: ${stats.matchesFetched}`,
+        message: `Partidas ao vivo: ${stats.matchesFetched}`,
         metadata: {
           count: stats.matchesFetched,
-          cache: payload.meta.cache,
-          rateLimitRemaining: payload.meta.rateLimitRemaining,
+          cache: fetchResult.meta.cache,
+          rateLimitRemaining: fetchResult.meta.rateLimitRemaining,
+          sportmonksError: fetchResult.error,
         },
       });
 
-      if (payload.meta.rateLimitRemaining != null && payload.meta.rateLimitRemaining < 50) {
+      if (fetchResult.meta.rateLimitRemaining != null && fetchResult.meta.rateLimitRemaining < 50) {
         await recordRuntimeOpsLog({
           event: "rate_limit_warning",
-          message: `SportMonks rate limit low: ${payload.meta.rateLimitRemaining}`,
+          message: `SportMonks rate limit low: ${fetchResult.meta.rateLimitRemaining}`,
           level: "warn",
         });
       }
 
-      const matchResult = await persistLiveMatches(payload.matches);
+      if (fetchResult.error) {
+        await recordRuntimeOpsLog({
+          event: "sportmonks_degraded",
+          message: `SportMonks degradado: ${fetchResult.error}`,
+          level: "warn",
+        });
+      }
+
+      const matches = fetchResult.matches;
+      const signals = fetchResult.signals;
+
+      const matchResult = await persistLiveMatches(matches);
       stats.matchesUpserted = matchResult.upserted;
 
-      const modelId = getActiveModelId();
-      const signals = evaluateAllGames(payload.matches);
       stats.signalsGenerated = signals.length;
 
       await recordRuntimeOpsLog({
         event: "signals_generated",
-        message: `Signals generated: ${stats.signalsGenerated}`,
+        message: `Sinais gerados: ${stats.signalsGenerated}`,
         metadata: { modelId, count: stats.signalsGenerated },
       });
 
-      const minuteByMatchId = Object.fromEntries(
-        payload.matches.map((m) => [m.id, m.minute])
-      );
+      const matchById = Object.fromEntries(matches.map((m) => [m.id, m]));
 
       const signalResult = await persistLiveSignals(signals, modelId, {
-        minuteByMatchId,
+        matchById,
       });
       stats.signalsPersisted = signalResult.persisted;
 
-      scheduleLiveAnalyticsUpdate();
-      scheduleExperimentalUpdate(payload.matches);
+      void syncLiveCycleArtifacts(matches, signals, fetchResult.meta);
 
-      stats.success = true;
+      scheduleLiveAnalyticsUpdate();
+      scheduleExperimentalUpdate(matches);
+
+      stats.success = fetchResult.ok || stats.matchesFetched > 0;
       stats.durationMs = Date.now() - cycleStartedAt;
+      this.cycleDurationsMs.push(stats.durationMs);
+      if (this.cycleDurationsMs.length > 50) {
+        this.cycleDurationsMs.shift();
+      }
 
       this.state.lastSuccessAt = new Date().toISOString();
       this.state.lastError = null;
@@ -261,35 +278,39 @@ export class LivePollingEngine {
     return stats;
   }
 
-  private async fetchWithRetry(signal: AbortSignal) {
+  getAverageCycleMs(): number {
+    if (this.cycleDurationsMs.length === 0) return 0;
+    const sum = this.cycleDurationsMs.reduce((a, b) => a + b, 0);
+    return Math.round(sum / this.cycleDurationsMs.length);
+  }
+
+  private async fetchWithRetry(modelId: string) {
     let attempt = 0;
-    let lastError: Error | null = null;
+    let lastResult: Awaited<ReturnType<typeof fetchLiveMatchesDirect>> | null =
+      null;
 
     while (attempt < 3) {
       attempt += 1;
-      try {
-        return await fetchLiveMatchesFromApi({
-          baseUrl: this.baseUrl,
-          signal,
-        });
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error("Unknown error");
+      const result = await fetchLiveMatchesDirect({ modelId, useCache: attempt > 1 });
 
-        if (signal.aborted) throw lastError;
+      if (result.ok) return result;
 
-        await recordRuntimeOpsLog({
-          event: "retry_attempt",
-          message: `Retry ${attempt}/3: ${lastError.message}`,
-          level: "warn",
-          metadata: { attempt },
-        });
+      lastResult = result;
 
-        const delay = RETRY_BASE_MS * attempt;
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
+      await recordRuntimeOpsLog({
+        event: "retry_attempt",
+        message: `Retry ${attempt}/3: ${result.error ?? "fetch failed"}`,
+        level: "warn",
+        metadata: { attempt },
+      });
+
+      const delay = RETRY_BASE_MS * attempt;
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
 
-    throw lastError ?? new Error("Live matches fetch failed");
+    if (lastResult) return lastResult;
+
+    return fetchLiveMatchesDirect({ modelId, useCache: false });
   }
 }
 
@@ -328,8 +349,8 @@ export function stopLivePolling(): void {
  * Production auto-start — single instance per Node process.
  */
 export function ensureProductionRuntimeStarted(): void {
-  if (process.env.NODE_ENV !== "production") return;
   if (process.env.GP_AUTO_START_RUNTIME === "false") return;
+  if (typeof window !== "undefined") return;
 
   const slot = getRuntimeSlot();
   if (slot.lock || slot.engine?.isRunning()) return;

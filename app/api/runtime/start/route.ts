@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 export async function GET(): Promise<NextResponse<RuntimeControlResponse>> {
   bootstrapGoalPressureRuntime();
   const engine = startLivePolling({
-    intervalMs: Number(process.env.GP_POLLING_INTERVAL_MS) || 20_000,
+    intervalMs: Number(process.env.GP_POLLING_INTERVAL_MS) || 15_000,
   });
 
   const state = engine.getState();

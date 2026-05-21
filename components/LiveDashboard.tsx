@@ -5,7 +5,9 @@ import { useLiveMatches } from "@/hooks/useLiveMatches";
 import { useSystemMetrics } from "@/hooks/useSystemMetrics";
 import type { ServiceState, ServiceStatus } from "@/types/domain";
 import { toLiveMatchView } from "@/types/domain";
+import EngineTelemetryStrip from "@/components/engine/EngineTelemetryStrip";
 import Header from "@/components/Header";
+import { useEngineInsights } from "@/hooks/useEngineInsights";
 import LiveGameCard from "@/components/LiveGameCard";
 import OperationalBar from "@/components/OperationalBar";
 import SignalCard, { SignalEmptyState } from "@/components/SignalCard";
@@ -41,6 +43,11 @@ export default function LiveDashboard() {
   } = useLiveMatches();
 
   const { signalActivity } = useSystemMetrics();
+  const {
+    engine,
+    dispatchQueueSize,
+    loading: engineLoading,
+  } = useEngineInsights();
 
   const displayLatency = responseTime ?? undefined;
 
@@ -72,6 +79,12 @@ export default function LiveDashboard() {
         apiLatencyMs={displayLatency}
         lastUpdated={lastUpdated ?? undefined}
         signalActivity={signalActivity}
+      />
+
+      <EngineTelemetryStrip
+        engine={engine}
+        loading={engineLoading}
+        dispatchQueueSize={dispatchQueueSize}
       />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-12 xl:gap-7">

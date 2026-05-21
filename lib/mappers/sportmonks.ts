@@ -4,10 +4,7 @@
  * @see https://docs.sportmonks.com/football/
  */
 
-import {
-  applyPressureToMatch,
-  calculatePressureScore,
-} from "@/lib/pressureScore";
+import { applyPressureToMatch } from "@/lib/pressureScore";
 import type {
   Match,
   MatchScore,
@@ -143,6 +140,8 @@ const DEFAULT_STATS: MatchStats = {
   shotsOnTarget: 0,
   dangerousAttacks: 0,
   corners: 0,
+  xG: 0,
+  possession: 50,
 };
 
 const DEFAULT_ODDS: Odds = {
@@ -217,6 +216,12 @@ const STAT_NAME_ALIASES: Record<string, keyof MatchStats> = {
   corners: "corners",
   "corner kicks": "corners",
   corner: "corners",
+  "expected goals": "xG",
+  expectedgoals: "xG",
+  xg: "xG",
+  "ball possession": "possession",
+  possession: "possession",
+  "possession %": "possession",
 };
 
 // ─── Internal helpers ──────────────────────────────────────────────────────────
@@ -375,6 +380,8 @@ function mapStats(fixture: SportmonksFixture): MatchStats {
     shotsOnTarget: 0,
     dangerousAttacks: 0,
     corners: 0,
+    xG: 0,
+    possession: 0,
   };
   const { home, away } = resolveParticipants(fixture);
   const homeId = home?.id;
@@ -390,10 +397,17 @@ function mapStats(fixture: SportmonksFixture): MatchStats {
     const value = extractStatValue(stat);
     const pid = stat.participant_id;
 
+    if (field === "possession") {
+      if (pid === homeId || pid === awayId) {
+        totals.possession = Math.max(totals.possession ?? 0, value);
+      }
+      continue;
+    }
+
     if (pid === homeId || pid === awayId) {
       totals[field] += value;
     } else if (pid === undefined) {
-      totals[field] = Math.max(totals[field], value);
+      totals[field] = Math.max(totals[field] as number, value);
     }
   }
 
@@ -402,6 +416,8 @@ function mapStats(fixture: SportmonksFixture): MatchStats {
     shotsOnTarget: totals.shotsOnTarget,
     dangerousAttacks: totals.dangerousAttacks,
     corners: totals.corners,
+    xG: totals.xG ?? 0,
+    possession: totals.possession && totals.possession > 0 ? totals.possession : 50,
   };
 }
 
@@ -530,9 +546,6 @@ export function mapSportmonksFixturesToMatches(
     .filter((fixture): fixture is SportmonksFixture => typeof fixture?.id === "number")
     .map((fixture) => {
       const base = buildMatchFromSportmonksFixture(fixture);
-      return {
-        ...base,
-        pressure: calculatePressureScore(base),
-      };
+      return applyPressureToMatch(base);
     });
 }

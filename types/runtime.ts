@@ -27,8 +27,12 @@ export interface RuntimeStatusResponse {
   running: boolean;
   lastPolling: string | null;
   lastSuccess: string | null;
+  lastCycle: LivePollingCycleStats | null;
   matchesProcessed: number;
   signalsGenerated: number;
+  matchesInLastCycle: number;
+  signalsInLastCycle: number;
+  averageCycleMs: number;
   uptime: number;
   memoryUsage: {
     heapUsedMb: number;

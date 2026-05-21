@@ -20,6 +20,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import EngineTelemetryStrip from "@/components/engine/EngineTelemetryStrip";
+import { useEngineInsights } from "@/hooks/useEngineInsights";
 import { useResearch } from "@/hooks/useResearch";
 import type { ModelComparisonEntry } from "@/lib/analytics/modelComparison";
 import type { ExperimentalModelSnapshot } from "@/lib/experimental/experimentalSignalEngine";
@@ -331,6 +333,11 @@ export default function ResearchDashboard() {
     responseTime,
     isInitialLoad,
   } = useResearch();
+  const {
+    engine,
+    dispatchQueueSize,
+    loading: engineLoading,
+  } = useEngineInsights();
 
   const chartRows = useMemo(() => {
     if (!modelComparison?.models.length) return [];
@@ -427,6 +434,12 @@ export default function ResearchDashboard() {
           </div>
         )}
       </div>
+
+      <EngineTelemetryStrip
+        engine={engine}
+        loading={engineLoading}
+        dispatchQueueSize={dispatchQueueSize}
+      />
 
       {isInitialLoad && status === "loading" ? (
         <div className="module-panel flex min-h-[200px] items-center justify-center p-8">

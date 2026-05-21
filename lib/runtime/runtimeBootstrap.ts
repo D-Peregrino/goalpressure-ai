@@ -1,5 +1,5 @@
 /**
- * Server-side runtime bootstrap — auto-starts live polling in production.
+ * Server-side runtime bootstrap — auto-starts live polling (15s) unless disabled.
  */
 
 import { ensureProductionRuntimeStarted } from "@/lib/live/livePollingEngine";

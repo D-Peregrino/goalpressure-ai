@@ -1,25 +1,22 @@
 /**
- * Realtime signal persistence — Supabase signals with 90s dedup window.
+ * Realtime signal persistence — Supabase signals with 5min dedup (fixture + market).
  */
 
 import { createHash } from "crypto";
-import type { Signal } from "@/types/domain";
+import type { Match, Signal } from "@/types/domain";
 import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/client";
 import type { SignalRow } from "@/lib/supabase/types";
 import { logInfo, logWarn } from "@/lib/utils/logger";
 import { recordRuntimeOpsLog } from "@/lib/ops/opsStore";
+import { SIGNAL_DEDUP_WINDOW_MS } from "@/lib/engine/signals/signalAntiSpam";
+import { calculateProductionPressureRaw } from "@/lib/engine/pressure/productionPressureFormula";
 
 const LOG_SCOPE = "live-signal-persistence";
-const DEDUP_WINDOW_MS = 90_000;
 
 const recentFingerprints = new Map<string, number>();
 
-function buildFingerprint(
-  fixtureId: string,
-  market: string,
-  confidence: string
-): string {
-  return `${fixtureId}|${market}|${confidence}`;
+function buildFingerprint(fixtureId: string, market: string): string {
+  return `${fixtureId}|${market}`;
 }
 
 function buildSignalId(
@@ -37,7 +34,7 @@ function buildSignalId(
 function isDuplicate(fingerprint: string, nowMs: number): boolean {
   const last = recentFingerprints.get(fingerprint);
   if (!last) return false;
-  return nowMs - last < DEDUP_WINDOW_MS;
+  return nowMs - last < SIGNAL_DEDUP_WINDOW_MS;
 }
 
 function mapSignalToRow(
@@ -45,8 +42,18 @@ function mapSignalToRow(
   modelId: string,
   fixtureId: string,
   signalId: string,
-  triggerMinute?: number
+  match?: Match
 ): SignalRow {
+  const rawStats = match
+    ? {
+        minute: match.minute,
+        score: match.score,
+        stats: match.stats,
+        odds: match.odds,
+        pressure_score: signal.pressureScore,
+      }
+    : { pressure_score: signal.pressureScore };
+
   return {
     signal_id: signalId,
     model_id: modelId,
@@ -59,10 +66,17 @@ function mapSignalToRow(
     odd: signal.odd,
     stake: signal.stake,
     status: "PENDING",
-    home_team: signal.matchLabel.split(" vs ")[0],
-    away_team: signal.matchLabel.split(" vs ")[1] ?? "",
-    trigger_minute: triggerMinute ?? null,
-    metadata: { reason: signal.reason, source: "live_polling" },
+    home_team: match?.homeTeam ?? signal.matchLabel.split(" vs ")[0],
+    away_team: match?.awayTeam ?? signal.matchLabel.split(" vs ")[1] ?? "",
+    league: match?.league,
+    trigger_minute: match?.minute ?? null,
+    metadata: {
+      source: "live_runtime",
+      reason: signal.reason,
+      raw_stats: rawStats,
+      pressure_score: signal.pressureScore,
+      roi: null,
+    },
     created_at: new Date().toISOString(),
   };
 }
@@ -85,13 +99,10 @@ export interface PersistLiveSignalsResult {
   failed: number;
 }
 
-/**
- * Persists live signals with dedup: same fixture + market + confidence within 90s.
- */
 export async function persistLiveSignals(
   signals: Signal[],
   modelId: string,
-  options?: { minuteByMatchId?: Record<string, number> }
+  options?: { minuteByMatchId?: Record<string, number>; matchById?: Record<string, Match> }
 ): Promise<PersistLiveSignalsResult> {
   const nowMs = Date.now();
   let persisted = 0;
@@ -113,30 +124,25 @@ export async function persistLiveSignals(
   for (const signal of signals) {
     const fixtureId =
       signal.matchId.replace(/^sm-/, "") || signal.matchId;
-    const fingerprint = buildFingerprint(
-      fixtureId,
-      signal.market,
-      signal.confidence
-    );
+    const fingerprint = buildFingerprint(fixtureId, signal.market);
 
     if (isDuplicate(fingerprint, nowMs)) {
       skippedDuplicate += 1;
       await recordRuntimeOpsLog({
         event: "signal_dedup_skipped",
-        message: `Signal dedup skipped: ${fingerprint}`,
+        message: `Dedup 5m: ${fingerprint}`,
         metadata: { fixtureId, market: signal.market },
       });
       continue;
     }
 
+    const fullMatch = options?.matchById?.[signal.matchId];
+    if (fullMatch) {
+      signal.pressureScore = calculateProductionPressureRaw(fullMatch).score;
+    }
+
     const signalId = buildSignalId(signal, modelId, fixtureId);
-    const row = mapSignalToRow(
-      signal,
-      modelId,
-      fixtureId,
-      signalId,
-      options?.minuteByMatchId?.[signal.matchId]
-    );
+    const row = mapSignalToRow(signal, modelId, fixtureId, signalId, fullMatch);
 
     try {
       await insertSignalCloud(row);
@@ -146,7 +152,7 @@ export async function persistLiveSignals(
       await recordRuntimeOpsLog({
         event: "supabase_upsert_success",
         message: `Signal persisted: ${signalId}`,
-        metadata: { table: "signals", signalId, modelId },
+        metadata: { table: "signals", signalId, fixtureId, market: signal.market },
       });
     } catch (error) {
       failed += 1;
@@ -156,7 +162,7 @@ export async function persistLiveSignals(
         event: "supabase_upsert_fail",
         message: `Signal upsert failed: ${message}`,
         level: "error",
-        metadata: { signalId },
+        metadata: { signalId, fixtureId },
       });
     }
   }

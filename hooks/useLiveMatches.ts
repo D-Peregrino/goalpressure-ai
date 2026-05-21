@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { mockGames } from "@/data/mockGames";
+import { generateLiveSignals } from "@/lib/engine/signals/liveSignalGenerator";
 import { applyPressureToMatch } from "@/lib/pressureScore";
-import { evaluateAllGames } from "@/lib/signalEngine";
 import type { LiveMatchesApiResponse } from "@/types/api";
 import type { Match, Signal } from "@/types/domain";
 
@@ -112,6 +112,7 @@ export function useLiveMatches(
   const fetchGenerationRef = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
   const pressureHistoryRef = useRef<Map<string, number>>(new Map());
+  const [apiSignals, setApiSignals] = useState<Signal[] | null>(null);
   const hasLiveDataRef = useRef(false);
   const sourceRef = useRef<LiveMatchSource>("mock");
 
@@ -120,6 +121,7 @@ export function useLiveMatches(
     sourceRef.current = "mock";
     hasLiveDataRef.current = false;
     setMatches(hydrateMockMatches(mockGames));
+    setApiSignals(null);
     setError(message);
     setStatus(message ? "error" : "live");
     setLastUpdated(Date.now());
@@ -172,6 +174,7 @@ export function useLiveMatches(
       if (generation !== fetchGenerationRef.current) return;
 
       setMatches(enriched);
+      setApiSignals(body.signals ?? null);
       setSource("sportmonks");
       sourceRef.current = "sportmonks";
       hasLiveDataRef.current = true;
@@ -228,7 +231,10 @@ export function useLiveMatches(
     return () => window.clearInterval(tickId);
   }, [source, mockTickIntervalMs]);
 
-  const signals = useMemo(() => evaluateAllGames(matches), [matches]);
+  const signals = useMemo(() => {
+    if (source === "sportmonks" && apiSignals) return apiSignals;
+    return generateLiveSignals(matches).signals;
+  }, [matches, source, apiSignals]);
 
   return {
     matches,
