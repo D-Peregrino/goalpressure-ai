@@ -1,0 +1,391 @@
+"use client";
+
+import { useMemo } from "react";
+import {
+  AlertTriangle,
+  Ban,
+  Copy,
+  Radio,
+  Send,
+  Shield,
+  Terminal,
+} from "lucide-react";
+import { useOps } from "@/hooks/useOps";
+import { getMarketLabel } from "@/types/domain";
+import type { OpsDispatchRecord, OpsLogEntry } from "@/types/opsApi";
+
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
+function formatPercent(rate: number): string {
+  return `${(rate * 100).toFixed(1)}%`;
+}
+
+interface KpiCardProps {
+  label: string;
+  value: string;
+  sub?: string;
+  accent?: boolean;
+}
+
+function KpiCard({ label, value, sub, accent }: KpiCardProps) {
+  return (
+    <div
+      className={`corner-brackets module-panel scanline-overlay relative p-4 ${
+        accent ? "glow-red border-pressure/30" : ""
+      }`}
+    >
+      <p className="telemetry-label">{label}</p>
+      <p
+        className={`mt-2 font-mono text-xl font-bold tabular-nums sm:text-2xl ${
+          accent ? "text-pressure" : "text-foreground"
+        }`}
+      >
+        {value}
+      </p>
+      {sub && (
+        <p className="mt-1 font-mono text-[9px] uppercase tracking-widest text-muted">
+          {sub}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function statusBadge(status: OpsDispatchRecord["status"]): string {
+  switch (status) {
+    case "dispatched":
+      return "border-pressure/50 bg-pressure/10 text-pressure";
+    case "sandbox":
+      return "border-amber-500/40 bg-amber-500/10 text-amber-400";
+    case "failed":
+      return "border-red-500/40 bg-red-500/10 text-red-400";
+    case "cooldown":
+      return "border-card bg-surface text-muted";
+    case "skipped":
+      return "border-card bg-surface text-muted";
+    default:
+      return "border-card/80 text-muted";
+  }
+}
+
+function OpsLogTerminal({ logs }: { logs: OpsLogEntry[] }) {
+  return (
+    <div className="module-panel overflow-hidden border-pressure/20 bg-[#06090d]">
+      <div className="flex items-center gap-2 border-b border-card/80 bg-surface/80 px-3 py-2">
+        <Terminal className="h-3.5 w-3.5 text-pressure" />
+        <span className="font-mono text-[9px] font-bold uppercase tracking-[0.25em] text-muted">
+          Dispatch Log Stream
+        </span>
+      </div>
+      <div className="max-h-[320px] overflow-y-auto p-3 font-mono text-[10px] leading-relaxed">
+        {logs.length === 0 ? (
+          <p className="text-muted">[ops] awaiting dispatch events…</p>
+        ) : (
+          logs.map((entry) => (
+            <div
+              key={entry.id}
+              className={`mb-1.5 border-l-2 pl-2 ${
+                entry.level === "error"
+                  ? "border-red-500 text-red-400"
+                  : entry.level === "warn"
+                    ? "border-amber-500 text-amber-400/90"
+                    : "border-pressure/40 text-foreground/85"
+              }`}
+            >
+              <span className="text-muted">[{formatTime(entry.timestamp)}]</span>{" "}
+              <span className="text-pressure/80">{entry.event}</span>{" "}
+              <span>{entry.message}</span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function OpsDashboard() {
+  const {
+    telegram,
+    queue,
+    counters,
+    recentDispatches,
+    logs,
+    status,
+    error,
+    lastUpdated,
+    responseTime,
+    isInitialLoad,
+  } = useOps();
+
+  const feedLabel =
+    status === "loading" && isInitialLoad
+      ? "SYNC"
+      : status === "error"
+        ? "ERROR"
+        : "LIVE";
+
+  const telegramLabel = useMemo(() => {
+    if (!telegram) return "—";
+    return telegram.status;
+  }, [telegram]);
+
+  return (
+    <>
+      <header className="mb-5 border-b border-card/80 pb-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.35em] text-muted">
+              Signal Distribution Command
+            </p>
+            <h1 className="mt-1 font-mono text-xl font-bold uppercase tracking-[0.08em] text-foreground sm:text-2xl lg:text-[1.65rem]">
+              Operations Terminal
+            </h1>
+            <p className="mt-2 max-w-2xl font-mono text-[10px] leading-relaxed text-muted">
+              Telegram dispatch observability · queue · cooldown · sandbox · no
+              production send until authorized
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Radio className="h-4 w-4 text-pressure animate-live-blink" />
+            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-pressure">
+              Ops Stream
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <div className="mb-6 grid grid-cols-2 gap-2 border border-card bg-surface/60 p-3 sm:grid-cols-4 lg:grid-cols-6">
+        <div className="telemetry-cell px-3 py-2">
+          <p className="telemetry-label">Feed</p>
+          <p className="telemetry-value uppercase">{feedLabel}</p>
+        </div>
+        <div className="telemetry-cell px-3 py-2">
+          <p className="telemetry-label">Sandbox</p>
+          <p className="telemetry-value text-pressure">
+            {telegram?.sandboxMode ? "ON" : "OFF"}
+          </p>
+        </div>
+        <div className="telemetry-cell px-3 py-2">
+          <p className="telemetry-label">Telegram</p>
+          <p className="telemetry-value">{telegramLabel}</p>
+        </div>
+        <div className="telemetry-cell px-3 py-2">
+          <p className="telemetry-label">Processing</p>
+          <p className="telemetry-value">
+            {queue?.processing ? "YES" : "NO"}
+          </p>
+        </div>
+        <div className="telemetry-cell px-3 py-2">
+          <p className="telemetry-label">Cooldown Keys</p>
+          <p className="telemetry-value tabular-nums">
+            {queue?.cooldownEntries ?? 0}
+          </p>
+        </div>
+        <div className="telemetry-cell px-3 py-2">
+          <p className="telemetry-label">API Latency</p>
+          <p className="telemetry-value tabular-nums">
+            {responseTime != null ? `${responseTime}ms` : "—"}
+          </p>
+        </div>
+        {error && (
+          <div className="col-span-full border border-pressure/40 bg-pressure/5 px-3 py-2">
+            <p className="font-mono text-[10px] text-pressure">{error}</p>
+          </div>
+        )}
+      </div>
+
+      {isInitialLoad && status === "loading" ? (
+        <div className="module-panel flex min-h-[200px] items-center justify-center p-8">
+          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted animate-pulse-glow">
+            Loading ops telemetry…
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <section>
+            <h2 className="section-header mb-4">Dispatch Telemetry</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              <KpiCard
+                label="Queue Size"
+                value={String(queue?.queueSize ?? 0)}
+                sub={queue?.processing ? "Processing" : "Idle"}
+                accent={(queue?.queueSize ?? 0) > 0}
+              />
+              <KpiCard
+                label="Dispatch Rate"
+                value={`${counters?.dispatchRatePerMin ?? 0}/min`}
+                sub={`${counters?.totalDispatched ?? 0} total`}
+              />
+              <KpiCard
+                label="Sandbox Status"
+                value={telegram?.sandboxMode ? "ACTIVE" : "OFF"}
+                sub="No real Telegram send"
+                accent={telegram?.sandboxMode}
+              />
+              <KpiCard
+                label="Telegram Status"
+                value={telegramLabel}
+                sub={
+                  telegram?.configured
+                    ? "Credentials present"
+                    : "Not configured"
+                }
+              />
+              <KpiCard
+                label="Fail Rate"
+                value={formatPercent(counters?.failRate ?? 0)}
+                sub={`${counters?.sendFailed ?? 0} failures`}
+              />
+              <KpiCard
+                label="Duplicate Blocks"
+                value={String(
+                  (counters?.duplicateSkips ?? 0) +
+                    (counters?.cooldownBlocked ?? 0)
+                )}
+                sub={`${counters?.duplicateSkips ?? 0} dup · ${counters?.cooldownBlocked ?? 0} cd`}
+              />
+            </div>
+          </section>
+
+          <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <div className="corner-brackets-inner module-panel glow-red p-4 sm:p-5">
+              <h2 className="section-header mb-4">Recent Dispatches</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] border-collapse font-mono text-[11px]">
+                  <thead>
+                    <tr className="border-b border-card text-left text-muted">
+                      <th className="px-2 py-2 uppercase tracking-wider">
+                        Signal ID
+                      </th>
+                      <th className="px-2 py-2 uppercase tracking-wider">
+                        Model
+                      </th>
+                      <th className="px-2 py-2 uppercase tracking-wider">
+                        Source
+                      </th>
+                      <th className="px-2 py-2 uppercase tracking-wider">
+                        Time
+                      </th>
+                      <th className="px-2 py-2 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-2 py-2 text-right uppercase tracking-wider">
+                        Latency
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentDispatches.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-2 py-8 text-center text-muted"
+                        >
+                          No dispatches recorded — trigger sandbox dispatch to
+                          populate
+                        </td>
+                      </tr>
+                    ) : (
+                      recentDispatches.map((row) => (
+                        <tr
+                          key={`${row.signalId}-${row.timestamp}`}
+                          className="border-b border-card/50 hover:bg-card/20"
+                        >
+                          <td className="max-w-[140px] truncate px-2 py-2 text-pressure">
+                            {row.signalId}
+                          </td>
+                          <td className="px-2 py-2">{row.modelId}</td>
+                          <td className="px-2 py-2 uppercase text-muted">
+                            {row.source}
+                          </td>
+                          <td className="px-2 py-2 tabular-nums text-muted">
+                            {formatTime(row.timestamp)}
+                          </td>
+                          <td className="px-2 py-2">
+                            <span
+                              className={`inline-block border px-1.5 py-0.5 text-[9px] font-bold uppercase ${statusBadge(row.status)}`}
+                            >
+                              {row.status}
+                            </span>
+                          </td>
+                          <td className="px-2 py-2 text-right tabular-nums">
+                            {row.latencyMs != null ? `${row.latencyMs}ms` : "—"}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {lastUpdated && (
+                <p className="mt-3 font-mono text-[9px] uppercase tracking-widest text-muted">
+                  Last sync {formatTime(new Date(lastUpdated).toISOString())}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <h2 className="section-header mb-4">Live Ops Log</h2>
+              <OpsLogTerminal logs={logs} />
+            </div>
+          </section>
+
+          <section className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="telemetry-cell flex items-center gap-2 px-3 py-3">
+              <Send className="h-3 w-3 text-muted" />
+              <div>
+                <p className="telemetry-label">Queued</p>
+                <p className="telemetry-value">{counters?.totalQueued ?? 0}</p>
+              </div>
+            </div>
+            <div className="telemetry-cell flex items-center gap-2 px-3 py-3">
+              <Shield className="h-3 w-3 text-muted" />
+              <div>
+                <p className="telemetry-label">Sandbox Sends</p>
+                <p className="telemetry-value text-pressure">
+                  {counters?.sandboxDispatches ?? 0}
+                </p>
+              </div>
+            </div>
+            <div className="telemetry-cell flex items-center gap-2 px-3 py-3">
+              <Copy className="h-3 w-3 text-muted" />
+              <div>
+                <p className="telemetry-label">Dup Skips</p>
+                <p className="telemetry-value">
+                  {counters?.duplicateSkips ?? 0}
+                </p>
+              </div>
+            </div>
+            <div className="telemetry-cell flex items-center gap-2 px-3 py-3">
+              <Ban className="h-3 w-3 text-muted" />
+              <div>
+                <p className="telemetry-label">Cooldown</p>
+                <p className="telemetry-value">
+                  {counters?.cooldownBlocked ?? 0}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="module-panel border-dashed border-card/60 p-4">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-pressure/80" />
+              <p className="font-mono text-[10px] leading-relaxed text-muted">
+                Production runtime is not connected to Telegram dispatch. Use{" "}
+                <code className="text-foreground">signalDispatcher.dispatch()</code>{" "}
+                manually in sandbox to generate telemetry. Market labels:{" "}
+                {getMarketLabel("OVER_0_5")} / {getMarketLabel("OVER_1_5")}.
+              </p>
+            </div>
+          </section>
+        </div>
+      )}
+    </>
+  );
+}

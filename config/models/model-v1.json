@@ -1,0 +1,22 @@
+{
+  "modelId": "model-v1",
+  "createdAt": "2026-05-21T00:00:00.000Z",
+  "description": "Initial heuristic pressure model",
+  "markets": {
+    "OVER_0_5": {
+      "minMinute": 20,
+      "minPressure": 70,
+      "maxMinute": 80,
+      "minDangerousAttacks": 25,
+      "minOdd": 1.5
+    },
+    "OVER_1_5": {
+      "minMinute": 25,
+      "minPressure": 75,
+      "maxMinute": 70,
+      "minDangerousAttacks": 30,
+      "minShots": 10,
+      "minOdd": 1.7
+    }
+  }
+}
