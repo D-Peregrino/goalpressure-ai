@@ -5,6 +5,8 @@
 
 import type { Match, MarketType } from "@/types/domain";
 import { getMatchLabel } from "@/types/domain";
+import { getTemporalDynamicsForFixture } from "@/lib/temporal/temporalSnapshot";
+import { temporalUrgencyBoost } from "@/lib/temporal/temporalDynamicsEngine";
 
 // ─── Thresholds (todas obrigatórias para shouldTrigger) ───────────────────────
 
@@ -289,6 +291,28 @@ export function evaluateSignalOpportunity(
     clamp(metrics.confidence * 0.6 + best.fairProbability * 0.4, 0, 1)
   );
 
+  const temporal = getTemporalDynamicsForFixture(fixtureId);
+  let urgency = best.urgency;
+  const reasons = [
+    ...best.reasons,
+    getMatchLabel(match),
+    `conf_${(blendedConfidence * 100).toFixed(0)}%`,
+  ];
+
+  if (temporal) {
+    urgency = Math.round(
+      clamp(urgency * temporalUrgencyBoost(temporal), 0, 100)
+    );
+    if (temporal.executionPriority === "CRITICAL") {
+      reasons.push(`temporal_${temporal.matchPhase}_CRITICAL`);
+    } else if (temporal.executionPriority === "HIGH") {
+      reasons.push(`temporal_${temporal.executionPriority}`);
+    }
+    if (temporal.flags.includes("CHAOS_PHASE")) {
+      reasons.push("chaos_phase");
+    }
+  }
+
   return {
     shouldTrigger: true,
     market: best.market,
@@ -296,12 +320,8 @@ export function evaluateSignalOpportunity(
     ev: best.ev,
     fairOdd: best.fairOdd,
     currentOdd: best.currentOdd,
-    reason: [
-      ...best.reasons,
-      getMatchLabel(match),
-      `conf_${(blendedConfidence * 100).toFixed(0)}%`,
-    ],
-    urgency: best.urgency,
+    reason: reasons,
+    urgency,
   };
 }
 

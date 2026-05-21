@@ -174,6 +174,7 @@ export default function OpsDashboard() {
     signalDecision,
     backtest,
     marketCalibration,
+    temporal,
     status,
     error,
     lastUpdated,
@@ -398,6 +399,90 @@ export default function OpsDashboard() {
               {backtest?.updatedAt
                 ? ` · last ${formatTime(backtest.updatedAt)}`
                 : " · no run yet"}
+            </p>
+          </section>
+
+          <section>
+            <h2 className="section-header mb-4">Temporal Dynamics Engine</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 mb-4">
+              <KpiCard
+                label="Avg Chaos"
+                value={
+                  temporal && temporal.matchCount > 0
+                    ? String(temporal.averageChaos)
+                    : "—"
+                }
+                sub="chaos map index"
+                accent={Boolean(temporal && temporal.averageChaos >= 55)}
+              />
+              <KpiCard
+                label="Acceleration"
+                value={
+                  temporal ? String(temporal.averageAcceleration) : "—"
+                }
+              />
+              <KpiCard
+                label="Urgency"
+                value={
+                  temporal ? temporal.averageUrgency.toFixed(2) : "—"
+                }
+                sub="multiplier avg"
+              />
+              <KpiCard
+                label="Volatility"
+                value={
+                  temporal ? String(temporal.averageVolatility) : "—"
+                }
+              />
+              <KpiCard
+                label="Critical"
+                value={String(temporal?.criticalCount ?? 0)}
+                sub={`${temporal?.highPriorityCount ?? 0} HIGH`}
+                accent={(temporal?.criticalCount ?? 0) > 0}
+              />
+              <KpiCard
+                label="Execution"
+                value={
+                  temporal?.chaosMap[0]?.executionPriority ?? "—"
+                }
+                sub={
+                  temporal?.chaosMap[0]
+                    ? `${temporal.chaosMap[0].matchPhase} ${temporal.chaosMap[0].minute}'`
+                    : "top fixture"
+                }
+              />
+            </div>
+            <div className="module-panel overflow-hidden border-pressure/20 bg-[#06090d] mb-6">
+              <div className="flex items-center gap-2 border-b border-card/80 bg-surface/80 px-3 py-2">
+                <span className="font-mono text-[9px] font-bold uppercase tracking-[0.25em] text-muted">
+                  Chaos Map
+                </span>
+              </div>
+              <div className="max-h-[220px] overflow-y-auto p-3 font-mono text-[10px]">
+                {(temporal?.chaosMap ?? []).length === 0 ? (
+                  <p className="text-muted">[temporal-dynamics] awaiting cycle…</p>
+                ) : (
+                  temporal?.chaosMap.map((e) => (
+                    <div
+                      key={e.fixtureId}
+                      className={`mb-1 border-l-2 pl-2 ${
+                        e.executionPriority === "CRITICAL"
+                          ? "border-red-500 text-red-400"
+                          : e.executionPriority === "HIGH"
+                            ? "border-pressure text-pressure"
+                            : "border-card text-foreground/80"
+                      }`}
+                    >
+                      {e.matchLabel ?? e.fixtureId} · {e.minute}&apos; ·{" "}
+                      {e.matchPhase} · chaos {e.chaosIndex} · {e.executionPriority}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+            <p className="mb-6 font-mono text-[9px] text-muted">
+              API{" "}
+              <code className="text-foreground">GET /api/temporal/live</code>
             </p>
           </section>
 

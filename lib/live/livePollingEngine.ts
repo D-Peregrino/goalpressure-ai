@@ -14,6 +14,11 @@ import {
 } from "@/lib/live/liveAnalyticsUpdater";
 import { processLiveRuntimeMetrics } from "@/lib/runtime/liveRuntime";
 import { processMarketCalibrationCycle } from "@/lib/market/marketCalibrationCycle";
+import type { MarketEdgeCalibration } from "@/types/market";
+import {
+  processTemporalLiveCycle,
+  processTemporalPreCycle,
+} from "@/lib/temporal/temporalCycle";
 import { processRuntimeSignalCycle } from "@/lib/runtime/signalDispatcher";
 import { recordRuntimeOpsLog } from "@/lib/ops/opsStore";
 import { logInfo, logOps, logWarn } from "@/lib/utils/logger";
@@ -205,6 +210,20 @@ export class LivePollingEngine {
       const runtimeMetrics = await processLiveRuntimeMetrics(fetchResult.matches);
       const matches = runtimeMetrics.matches;
 
+      try {
+        processTemporalPreCycle({
+          matches,
+          metrics: runtimeMetrics.snapshot.metrics,
+        });
+      } catch (temporalPreErr) {
+        logWarn(LOG_SCOPE, "Temporal pre-cycle skipped", {
+          message:
+            temporalPreErr instanceof Error
+              ? temporalPreErr.message
+              : "temporal_pre_failed",
+        });
+      }
+
       const signalCycle = await processRuntimeSignalCycle({
         matches,
         metrics: runtimeMetrics.snapshot.metrics,
@@ -227,6 +246,8 @@ export class LivePollingEngine {
       stats.decisionSignalsTriggered = signalCycle.triggered;
       stats.decisionSignalsDispatched = signalCycle.dispatched;
 
+      let marketEdges: MarketEdgeCalibration[] = [];
+
       try {
         const marketCal = await processMarketCalibrationCycle({
           matches,
@@ -234,10 +255,27 @@ export class LivePollingEngine {
           activeSignals: signalCycle.snapshot.activeSignals,
         });
         stats.marketEdgesCalibrated = marketCal.calibrated;
+        marketEdges = marketCal.snapshot.edges;
       } catch (marketErr) {
         const msg =
           marketErr instanceof Error ? marketErr.message : "market_calibration_failed";
         logWarn(LOG_SCOPE, "Market calibration skipped", { message: msg });
+      }
+
+      try {
+        const temporalLive = await processTemporalLiveCycle({
+          matches,
+          metrics: runtimeMetrics.snapshot.metrics,
+          marketEdges,
+        });
+        stats.temporalMetricsPersisted = temporalLive.persisted;
+      } catch (temporalErr) {
+        logWarn(LOG_SCOPE, "Temporal live cycle skipped", {
+          message:
+            temporalErr instanceof Error
+              ? temporalErr.message
+              : "temporal_live_failed",
+        });
       }
 
       const matchResult = await persistLiveMatches(matches);

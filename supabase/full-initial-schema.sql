@@ -343,6 +343,41 @@ create index if not exists market_snapshots_type_idx
   on public.market_snapshots (snapshot_type, created_at desc);
 
 -- =============================================================================
+-- TEMPORAL_METRICS — game-phase offensive & market dynamics
+-- =============================================================================
+
+create table if not exists public.temporal_metrics (
+  id uuid primary key default gen_random_uuid(),
+  fixture_id text not null,
+  minute int not null default 0,
+  match_phase text not null default 'MID',
+  temporal_pressure numeric(5, 2) not null default 0,
+  urgency_multiplier numeric(6, 3) not null default 1,
+  scoring_window_probability numeric(6, 4) not null default 0,
+  late_goal_probability numeric(6, 4) not null default 0,
+  exhaustion_factor numeric(6, 4) not null default 0,
+  chaos_index numeric(5, 2) not null default 0,
+  market_lag_factor numeric(6, 4) not null default 0,
+  acceleration_score numeric(5, 2) not null default 0,
+  volatility_score numeric(5, 2) not null default 0,
+  execution_priority text not null default 'LOW',
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists temporal_metrics_fixture_id_idx
+  on public.temporal_metrics (fixture_id);
+
+create index if not exists temporal_metrics_created_at_idx
+  on public.temporal_metrics (created_at desc);
+
+create index if not exists temporal_metrics_priority_idx
+  on public.temporal_metrics (execution_priority, created_at desc);
+
+create index if not exists temporal_metrics_chaos_idx
+  on public.temporal_metrics (chaos_index desc, created_at desc);
+
+-- =============================================================================
 -- DISPATCH_LOGS — Telegram / notification dispatch observability
 -- =============================================================================
 

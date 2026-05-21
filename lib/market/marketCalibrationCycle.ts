@@ -7,6 +7,8 @@ import type { MarketType } from "@/types/domain";
 import type { LiveMetricRecord } from "@/lib/runtime/liveRuntime";
 import type { RuntimeActiveSignal } from "@/lib/runtime/signalDispatcher";
 import { calibrateMarketEdge } from "@/lib/market/marketCalibrationEngine";
+import { temporalMarketEdgeAdjustment } from "@/lib/temporal/temporalDynamicsEngine";
+import { getTemporalDynamicsForFixture } from "@/lib/temporal/temporalSnapshot";
 import {
   detectSteamMove,
   recordMarketOdd,
@@ -106,6 +108,15 @@ export async function processMarketCalibrationCycle(
 
       if (detectSteamMove(fixtureId, market)) {
         cal.steamMove = true;
+      }
+
+      const temporal = getTemporalDynamicsForFixture(fixtureId);
+      if (temporal) {
+        cal.edge = temporalMarketEdgeAdjustment(temporal, cal.edge);
+        cal.edgePercent = Math.round(cal.edge * 10000) / 100;
+        if (temporal.flags.includes("MARKET_LAG")) {
+          cal.steamMove = cal.steamMove || temporal.volatilityScore > 60;
+        }
       }
 
       calibrations.push(cal);

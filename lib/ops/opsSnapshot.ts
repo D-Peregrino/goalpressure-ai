@@ -8,6 +8,7 @@ import { getAverageDispatchLatencyMs } from "@/lib/telegram/telegramDispatchStat
 import { getLiveRuntimeMetricsSnapshot } from "@/lib/runtime/liveRuntime";
 import { getBacktestOpsSnapshot } from "@/lib/backtest/backtestSnapshot";
 import { getMarketCalibrationOpsSnapshot } from "@/lib/market/marketSnapshot";
+import { getTemporalOpsSnapshot } from "@/lib/temporal/temporalSnapshot";
 import { getRuntimeSignalOpsSnapshot } from "@/lib/runtime/signalDispatcher";
 import { getOpsStoreSnapshot } from "@/lib/ops/opsStore";
 import type {
@@ -15,6 +16,7 @@ import type {
   OpsLivePressureSnapshot,
   OpsBacktestSnapshot,
   OpsMarketCalibrationSnapshot,
+  OpsTemporalSnapshot,
   OpsSignalDecisionSnapshot,
   OpsTelegramStatus,
 } from "@/types/opsApi";
@@ -183,6 +185,35 @@ function buildMarketCalibrationSnapshot(): OpsMarketCalibrationSnapshot {
   };
 }
 
+function buildTemporalSnapshot(): OpsTemporalSnapshot {
+  const snap = getTemporalOpsSnapshot();
+  if (!snap) {
+    return {
+      updatedAt: null,
+      matchCount: 0,
+      averageChaos: 0,
+      averageAcceleration: 0,
+      averageUrgency: 0,
+      averageVolatility: 0,
+      criticalCount: 0,
+      highPriorityCount: 0,
+      chaosMap: [],
+    };
+  }
+
+  return {
+    updatedAt: snap.updatedAt,
+    matchCount: snap.matchCount,
+    averageChaos: snap.averageChaos,
+    averageAcceleration: snap.averageAcceleration,
+    averageUrgency: snap.averageUrgency,
+    averageVolatility: snap.averageVolatility,
+    criticalCount: snap.criticalCount,
+    highPriorityCount: snap.highPriorityCount,
+    chaosMap: snap.chaosMap,
+  };
+}
+
 export async function buildOpsApiPayload(
   responseTimeMs: number
 ): Promise<OpsApiSuccessResponse> {
@@ -196,6 +227,7 @@ export async function buildOpsApiPayload(
   const signalDecision = buildSignalDecisionSnapshot();
   const backtest = buildBacktestSnapshot();
   const marketCalibration = buildMarketCalibrationSnapshot();
+  const temporal = buildTemporalSnapshot();
 
   const counters = {
     ...store.counters,
@@ -217,6 +249,7 @@ export async function buildOpsApiPayload(
     signalDecision,
     backtest,
     marketCalibration,
+    temporal,
     meta: {
       fetchedAt: new Date().toISOString(),
       responseTimeMs,

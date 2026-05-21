@@ -155,6 +155,25 @@ export interface OpsMarketCalibrationSnapshot {
   }[];
 }
 
+export interface OpsTemporalSnapshot {
+  updatedAt: string | null;
+  matchCount: number;
+  averageChaos: number;
+  averageAcceleration: number;
+  averageUrgency: number;
+  averageVolatility: number;
+  criticalCount: number;
+  highPriorityCount: number;
+  chaosMap: {
+    fixtureId: string;
+    matchLabel?: string;
+    minute: number;
+    chaosIndex: number;
+    executionPriority: string;
+    matchPhase: string;
+  }[];
+}
+
 export interface OpsApiSuccessResponse {
   ok: true;
   telegram: OpsTelegramStatus;
@@ -166,6 +185,7 @@ export interface OpsApiSuccessResponse {
   signalDecision: OpsSignalDecisionSnapshot;
   backtest: OpsBacktestSnapshot;
   marketCalibration: OpsMarketCalibrationSnapshot;
+  temporal: OpsTemporalSnapshot;
   meta: {
     fetchedAt: string;
     responseTimeMs: number;

@@ -8,6 +8,7 @@ import type {
   OpsLivePressureSnapshot,
   OpsBacktestSnapshot,
   OpsMarketCalibrationSnapshot,
+  OpsTemporalSnapshot,
   OpsSignalDecisionSnapshot,
   OpsLogEntry,
   OpsQueueMetrics,
@@ -33,6 +34,7 @@ export interface UseOpsResult {
   signalDecision: OpsSignalDecisionSnapshot | null;
   backtest: OpsBacktestSnapshot | null;
   marketCalibration: OpsMarketCalibrationSnapshot | null;
+  temporal: OpsTemporalSnapshot | null;
   status: OpsFeedStatus;
   error: string | null;
   lastUpdated: number | null;
@@ -57,6 +59,7 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
   const [backtest, setBacktest] = useState<OpsBacktestSnapshot | null>(null);
   const [marketCalibration, setMarketCalibration] =
     useState<OpsMarketCalibrationSnapshot | null>(null);
+  const [temporal, setTemporal] = useState<OpsTemporalSnapshot | null>(null);
   const [status, setStatus] = useState<OpsFeedStatus>("loading");
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
@@ -102,6 +105,7 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
       setSignalDecision(data.signalDecision);
       setBacktest(data.backtest);
       setMarketCalibration(data.marketCalibration);
+      setTemporal(data.temporal);
       setResponseTime(data.meta.responseTimeMs);
       setLastUpdated(Date.now());
       setError(null);
@@ -139,6 +143,7 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
     signalDecision,
     backtest,
     marketCalibration,
+    temporal,
     status,
     error,
     lastUpdated,

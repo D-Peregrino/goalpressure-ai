@@ -70,6 +70,25 @@ export interface SignalDispatchRow {
   created_at?: string;
 }
 
+export interface TemporalMetricsRow {
+  id?: string;
+  fixture_id: string;
+  minute: number;
+  match_phase: string;
+  temporal_pressure: number;
+  urgency_multiplier: number;
+  scoring_window_probability: number;
+  late_goal_probability: number;
+  exhaustion_factor: number;
+  chaos_index: number;
+  market_lag_factor: number;
+  acceleration_score: number;
+  volatility_score: number;
+  execution_priority: string;
+  metadata?: Record<string, unknown>;
+  created_at?: string;
+}
+
 export interface MarketEdgeRow {
   id?: string;
   fixture_id: string;
