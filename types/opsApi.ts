@@ -174,6 +174,36 @@ export interface OpsTemporalSnapshot {
   }[];
 }
 
+export interface OpsPlayerImpactSnapshot {
+  updatedAt: string | null;
+  matchCount: number;
+  topClutchPlayers: {
+    name: string;
+    fixtureId: string;
+    clutchFactor: number;
+  }[];
+  fatigueAlerts: {
+    name: string;
+    fixtureId: string;
+    fatigueImpact: number;
+  }[];
+  goalkeeperResistance: {
+    fixtureId: string;
+    matchLabel?: string;
+    value: number;
+  }[];
+  substitutionImpacts: {
+    fixtureId: string;
+    matchLabel?: string;
+    swing: number;
+  }[];
+  chaosContributors: {
+    name: string;
+    fixtureId: string;
+    chaos: number;
+  }[];
+}
+
 export interface OpsApiSuccessResponse {
   ok: true;
   telegram: OpsTelegramStatus;
@@ -186,6 +216,7 @@ export interface OpsApiSuccessResponse {
   backtest: OpsBacktestSnapshot;
   marketCalibration: OpsMarketCalibrationSnapshot;
   temporal: OpsTemporalSnapshot;
+  playerImpact: OpsPlayerImpactSnapshot;
   meta: {
     fetchedAt: string;
     responseTimeMs: number;

@@ -378,6 +378,37 @@ create index if not exists temporal_metrics_chaos_idx
   on public.temporal_metrics (chaos_index desc, created_at desc);
 
 -- =============================================================================
+-- PLAYER_RUNTIME_METRICS — individual player impact (live cycle)
+-- =============================================================================
+
+create table if not exists public.player_runtime_metrics (
+  id uuid primary key default gen_random_uuid(),
+  fixture_id text not null,
+  minute int not null default 0,
+  offensive_impact numeric(5, 2) not null default 0,
+  defensive_impact numeric(5, 2) not null default 0,
+  chaos_contribution numeric(5, 2) not null default 0,
+  fatigue_impact numeric(5, 2) not null default 0,
+  clutch_factor numeric(5, 2) not null default 0,
+  goalkeeper_resistance numeric(5, 2) not null default 0,
+  substitution_swing numeric(6, 2) not null default 0,
+  red_card_impact numeric(5, 2) not null default 0,
+  player_volatility numeric(5, 2) not null default 0,
+  team_synergy_shift numeric(6, 2) not null default 0,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists player_runtime_metrics_fixture_id_idx
+  on public.player_runtime_metrics (fixture_id);
+
+create index if not exists player_runtime_metrics_created_at_idx
+  on public.player_runtime_metrics (created_at desc);
+
+create index if not exists player_runtime_metrics_clutch_idx
+  on public.player_runtime_metrics (clutch_factor desc, created_at desc);
+
+-- =============================================================================
 -- DISPATCH_LOGS — Telegram / notification dispatch observability
 -- =============================================================================
 

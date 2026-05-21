@@ -175,6 +175,7 @@ export default function OpsDashboard() {
     backtest,
     marketCalibration,
     temporal,
+    playerImpact,
     status,
     error,
     lastUpdated,
@@ -483,6 +484,117 @@ export default function OpsDashboard() {
             <p className="mb-6 font-mono text-[9px] text-muted">
               API{" "}
               <code className="text-foreground">GET /api/temporal/live</code>
+            </p>
+          </section>
+
+          <section>
+            <h2 className="section-header mb-4">Player Impact Engine</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 mb-4">
+              <KpiCard
+                label="Clutch"
+                value={
+                  playerImpact?.topClutchPlayers[0]
+                    ? String(playerImpact.topClutchPlayers[0].clutchFactor)
+                    : "—"
+                }
+                sub={playerImpact?.topClutchPlayers[0]?.name ?? "top player"}
+                accent={Boolean(
+                  playerImpact &&
+                    (playerImpact.topClutchPlayers[0]?.clutchFactor ?? 0) >= 70
+                )}
+              />
+              <KpiCard
+                label="Fatigue Alerts"
+                value={String(playerImpact?.fatigueAlerts.length ?? 0)}
+                sub="extreme fatigue"
+                accent={(playerImpact?.fatigueAlerts.length ?? 0) > 0}
+              />
+              <KpiCard
+                label="GK Resistance"
+                value={
+                  playerImpact?.goalkeeperResistance[0]
+                    ? String(playerImpact.goalkeeperResistance[0].value)
+                    : "—"
+                }
+                sub={
+                  playerImpact?.goalkeeperResistance[0]?.matchLabel ?? "hot GK"
+                }
+              />
+              <KpiCard
+                label="Sub Swing"
+                value={
+                  playerImpact?.substitutionImpacts[0]
+                    ? `${playerImpact.substitutionImpacts[0].swing > 0 ? "+" : ""}${playerImpact.substitutionImpacts[0].swing}`
+                    : "—"
+                }
+                sub="substitution impact"
+              />
+              <KpiCard
+                label="Chaos"
+                value={
+                  playerImpact?.chaosContributors[0]
+                    ? String(playerImpact.chaosContributors[0].chaos)
+                    : "—"
+                }
+                sub={playerImpact?.chaosContributors[0]?.name ?? "contributor"}
+              />
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 mb-6">
+              <div className="module-panel overflow-hidden border-pressure/20 bg-[#06090d]">
+                <div className="flex items-center gap-2 border-b border-card/80 bg-surface/80 px-3 py-2">
+                  <span className="font-mono text-[9px] font-bold uppercase tracking-[0.25em] text-muted">
+                    Clutch Players
+                  </span>
+                </div>
+                <div className="max-h-[180px] overflow-y-auto p-3 font-mono text-[10px]">
+                  {(playerImpact?.topClutchPlayers ?? []).length === 0 ? (
+                    <p className="text-muted">[player-impact] awaiting cycle…</p>
+                  ) : (
+                    playerImpact?.topClutchPlayers.map((p) => (
+                      <div key={p.fixtureId} className="mb-1 border-l-2 border-pressure pl-2">
+                        {p.name} · {p.fixtureId} · clutch {p.clutchFactor}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+              <div className="module-panel overflow-hidden border-pressure/20 bg-[#06090d]">
+                <div className="flex items-center gap-2 border-b border-card/80 bg-surface/80 px-3 py-2">
+                  <span className="font-mono text-[9px] font-bold uppercase tracking-[0.25em] text-muted">
+                    Fatigue · Sub · Chaos
+                  </span>
+                </div>
+                <div className="max-h-[180px] overflow-y-auto p-3 font-mono text-[10px]">
+                  {(playerImpact?.fatigueAlerts ?? []).map((f) => (
+                    <div
+                      key={`fat-${f.fixtureId}`}
+                      className="mb-1 border-l-2 border-amber-500 pl-2 text-amber-400"
+                    >
+                      FATIGUE {f.name} · {f.fatigueImpact}
+                    </div>
+                  ))}
+                  {(playerImpact?.substitutionImpacts ?? []).slice(0, 4).map((s) => (
+                    <div
+                      key={`sub-${s.fixtureId}`}
+                      className="mb-1 border-l-2 border-card pl-2"
+                    >
+                      SUB {s.matchLabel ?? s.fixtureId} · swing {s.swing}
+                    </div>
+                  ))}
+                  {(playerImpact?.chaosContributors ?? []).slice(0, 4).map((c) => (
+                    <div
+                      key={`chaos-${c.fixtureId}`}
+                      className="mb-1 border-l-2 border-red-500/60 pl-2"
+                    >
+                      CHAOS {c.name} · {c.chaos}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <p className="mb-6 font-mono text-[9px] text-muted">
+              API{" "}
+              <code className="text-foreground">GET /api/player/runtime</code>
             </p>
           </section>
 

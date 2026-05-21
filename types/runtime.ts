@@ -8,6 +8,7 @@ export interface LivePollingCycleStats {
   decisionSignalsDispatched?: number;
   marketEdgesCalibrated?: number;
   temporalMetricsPersisted?: number;
+  playerMetricsPersisted?: number;
   durationMs: number;
   success: boolean;
   error?: string;

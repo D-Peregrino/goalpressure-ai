@@ -9,6 +9,8 @@ import type { RuntimeActiveSignal } from "@/lib/runtime/signalDispatcher";
 import { calibrateMarketEdge } from "@/lib/market/marketCalibrationEngine";
 import { temporalMarketEdgeAdjustment } from "@/lib/temporal/temporalDynamicsEngine";
 import { getTemporalDynamicsForFixture } from "@/lib/temporal/temporalSnapshot";
+import { getPlayerImpactForFixture } from "@/lib/player/playerSnapshot";
+import { playerMarketEdgeBoost } from "@/lib/player/playerImpactEngine";
 import {
   detectSteamMove,
   recordMarketOdd,
@@ -116,6 +118,15 @@ export async function processMarketCalibrationCycle(
         cal.edgePercent = Math.round(cal.edge * 10000) / 100;
         if (temporal.flags.includes("MARKET_LAG")) {
           cal.steamMove = cal.steamMove || temporal.volatilityScore > 60;
+        }
+      }
+
+      const playerImpact = getPlayerImpactForFixture(fixtureId);
+      if (playerImpact) {
+        cal.edge += playerMarketEdgeBoost(playerImpact);
+        cal.edgePercent = Math.round(cal.edge * 10000) / 100;
+        if (playerImpact.substitutionSwing >= 30) {
+          cal.steamMove = true;
         }
       }
 

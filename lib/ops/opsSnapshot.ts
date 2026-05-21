@@ -9,6 +9,7 @@ import { getLiveRuntimeMetricsSnapshot } from "@/lib/runtime/liveRuntime";
 import { getBacktestOpsSnapshot } from "@/lib/backtest/backtestSnapshot";
 import { getMarketCalibrationOpsSnapshot } from "@/lib/market/marketSnapshot";
 import { getTemporalOpsSnapshot } from "@/lib/temporal/temporalSnapshot";
+import { getPlayerOpsSnapshot } from "@/lib/player/playerSnapshot";
 import { getRuntimeSignalOpsSnapshot } from "@/lib/runtime/signalDispatcher";
 import { getOpsStoreSnapshot } from "@/lib/ops/opsStore";
 import type {
@@ -17,6 +18,7 @@ import type {
   OpsBacktestSnapshot,
   OpsMarketCalibrationSnapshot,
   OpsTemporalSnapshot,
+  OpsPlayerImpactSnapshot,
   OpsSignalDecisionSnapshot,
   OpsTelegramStatus,
 } from "@/types/opsApi";
@@ -185,6 +187,31 @@ function buildMarketCalibrationSnapshot(): OpsMarketCalibrationSnapshot {
   };
 }
 
+function buildPlayerImpactSnapshot(): OpsPlayerImpactSnapshot {
+  const snap = getPlayerOpsSnapshot();
+  if (!snap) {
+    return {
+      updatedAt: null,
+      matchCount: 0,
+      topClutchPlayers: [],
+      fatigueAlerts: [],
+      goalkeeperResistance: [],
+      substitutionImpacts: [],
+      chaosContributors: [],
+    };
+  }
+
+  return {
+    updatedAt: snap.updatedAt,
+    matchCount: snap.matchCount,
+    topClutchPlayers: snap.topClutchPlayers,
+    fatigueAlerts: snap.fatigueAlerts,
+    goalkeeperResistance: snap.goalkeeperResistance,
+    substitutionImpacts: snap.substitutionImpacts,
+    chaosContributors: snap.chaosContributors,
+  };
+}
+
 function buildTemporalSnapshot(): OpsTemporalSnapshot {
   const snap = getTemporalOpsSnapshot();
   if (!snap) {
@@ -228,6 +255,7 @@ export async function buildOpsApiPayload(
   const backtest = buildBacktestSnapshot();
   const marketCalibration = buildMarketCalibrationSnapshot();
   const temporal = buildTemporalSnapshot();
+  const playerImpact = buildPlayerImpactSnapshot();
 
   const counters = {
     ...store.counters,
@@ -250,6 +278,7 @@ export async function buildOpsApiPayload(
     backtest,
     marketCalibration,
     temporal,
+    playerImpact,
     meta: {
       fetchedAt: new Date().toISOString(),
       responseTimeMs,

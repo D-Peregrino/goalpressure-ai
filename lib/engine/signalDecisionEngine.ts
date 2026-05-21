@@ -7,6 +7,8 @@ import type { Match, MarketType } from "@/types/domain";
 import { getMatchLabel } from "@/types/domain";
 import { getTemporalDynamicsForFixture } from "@/lib/temporal/temporalSnapshot";
 import { temporalUrgencyBoost } from "@/lib/temporal/temporalDynamicsEngine";
+import { getPlayerImpactForFixture } from "@/lib/player/playerSnapshot";
+import { playerImpactUrgencyBoost } from "@/lib/player/playerImpactEngine";
 
 // ─── Thresholds (todas obrigatórias para shouldTrigger) ───────────────────────
 
@@ -310,6 +312,22 @@ export function evaluateSignalOpportunity(
     }
     if (temporal.flags.includes("CHAOS_PHASE")) {
       reasons.push("chaos_phase");
+    }
+  }
+
+  const playerImpact = getPlayerImpactForFixture(fixtureId);
+  if (playerImpact) {
+    urgency = Math.round(
+      clamp(urgency * playerImpactUrgencyBoost(playerImpact), 0, 100)
+    );
+    if (playerImpact.clutchFactor >= 70) {
+      reasons.push("player_clutch");
+    }
+    if (playerImpact.substitutionSwing >= 25) {
+      reasons.push("offensive_substitution");
+    }
+    if (playerImpact.flags.includes("RED_CARD_CASCADE")) {
+      reasons.push("red_card_cascade");
     }
   }
 

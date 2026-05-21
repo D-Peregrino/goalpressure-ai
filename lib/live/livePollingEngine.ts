@@ -19,6 +19,10 @@ import {
   processTemporalLiveCycle,
   processTemporalPreCycle,
 } from "@/lib/temporal/temporalCycle";
+import {
+  processPlayerImpactLiveCycle,
+  processPlayerImpactPreCycle,
+} from "@/lib/player/playerImpactCycle";
 import { processRuntimeSignalCycle } from "@/lib/runtime/signalDispatcher";
 import { recordRuntimeOpsLog } from "@/lib/ops/opsStore";
 import { logInfo, logOps, logWarn } from "@/lib/utils/logger";
@@ -224,6 +228,20 @@ export class LivePollingEngine {
         });
       }
 
+      try {
+        processPlayerImpactPreCycle({
+          matches,
+          metrics: runtimeMetrics.snapshot.metrics,
+        });
+      } catch (playerPreErr) {
+        logWarn(LOG_SCOPE, "Player impact pre-cycle skipped", {
+          message:
+            playerPreErr instanceof Error
+              ? playerPreErr.message
+              : "player_pre_failed",
+        });
+      }
+
       const signalCycle = await processRuntimeSignalCycle({
         matches,
         metrics: runtimeMetrics.snapshot.metrics,
@@ -275,6 +293,21 @@ export class LivePollingEngine {
             temporalErr instanceof Error
               ? temporalErr.message
               : "temporal_live_failed",
+        });
+      }
+
+      try {
+        const playerLive = await processPlayerImpactLiveCycle({
+          matches,
+          metrics: runtimeMetrics.snapshot.metrics,
+        });
+        stats.playerMetricsPersisted = playerLive.persisted;
+      } catch (playerErr) {
+        logWarn(LOG_SCOPE, "Player impact live cycle skipped", {
+          message:
+            playerErr instanceof Error
+              ? playerErr.message
+              : "player_live_failed",
         });
       }
 

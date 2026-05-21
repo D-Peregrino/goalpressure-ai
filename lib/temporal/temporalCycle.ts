@@ -9,6 +9,8 @@ import type { MarketEdgeCalibration } from "@/types/market";
 import { calculateTemporalDynamics } from "@/lib/temporal/temporalDynamicsEngine";
 import { persistTemporalMetricsBatch } from "@/lib/temporal/temporalPersistence";
 import { setTemporalOpsSnapshot } from "@/lib/temporal/temporalSnapshot";
+import { getPlayerImpactForFixture } from "@/lib/player/playerSnapshot";
+import { playerChaosBoost } from "@/lib/player/playerImpactEngine";
 import type { TemporalDynamicsResult } from "@/types/temporal";
 import { logOps } from "@/lib/utils/logger";
 import { recordRuntimeOpsLog } from "@/lib/ops/opsStore";
@@ -116,9 +118,33 @@ export async function processTemporalLiveCycle(
     if (!metric) continue;
 
     const edge = strongestEdgeForFixture(fixtureId, edges);
-    const temporal = calculateTemporalDynamics(
+    let temporal = calculateTemporalDynamics(
       buildTemporalInput(match, metric, edge)
     );
+
+    const playerImpact = getPlayerImpactForFixture(fixtureId);
+    if (playerImpact) {
+      const chaosBoost = playerChaosBoost(playerImpact);
+      const boostedChaos = Math.min(100, temporal.chaosIndex + chaosBoost);
+      const boostedVolatility = Math.min(
+        100,
+        temporal.volatilityScore + chaosBoost * 0.5
+      );
+      const flags = [...temporal.flags];
+      if (playerImpact.flags.includes("RED_CARD_CASCADE")) {
+        flags.push("PLAYER_RED_CASCADE");
+      }
+      if (playerImpact.fatigueImpact >= 65) {
+        flags.push("PLAYER_FATIGUE");
+      }
+      temporal = {
+        ...temporal,
+        chaosIndex: boostedChaos,
+        volatilityScore: boostedVolatility,
+        flags,
+      };
+    }
+
     results.push(temporal);
 
     if (temporal.executionPriority !== "LOW") {
