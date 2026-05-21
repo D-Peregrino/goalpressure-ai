@@ -1,10 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Rajdhani } from "next/font/google";
+import { Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { BRAND } from "@/lib/design/brand";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+});
+
+const rajdhani = Rajdhani({
+  variable: "--font-rajdhani",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -13,9 +21,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GoalPressure AI — Institutional Sports Intelligence",
-  description:
-    "Premium real-time quantitative football intelligence. Pressure, edge, meta consensus and execution grades.",
+  title: `${BRAND.name} — ${BRAND.tagline}`,
+  description: BRAND.subtitle,
   metadataBase: new URL("https://goalpressure.com.br"),
 };
 
@@ -26,10 +33,12 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      lang="pt-BR"
+      className={`${inter.variable} ${rajdhani.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-mono antialiased">{children}</body>
+      <body className="min-h-full flex flex-col font-body bg-[var(--gp-white)] text-[var(--text)]">
+        {children}
+      </body>
     </html>
   );
 }

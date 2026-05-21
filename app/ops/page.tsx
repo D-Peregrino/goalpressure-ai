@@ -1,13 +1,6 @@
-import AppShell from "@/components/layout/AppShell";
-import CommandCenter from "@/components/command/CommandCenter";
+import { redirect } from "next/navigation";
 
+/** Mantém /ops — redireciona para o terminal operacional principal */
 export default function OpsPage() {
-  return (
-    <AppShell
-      title="Command Center"
-      subtitle="Institutional live intelligence"
-    >
-      <CommandCenter />
-    </AppShell>
-  );
+  redirect("/terminal");
 }

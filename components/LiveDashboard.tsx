@@ -108,7 +108,7 @@ export default function LiveDashboard() {
                 return (
                   <Link
                     key={view.id}
-                    href={`/live/${encodeURIComponent(view.id)}`}
+                    href={`/match/${encodeURIComponent(view.id.replace(/^sm-/, ""))}`}
                     className="block transition hover:-translate-y-0.5"
                   >
                     <LiveGameCard

@@ -4,33 +4,37 @@ import { useMemo } from "react";
 import { useLiveMatches } from "@/hooks/useLiveMatches";
 import { useOps } from "@/hooks/useOps";
 
-function normalizeFixtureId(matchId: string): string {
-  return matchId.replace(/^sm-/, "");
+/** Aceita matchId (sm-xxx) ou fixtureId puro */
+export function resolveFixtureId(id: string): string {
+  return id.replace(/^sm-/, "");
 }
 
-export function useMatchIntel(matchId: string) {
+export function useMatchIntel(idOrFixture: string) {
   const { matches, status: feedStatus } = useLiveMatches();
   const ops = useOps();
 
-  const fixtureId = normalizeFixtureId(matchId);
+  const fixtureId = resolveFixtureId(idOrFixture);
+  const matchId = idOrFixture.startsWith("sm-") ? idOrFixture : `sm-${fixtureId}`;
 
   const match = useMemo(
-    () => matches.find((m) => m.id === matchId || m.externalId === fixtureId),
-    [matches, matchId, fixtureId]
+    () =>
+      matches.find(
+        (m) =>
+          m.id === matchId ||
+          m.externalId === fixtureId ||
+          m.id === idOrFixture
+      ),
+    [matches, matchId, fixtureId, idOrFixture]
   );
 
   const pressure = useMemo(
     () =>
-      ops.livePressure?.metrics.find(
-        (m) => m.fixtureId === fixtureId || m.matchLabel?.includes(fixtureId)
-      ) ?? null,
+      ops.livePressure?.metrics.find((m) => m.fixtureId === fixtureId) ?? null,
     [ops.livePressure, fixtureId]
   );
 
   const meta = useMemo(
-    () =>
-      ops.metaConsensus?.consensusHeatmap.find((c) => c.fixtureId === fixtureId) ??
-      ops.metaConsensus?.topExecutions.find((c) => c.fixtureId === fixtureId),
+    () => ops.metaConsensus?.consensusHeatmap.find((c) => c.fixtureId === fixtureId),
     [ops.metaConsensus, fixtureId]
   );
 
@@ -57,9 +61,7 @@ export function useMatchIntel(matchId: string) {
 
   const edges = useMemo(
     () =>
-      (ops.marketCalibration?.topEdges ?? []).filter(
-        (e) => e.fixtureId === fixtureId
-      ),
+      (ops.marketCalibration?.topEdges ?? []).filter((e) => e.fixtureId === fixtureId),
     [ops.marketCalibration, fixtureId]
   );
 
@@ -71,6 +73,8 @@ export function useMatchIntel(matchId: string) {
 
   return {
     match,
+    matchId,
+    fixtureId,
     pressure,
     meta,
     temporal,

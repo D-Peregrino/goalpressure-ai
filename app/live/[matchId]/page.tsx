@@ -1,17 +1,12 @@
-import AppShell from "@/components/layout/AppShell";
-import MatchIntelView from "@/components/match/MatchIntelView";
+import { redirect } from "next/navigation";
 
-export default async function LiveMatchPage({
+/** Compat: /live/sm-123 → /match/123 */
+export default async function LiveMatchRedirect({
   params,
 }: {
   params: Promise<{ matchId: string }>;
 }) {
   const { matchId } = await params;
-  const decoded = decodeURIComponent(matchId);
-
-  return (
-    <AppShell subtitle="Match intelligence">
-      <MatchIntelView matchId={decoded} />
-    </AppShell>
-  );
+  const fixtureId = decodeURIComponent(matchId).replace(/^sm-/, "");
+  redirect(`/match/${encodeURIComponent(fixtureId)}`);
 }
