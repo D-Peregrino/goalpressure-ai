@@ -8,9 +8,13 @@ import type { SportmonksFixture } from "@/lib/mappers/sportmonks";
 import { recordApiUsageEvent } from "@/lib/api/apiUsageMonitor";
 import { SportmonksServiceError } from "@/lib/utils/sportmonksErrors";
 import { logError, logInfo, logWarn } from "@/lib/utils/logger";
+import {
+  emitSportmonksAuditLog,
+  logSportmonksAudit,
+} from "@/lib/services/sportmonksAudit";
 
 const DEFAULT_BASE_URL = "https://api.sportmonks.com/v3/football";
-const INPLAY_PATH = "/livescores/inplay";
+export const INPLAY_PATH = "/livescores/inplay";
 const DEFAULT_TIMEOUT_MS = 15_000;
 
 /** Full include set we aim for (richest payload). */
@@ -61,6 +65,7 @@ export interface SportmonksInplayResult {
   rateLimit?: SportmonksRateLimit;
   includeProfile: SportmonksIncludeProfile;
   endpointUrlRedacted: string;
+  subscriptionHint?: unknown;
 }
 
 interface SportmonksListResponse {
@@ -319,6 +324,19 @@ async function requestInplay(
     };
 
     const rateLimit = parseRateLimit(body);
+
+    logSportmonksAudit("HTTP response", {
+      url: endpointUrlRedacted,
+      parameters: {
+        api_token: "***",
+        include: includes.join(";") || "(none)",
+      },
+      includes,
+      httpStatus: response.status,
+      returnedCount: Array.isArray(body.data) ? body.data.length : 0,
+      rateLimitRemaining: rateLimit?.remaining ?? null,
+    });
+
     recordApiUsageEvent({
       endpoint: INPLAY_PATH,
       method: "GET",
@@ -555,13 +573,31 @@ export async function fetchInplayFixtures(): Promise<SportmonksInplayResult> {
       });
     }
 
-    return {
+    const result: SportmonksInplayResult = {
       fixtures,
       responseTimeMs: attempt.responseTimeMs,
       rateLimit,
       includeProfile: profile,
       endpointUrlRedacted: attempt.endpointUrlRedacted,
+      subscriptionHint: attempt.body.subscription ?? null,
     };
+
+    emitSportmonksAuditLog({
+      endpointUrlRedacted: attempt.endpointUrlRedacted,
+      parameters: {
+        api_token: "***",
+        include: profile.activeIncludes.join(";") || "(none)",
+      },
+      includes: profile.activeIncludes,
+      returnedCount: fixtures.length,
+      expectedEstimate: fixtures.length,
+      estimatedCoverage:
+        fixtures.length <= 3 ? "NARROW_OR_LOW_CONCURRENCY" : "NORMAL",
+      afterMapperCount: fixtures.filter((f) => typeof f?.id === "number").length,
+      rateLimitRemaining: rateLimit?.remaining ?? null,
+    });
+
+    return result;
   } catch (error) {
     if (
       error instanceof SportmonksServiceError &&
@@ -587,4 +623,9 @@ export async function fetchInplayFixtures(): Promise<SportmonksInplayResult> {
 /** Clears cached include profile (for tests or forced rediscovery). */
 export function resetSportmonksIncludeProfile(): void {
   resolvedIncludeProfile = null;
+}
+
+/** Active include profile for this process (null until first fetch). */
+export function getSportmonksIncludeProfile(): SportmonksIncludeProfile | null {
+  return resolvedIncludeProfile;
 }
