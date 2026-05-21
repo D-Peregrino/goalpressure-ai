@@ -52,6 +52,9 @@ const defaultCounters: OpsCounterMetrics = {
   sandboxDispatches: 0,
   dispatchRatePerMin: 0,
   failRate: 0,
+  runtimeCycles: 0,
+  pollingSuccess: 0,
+  pollingFailures: 0,
 };
 
 let counters: OpsCounterMetrics = { ...defaultCounters };
@@ -211,6 +214,43 @@ export interface OpsStoreSnapshot {
   recentDispatches: OpsDispatchRecord[];
   logs: OpsLogEntry[];
   historyUpdatedAt: string | null;
+}
+
+export interface RecordRuntimeOpsLogInput {
+  event: string;
+  message: string;
+  level?: OpsLogLevel;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Runtime / live ingestion ops log (no Telegram dispatch record required).
+ */
+export async function recordRuntimeOpsLog(
+  input: RecordRuntimeOpsLogInput
+): Promise<void> {
+  await loadHistoryFromDisk();
+
+  if (input.event === "polling_completed") {
+    counters.runtimeCycles = (counters.runtimeCycles ?? 0) + 1;
+    counters.pollingSuccess = (counters.pollingSuccess ?? 0) + 1;
+  }
+  if (input.event === "polling_failed") {
+    counters.runtimeCycles = (counters.runtimeCycles ?? 0) + 1;
+    counters.pollingFailures = (counters.pollingFailures ?? 0) + 1;
+  }
+
+  const logEntry: OpsLogEntry = {
+    id: generateLogId(),
+    timestamp: new Date().toISOString(),
+    level: input.level ?? (input.event.includes("fail") ? "error" : "info"),
+    event: input.event,
+    message: input.message,
+    metadata: input.metadata,
+  };
+
+  logs = [logEntry, ...logs].slice(0, MAX_LOGS);
+  schedulePersist();
 }
 
 export async function getOpsStoreSnapshot(): Promise<OpsStoreSnapshot> {

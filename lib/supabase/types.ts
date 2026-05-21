@@ -7,6 +7,7 @@ export interface SignalRow {
   model_id?: string | null;
   match_id?: string | null;
   external_id?: string | null;
+  fixture_id?: string | null;
   market: string;
   confidence: string;
   pressure: number;
@@ -26,6 +27,7 @@ export interface SignalRow {
 
 export interface MatchRow {
   external_id: string;
+  fixture_id?: string | null;
   home_team: string;
   away_team: string;
   league?: string | null;
@@ -36,6 +38,7 @@ export interface MatchRow {
   stats?: Record<string, unknown> | null;
   odds?: Record<string, unknown> | null;
   updated_at?: string;
+  last_seen_at?: string;
 }
 
 export interface OpsLogRow {

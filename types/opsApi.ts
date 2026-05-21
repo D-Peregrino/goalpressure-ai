@@ -17,7 +17,8 @@ export type OpsEventType =
   | "skipped_duplicate"
   | "cooldown_blocked"
   | "failed"
-  | "sandbox_dispatch";
+  | "sandbox_dispatch"
+  | string;
 
 export interface OpsDispatchRecord {
   signalId: string;
@@ -35,8 +36,9 @@ export interface OpsLogEntry {
   id: string;
   timestamp: string;
   level: OpsLogLevel;
-  event: OpsEventType;
+  event: string;
   message: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface OpsQueueMetrics {
@@ -55,6 +57,9 @@ export interface OpsCounterMetrics {
   sandboxDispatches: number;
   dispatchRatePerMin: number;
   failRate: number;
+  runtimeCycles?: number;
+  pollingSuccess?: number;
+  pollingFailures?: number;
 }
 
 export interface OpsTelegramStatus {

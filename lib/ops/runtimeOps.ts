@@ -1,0 +1,16 @@
+export type RuntimeOpsEventType =
+  | "polling_started"
+  | "polling_completed"
+  | "polling_failed"
+  | "matches_fetched"
+  | "signals_generated"
+  | "supabase_upsert_success"
+  | "supabase_upsert_fail"
+  | "analytics_updated"
+  | "analytics_skipped"
+  | "analytics_failed"
+  | "signal_dedup_skipped"
+  | "rate_limit_warning"
+  | "retry_attempt"
+  | "runtime_started"
+  | "runtime_stopped";

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { bootstrapGoalPressureRuntime } from "@/lib/runtime/runtimeBootstrap";
 import { getSystemHealthReport } from "@/lib/system/systemStatus";
 import { logOps } from "@/lib/utils/logger";
 
@@ -8,6 +9,7 @@ export const runtime = "nodejs";
 const ROUTE_SCOPE = "api/health";
 
 export async function GET(): Promise<NextResponse> {
+  bootstrapGoalPressureRuntime();
   const report = await getSystemHealthReport();
 
   const httpStatus =
