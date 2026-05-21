@@ -35,7 +35,7 @@ const MetricsRow = memo(function MetricsRow({
   apiRisk: string;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="app-shell__metrics-grid">
       <MetricTile label="Partidas rastreadas" value={String(tracked)} large />
       <MetricTile label="Sinais ativos" value={String(signals)} accent />
       <MetricTile
@@ -133,7 +133,12 @@ export default function LiveCommandCenter() {
   const fpAlerts = ops.metaConsensus?.falsePositiveAlerts ?? [];
 
   return (
-    <motion.div variants={terminalStagger} initial="hidden" animate="show" className="space-y-8">
+    <motion.div
+      variants={terminalStagger}
+      initial="hidden"
+      animate="show"
+      className="w-full min-w-0 max-w-full space-y-8"
+    >
       <motion.header variants={terminalFadeUp} className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="t-label flex items-center gap-2">
@@ -193,51 +198,50 @@ export default function LiveCommandCenter() {
             apiRisk={ops.apiUsage?.alertLevel ?? "SAFE"}
           />
 
-          <div className="grid gap-6 xl:grid-cols-12">
-            <div className="xl:col-span-4 space-y-6">
-              <GlowPanel title="Live Edge Radar">
+          <div className="app-shell__panel-grid">
+            <div className="min-w-0 space-y-5">
+              <GlowPanel title="Live Edge Radar" className="min-w-0">
                 <RadarPanel
                   value={ops.marketCalibration?.strongestEdgePercent ?? avgEdge * 8}
                   label=""
                   sublabel="Edge institucional"
                 />
               </GlowPanel>
-              <TerminalCard>
+              <TerminalCard className="min-w-0">
                 <ChaosIndicator level={chaosLevel} />
               </TerminalCard>
             </div>
 
-            <div className="xl:col-span-5">
+            <div className="min-w-0">
               <p className="t-label mb-3">Execution Feed</p>
               <SignalFeed items={signalItems} />
             </div>
 
-            <div className="xl:col-span-3 space-y-6">
-              <TerminalCard>
-                <p className="t-label mb-3">Market Drift Panel</p>
-                <div className="space-y-3">
-                  {(ops.marketCalibration?.topEdges ?? []).slice(0, 5).map((e) => (
-                    <EdgeMeter key={`${e.fixtureId}-${e.market}`} value={e.edgePercent} label={e.market} />
-                  ))}
-                  {(ops.marketCalibration?.topEdges ?? []).length === 0 && (
-                    <p className="font-mono-data text-[var(--text-muted-on-dark)]">Awaiting live data</p>
-                  )}
-                </div>
-              </TerminalCard>
-              <TerminalCard>
-                <p className="t-label mb-3">Trigger Windows</p>
-                {(ops.temporal?.chaosMap ?? []).slice(0, 4).map((c) => (
-                  <EdgeMeter
-                    key={c.fixtureId}
-                    value={c.chaosIndex}
-                    label={`${c.matchPhase ?? "—"} · ${c.matchLabel ?? c.fixtureId}`}
-                  />
+            <TerminalCard className="min-w-0">
+              <p className="t-label mb-3">Market Drift Panel</p>
+              <div className="space-y-3">
+                {(ops.marketCalibration?.topEdges ?? []).slice(0, 5).map((e) => (
+                  <EdgeMeter key={`${e.fixtureId}-${e.market}`} value={e.edgePercent} label={e.market} />
                 ))}
-              </TerminalCard>
-            </div>
+                {(ops.marketCalibration?.topEdges ?? []).length === 0 && (
+                  <p className="font-mono-data text-[var(--text-muted-on-dark)]">Awaiting live data</p>
+                )}
+              </div>
+            </TerminalCard>
+
+            <TerminalCard className="min-w-0">
+              <p className="t-label mb-3">Trigger Windows</p>
+              {(ops.temporal?.chaosMap ?? []).slice(0, 4).map((c) => (
+                <EdgeMeter
+                  key={c.fixtureId}
+                  value={c.chaosIndex}
+                  label={`${c.matchPhase ?? "—"} · ${c.matchLabel ?? c.fixtureId}`}
+                />
+              ))}
+            </TerminalCard>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="app-shell__panel-grid">
             <TerminalCard>
               <p className="t-label mb-3">Dominant Engines</p>
               <EngineConsensusBar engines={ops.metaConsensus?.dominantEnginesSummary ?? []} />
@@ -255,9 +259,9 @@ export default function LiveCommandCenter() {
                 ))
               )}
             </TerminalCard>
-            <TerminalCard>
+            <TerminalCard className="min-w-0 lg:col-span-2">
               <p className="t-label mb-3">Live Pressure Metrics</p>
-              <div className="space-y-2 max-h-[200px] overflow-y-auto t-scrollbar">
+              <div className="max-h-[200px] space-y-2 overflow-y-auto t-scrollbar">
                 {(ops.livePressure?.metrics ?? []).slice(0, 8).map((m) => (
                   <Link
                     key={m.fixtureId}

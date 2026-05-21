@@ -54,7 +54,12 @@ export default function MatchTerminalView({ fixtureId }: { fixtureId: string }) 
   const score = match.score;
 
   return (
-    <motion.div variants={terminalStagger} initial="hidden" animate="show">
+    <motion.div
+      variants={terminalStagger}
+      initial="hidden"
+      animate="show"
+      className="w-full min-w-0 max-w-full"
+    >
       <Link
         href="/terminal"
         className="t-label mb-8 inline-flex items-center gap-2 hover:text-[var(--text)]"
@@ -76,7 +81,7 @@ export default function MatchTerminalView({ fixtureId }: { fixtureId: string }) 
         <ExecutionBadge decision={decision} size="lg" />
       </motion.header>
 
-      <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="app-shell__metrics-grid mb-10">
         {[
           { l: "Pressure score", v: pressure?.pressureScore ?? match.pressure.score },
           { l: "Momentum", v: pressure?.momentum ?? 0 },
@@ -90,8 +95,8 @@ export default function MatchTerminalView({ fixtureId }: { fixtureId: string }) 
         ))}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-12">
-        <div className="space-y-6 lg:col-span-5">
+      <div className="app-shell__panel-grid">
+        <div className="min-w-0 space-y-5">
           <GlowPanel title="Radar · Pressão">
             <RadarPanel value={pressure?.pressureScore ?? match.pressure.score} label="" />
           </GlowPanel>
@@ -105,8 +110,8 @@ export default function MatchTerminalView({ fixtureId }: { fixtureId: string }) 
           </TerminalCard>
         </div>
 
-        <div className="lg:col-span-4">
-          <TerminalCard>
+        <div className="min-w-0">
+          <TerminalCard className="min-w-0">
             <p className="t-label mb-5">Timeline · Fase temporal</p>
             <div className="relative mb-8 h-2 rounded-full bg-white/[0.08]">
               <div
@@ -139,8 +144,8 @@ export default function MatchTerminalView({ fixtureId }: { fixtureId: string }) 
           </TerminalCard>
         </div>
 
-        <div className="space-y-6 lg:col-span-3">
-          <TerminalCard>
+        <div className="min-w-0 space-y-5">
+          <TerminalCard className="min-w-0">
             <p className="t-label mb-4">Market edge</p>
             {edges.length === 0 ? (
               <p className="font-mono-data text-[var(--text-muted-on-dark)]">Awaiting live data</p>

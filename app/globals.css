@@ -629,6 +629,7 @@ body {
   background: var(--card-dark);
   color: var(--text-on-dark);
   padding: 1.15rem 1.35rem;
+  min-width: 0;
 }
 
 .t-metric--accent {
@@ -809,9 +810,111 @@ body {
   border-radius: 6px;
 }
 
-.t-sidebar {
-  background: var(--surface);
+/* ── App shell layout (sidebar + main, sem sobreposição) ── */
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.app-shell__sidebar {
+  display: none;
+  width: 280px;
+  flex-shrink: 0;
+  flex-direction: column;
+  min-height: 100vh;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--gp-white-tech);
   border-right: 1px solid var(--border);
+}
+
+@media (min-width: 1024px) {
+  .app-shell__sidebar {
+    display: flex;
+  }
+}
+
+.app-shell__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.app-shell__content {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  padding: 1rem;
+  overflow-x: hidden;
+}
+
+@media (min-width: 640px) {
+  .app-shell__content {
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-shell__content {
+    padding: 32px;
+  }
+}
+
+.app-shell__metrics-grid {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+@media (min-width: 1024px) {
+  .app-shell__metrics-grid {
+    gap: 20px;
+  }
+}
+
+.app-shell__panel-grid {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1024px) {
+  .app-shell__panel-grid {
+    gap: 20px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.t-sidebar {
+  background: var(--gp-white-tech);
+  border-right: 1px solid var(--border);
+}
+
+.t-sidebar--drawer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 50;
+  height: 100vh;
+  width: 280px;
+  overflow-y: auto;
 }
 
 .t-nav-item {

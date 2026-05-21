@@ -22,7 +22,7 @@ export default function MetricTile({
     <motion.div
       whileHover={{ y: -2 }}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
-      className={`t-metric ${accent ? "t-metric--accent" : ""} ${large ? "t-metric--lg" : ""}`}
+      className={`t-metric min-w-0 ${accent ? "t-metric--accent" : ""} ${large ? "t-metric--lg" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
         <p className="t-label">{label}</p>
