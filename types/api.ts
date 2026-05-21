@@ -14,6 +14,7 @@ export interface LiveMatchesApiMeta {
   warning?: string;
   cacheAgeMs?: number;
   cacheExpiresInMs?: number;
+  activeFixtures?: number;
 }
 
 export interface LiveMatchesSuccessResponse {

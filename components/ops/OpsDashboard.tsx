@@ -179,6 +179,10 @@ export default function OpsDashboard() {
     microevent,
     sequenceMemory,
     metaConsensus,
+    dataQuality,
+    autoDispatch,
+    validation,
+    apiUsage,
     status,
     error,
     lastUpdated,
@@ -879,6 +883,171 @@ export default function OpsDashboard() {
             <p className="mb-6 font-mono text-[9px] text-muted">
               API{" "}
               <code className="text-foreground">GET /api/sequence/live</code>
+            </p>
+          </section>
+
+          <section>
+            <h2 className="section-header mb-4">Operational Intelligence Layer</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 mb-4">
+              <KpiCard
+                label="Data Quality"
+                value={
+                  dataQuality && dataQuality.matchCount > 0
+                    ? String(dataQuality.averageScore)
+                    : "—"
+                }
+                sub={`${dataQuality?.unreliableCount ?? 0} unreliable`}
+                accent={Boolean(dataQuality && dataQuality.averageScore >= 60)}
+              />
+              <KpiCard
+                label="Not Usable"
+                value={String(dataQuality?.notUsableForSignal.length ?? 0)}
+                sub="signal blocked"
+                accent={(dataQuality?.notUsableForSignal.length ?? 0) > 0}
+              />
+              <KpiCard
+                label="Auto Dispatch"
+                value={autoDispatch?.status ?? "—"}
+                sub={`sent ${autoDispatch?.lastDispatched ?? 0} · blk ${autoDispatch?.lastBlocked ?? 0}`}
+                accent={autoDispatch?.status === "ACTIVE"}
+              />
+              <KpiCard
+                label="Stale Alerts"
+                value={String(dataQuality?.staleAlerts.length ?? 0)}
+              />
+              <KpiCard
+                label="FP Risk"
+                value={
+                  metaConsensus?.falsePositiveAlerts[0]
+                    ? String(metaConsensus.falsePositiveAlerts[0].falsePositiveRisk)
+                    : "—"
+                }
+              />
+              <KpiCard
+                label="Executions"
+                value={String(metaConsensus?.topExecutions.length ?? 0)}
+                sub="meta approved"
+              />
+              <KpiCard
+                label="Validation"
+                value={
+                  validation && validation.tradeCount > 0
+                    ? `${(validation.hitRate * 100).toFixed(0)}%`
+                    : "—"
+                }
+                sub={`${validation?.suggestionCount ?? 0} calibrations`}
+                accent={Boolean(validation && validation.roi > 0)}
+              />
+            </div>
+            <p className="mb-6 font-mono text-[9px] text-muted">
+              APIs{" "}
+              <code className="text-foreground">/api/data-quality/live</code> ·{" "}
+              <code className="text-foreground">/api/meta/live</code> ·{" "}
+              <code className="text-foreground">/api/validation/live</code> · Telegram: EXECUTE only
+            </p>
+          </section>
+
+          <section>
+            <h2 className="section-header mb-4">SportMonks API Usage Monitor</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 mb-4">
+              <KpiCard
+                label="Alert"
+                value={apiUsage?.alertLevel ?? "—"}
+                accent={
+                  apiUsage?.alertLevel === "CRITICAL" ||
+                  apiUsage?.alertLevel === "SATURATED"
+                }
+              />
+              <KpiCard
+                label="Req / min"
+                value={String(apiUsage?.requestsPerMinute ?? 0)}
+                sub={`${apiUsage?.requestsPerHour ?? 0}/h`}
+              />
+              <KpiCard
+                label="Month Proj."
+                value={String(apiUsage?.requestsMonthProjection ?? 0)}
+                sub={`quota ${apiUsage?.monthlyQuota ?? 0}`}
+                accent={(apiUsage?.quotaUtilizationPercent ?? 0) >= 80}
+              />
+              <KpiCard
+                label="Quota Risk"
+                value={`${(apiUsage?.quotaUtilizationPercent ?? 0).toFixed(0)}%`}
+                sub={
+                  apiUsage?.estimatedRemainingQuota != null
+                    ? `${apiUsage.estimatedRemainingQuota} left`
+                    : "remaining n/a"
+                }
+              />
+              <KpiCard
+                label="Plan Support"
+                value={
+                  apiUsage?.planSupportDays != null
+                    ? `${apiUsage.planSupportDays}d`
+                    : "—"
+                }
+                sub={
+                  apiUsage?.planSupportHours != null
+                    ? `${apiUsage.planSupportHours}h est.`
+                    : "burn rate"
+                }
+                accent={Boolean(
+                  apiUsage?.planSupportDays != null && apiUsage.planSupportDays < 7
+                )}
+              />
+              <KpiCard
+                label="Polling"
+                value={`${((apiUsage?.averagePollingFrequencyMs ?? 0) / 1000).toFixed(0)}s`}
+                sub={`${apiUsage?.activeFixtures ?? 0} fixtures`}
+              />
+            </div>
+            <div className="grid gap-3 lg:grid-cols-2 mb-4">
+              <div className="module-panel p-4">
+                <p className="mb-2 font-mono text-[9px] uppercase tracking-[0.2em] text-muted">
+                  Top endpoints (24h)
+                </p>
+                <div className="max-h-[160px] overflow-y-auto font-mono text-[10px]">
+                  {(apiUsage?.topEndpoints ?? []).length === 0 ? (
+                    <p className="text-muted">—</p>
+                  ) : (
+                    apiUsage?.topEndpoints.map((e) => (
+                      <div
+                        key={e.endpoint}
+                        className="mb-1 flex justify-between border-b border-card/40 py-1"
+                      >
+                        <span className="truncate pr-2">{e.endpoint}</span>
+                        <span className="text-muted shrink-0">
+                          {e.count} · {e.sharePercent}%
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+              <div className="module-panel p-4">
+                <p className="mb-2 font-mono text-[9px] uppercase tracking-[0.2em] text-muted">
+                  Request heatmap (24h UTC hour)
+                </p>
+                <div className="grid grid-cols-12 gap-1">
+                  {(apiUsage?.requestHeatmap ?? []).map((cell) => (
+                    <div
+                      key={cell.hour}
+                      title={`${cell.hour}h: ${cell.count} req`}
+                      className="aspect-square border border-card/60"
+                      style={{
+                        backgroundColor: `rgba(255, 43, 43, ${Math.max(0.08, cell.intensity / 100)})`,
+                      }}
+                    />
+                  ))}
+                </div>
+                <p className="mt-2 font-mono text-[9px] text-muted">
+                  cache hit {(apiUsage?.cacheHitRate ?? 0) * 100}% · live counter
+                </p>
+              </div>
+            </div>
+            <p className="mb-6 font-mono text-[9px] text-muted">
+              API{" "}
+              <code className="text-foreground">GET /api/system/api-usage</code> ·
+              configure <code className="text-foreground">SPORTMONKS_MONTHLY_QUOTA</code>
             </p>
           </section>
 

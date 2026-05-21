@@ -13,6 +13,10 @@ import { getPlayerOpsSnapshot } from "@/lib/player/playerSnapshot";
 import { getMicroeventOpsSnapshot } from "@/lib/microevent/microeventSnapshot";
 import { getSequenceOpsSnapshot } from "@/lib/sequence/sequenceSnapshot";
 import { getMetaOpsSnapshot } from "@/lib/meta/metaSnapshot";
+import { getDataQualityOpsSnapshot } from "@/lib/dataQuality/dataQualitySnapshot";
+import { getAutoDispatchStatus } from "@/lib/telegram/autoDispatchController";
+import { getValidationOpsSnapshot } from "@/lib/validation/validationSnapshot";
+import { getApiUsageSnapshot } from "@/lib/api/apiUsageMonitor";
 import { getRuntimeSignalOpsSnapshot } from "@/lib/runtime/signalDispatcher";
 import { getOpsStoreSnapshot } from "@/lib/ops/opsStore";
 import type {
@@ -25,6 +29,10 @@ import type {
   OpsMicroeventSnapshot,
   OpsSequenceMemorySnapshot,
   OpsMetaConsensusSnapshot,
+  OpsDataQualitySnapshot,
+  OpsAutoDispatchSnapshot,
+  OpsValidationSnapshot,
+  OpsApiUsageSnapshot,
   OpsSignalDecisionSnapshot,
   OpsTelegramStatus,
 } from "@/types/opsApi";
@@ -193,6 +201,112 @@ function buildMarketCalibrationSnapshot(): OpsMarketCalibrationSnapshot {
   };
 }
 
+function buildDataQualitySnapshot(): OpsDataQualitySnapshot {
+  const snap = getDataQualityOpsSnapshot();
+  if (!snap) {
+    return {
+      updatedAt: null,
+      matchCount: 0,
+      averageScore: 0,
+      unreliableCount: 0,
+      staleAlerts: [],
+      notUsableForSignal: [],
+    };
+  }
+  return {
+    updatedAt: snap.updatedAt,
+    matchCount: snap.matchCount,
+    averageScore: snap.averageScore,
+    unreliableCount: snap.unreliableCount,
+    staleAlerts: snap.staleAlerts,
+    notUsableForSignal: snap.notUsableForSignal,
+  };
+}
+
+function buildAutoDispatchSnapshot(): OpsAutoDispatchSnapshot {
+  return getAutoDispatchStatus();
+}
+
+function buildApiUsageSnapshot(): OpsApiUsageSnapshot {
+  const snap = getApiUsageSnapshot();
+  if (!snap) {
+    return {
+      updatedAt: null,
+      alertLevel: "SAFE",
+      requestsPerMinute: 0,
+      requestsPerHour: 0,
+      requestsPerDay: 0,
+      requestsMonthProjection: 0,
+      estimatedRemainingQuota: null,
+      monthlyQuota: 3000,
+      quotaUtilizationPercent: 0,
+      averagePollingFrequencyMs: 15000,
+      activeFixtures: 0,
+      planSupportDays: null,
+      planSupportHours: null,
+      topEndpoints: [],
+      requestHeatmap: [],
+      cacheHitRate: 0,
+    };
+  }
+  return {
+    updatedAt: snap.updatedAt,
+    alertLevel: snap.alertLevel,
+    requestsPerMinute: snap.requestsPerMinute,
+    requestsPerHour: snap.requestsPerHour,
+    requestsPerDay: snap.requestsPerDay,
+    requestsMonthProjection: snap.requestsMonthProjection,
+    estimatedRemainingQuota: snap.estimatedRemainingQuota,
+    monthlyQuota: snap.monthlyQuota,
+    quotaUtilizationPercent: snap.quotaUtilizationPercent,
+    averagePollingFrequencyMs: snap.averagePollingFrequencyMs,
+    activeFixtures: snap.activeFixtures,
+    planSupportDays: snap.planSupportDays,
+    planSupportHours: snap.planSupportHours,
+    topEndpoints: snap.topEndpoints
+      .filter((e) => !e.endpoint.startsWith("/internal/"))
+      .map((e) => ({
+        endpoint: e.endpoint,
+        count: e.count,
+        sharePercent: e.sharePercent,
+      })),
+    requestHeatmap: snap.requestHeatmap,
+    cacheHitRate: snap.cacheHitRate,
+  };
+}
+
+function buildValidationSnapshot(): OpsValidationSnapshot {
+  const snap = getValidationOpsSnapshot();
+  if (!snap) {
+    return {
+      updatedAt: null,
+      matchCount: 0,
+      averageValidationScore: 0,
+      tradeCount: 0,
+      hitRate: 0,
+      roi: 0,
+      suggestionCount: 0,
+      flaggedCount: 0,
+      topSuggestions: [],
+    };
+  }
+  return {
+    updatedAt: snap.updatedAt,
+    matchCount: snap.matchCount,
+    averageValidationScore: snap.averageValidationScore,
+    tradeCount: snap.lab.tradeCount,
+    hitRate: snap.lab.hitRate,
+    roi: snap.lab.roi,
+    suggestionCount: snap.lab.calibrationSuggestions.length,
+    flaggedCount: snap.flaggedCount,
+    topSuggestions: snap.lab.calibrationSuggestions.slice(0, 5).map((s) => ({
+      title: s.title,
+      priority: s.priority,
+      action: s.action,
+    })),
+  };
+}
+
 function buildMetaConsensusSnapshot(): OpsMetaConsensusSnapshot {
   const snap = getMetaOpsSnapshot();
   if (!snap) {
@@ -352,6 +466,10 @@ export async function buildOpsApiPayload(
   const microevent = buildMicroeventSnapshot();
   const sequenceMemory = buildSequenceMemorySnapshot();
   const metaConsensus = buildMetaConsensusSnapshot();
+  const dataQuality = buildDataQualitySnapshot();
+  const autoDispatch = buildAutoDispatchSnapshot();
+  const validation = buildValidationSnapshot();
+  const apiUsage = buildApiUsageSnapshot();
 
   const counters = {
     ...store.counters,
@@ -378,6 +496,10 @@ export async function buildOpsApiPayload(
     microevent,
     sequenceMemory,
     metaConsensus,
+    dataQuality,
+    autoDispatch,
+    validation,
+    apiUsage,
     meta: {
       fetchedAt: new Date().toISOString(),
       responseTimeMs,

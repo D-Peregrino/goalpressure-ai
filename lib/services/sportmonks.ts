@@ -5,6 +5,7 @@
  */
 
 import type { SportmonksFixture } from "@/lib/mappers/sportmonks";
+import { recordApiUsageEvent } from "@/lib/api/apiUsageMonitor";
 import { SportmonksServiceError } from "@/lib/utils/sportmonksErrors";
 import { logError, logInfo, logWarn } from "@/lib/utils/logger";
 
@@ -307,7 +308,7 @@ async function requestInplay(
       );
     }
 
-    return {
+    const result = {
       ok: response.ok,
       status: response.status,
       body,
@@ -316,16 +317,53 @@ async function requestInplay(
       endpointUrlRedacted,
       includes,
     };
+
+    const rateLimit = parseRateLimit(body);
+    recordApiUsageEvent({
+      endpoint: INPLAY_PATH,
+      method: "GET",
+      success: response.ok,
+      responseMs: responseTimeMs,
+      httpStatus: response.status,
+      rateLimitRemaining: rateLimit?.remaining,
+      rateLimitResetsInSeconds: rateLimit?.resetsInSeconds,
+      metadata: {
+        includes: includes.join(";") || "(none)",
+        dataCount: Array.isArray(body.data) ? body.data.length : 0,
+      },
+    });
+
+    return result;
   } catch (error) {
     if (error instanceof SportmonksServiceError) throw error;
 
+    const responseMs = Date.now() - startedAt;
+
     if (error instanceof Error && error.name === "AbortError") {
+      recordApiUsageEvent({
+        endpoint: INPLAY_PATH,
+        method: "GET",
+        success: false,
+        responseMs,
+        httpStatus: 408,
+        metadata: { error: "timeout" },
+      });
       throw new SportmonksServiceError(
         "TIMEOUT",
         `Sportmonks request timed out after ${timeoutMs}ms.`,
         { cause: error }
       );
     }
+
+    recordApiUsageEvent({
+      endpoint: INPLAY_PATH,
+      method: "GET",
+      success: false,
+      responseMs,
+      metadata: {
+        error: error instanceof Error ? error.message : "network",
+      },
+    });
 
     throw new SportmonksServiceError(
       "NETWORK_ERROR",

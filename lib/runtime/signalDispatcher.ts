@@ -23,6 +23,7 @@ import type { LiveMetricRecord } from "@/lib/runtime/liveRuntime";
 import { recordRuntimeOpsLog } from "@/lib/ops/opsStore";
 import { getMetaConsensusForFixture } from "@/lib/meta/metaSnapshot";
 import { isMetaTelegramApproved } from "@/lib/meta/metaConsensusEngine";
+import { getDataQualityForFixture } from "@/lib/dataQuality/dataQualitySnapshot";
 import { logOps } from "@/lib/utils/logger";
 const LOG_SCOPE = "runtime-signal-dispatcher";
 
@@ -171,13 +172,16 @@ export async function processRuntimeSignalCycle(
     const fixtureId = record.fixtureId;
 
     const metaConsensus = getMetaConsensusForFixture(fixtureId);
+    const dataQuality = getDataQualityForFixture(fixtureId);
     const metaApproved =
       !metaConsensus || isMetaTelegramApproved(metaConsensus);
+    const dataApproved = !dataQuality || dataQuality.usableForSignal;
+    const institutionalApproved = metaApproved && dataApproved;
 
     const telegramWillSend =
       evaluation.shouldTrigger &&
       input.dispatchTelegram !== false &&
-      metaApproved;
+      institutionalApproved;
 
     if (evaluation.shouldTrigger) {
       triggered += 1;
@@ -185,7 +189,7 @@ export async function processRuntimeSignalCycle(
 
       if (
         evaluation.reason.includes("cooldown_active") ||
-        !metaApproved
+        !institutionalApproved
       ) {
         blocked += 1;
       } else {
@@ -230,6 +234,9 @@ export async function processRuntimeSignalCycle(
           : "meta_not_ready"
       );
     }
+    if (evaluation.shouldTrigger && !dataApproved) {
+      reasons.push("data_quality_blocked");
+    }
 
     persistInputs.push({
       fixtureId,
@@ -244,7 +251,7 @@ export async function processRuntimeSignalCycle(
       triggered:
         evaluation.shouldTrigger &&
         !evaluation.reason.includes("cooldown_active") &&
-        metaApproved,
+        institutionalApproved,
       telegramSent: false,
       metadata: {
         match_id: match.id,
@@ -262,13 +269,13 @@ export async function processRuntimeSignalCycle(
   }
 
   if (signals.length > 0 && input.dispatchTelegram !== false) {
-    const queueSize = dispatchLiveSignalsToTelegram(
+    const sent = await dispatchLiveSignalsToTelegram(
       signals,
       input.modelId,
-      insights
+      insights,
+      { matches: input.matches, metrics: input.metrics }
     );
-    dispatched = signals.length;
-    void queueSize;
+    dispatched = sent;
 
     for (const row of persistInputs) {
       if (row.triggered) {

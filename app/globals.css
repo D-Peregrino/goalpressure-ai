@@ -334,3 +334,189 @@ body {
   border-left: 2px solid var(--pressure);
   padding-left: 10px;
 }
+
+/* ── GoalPressure Premium Design System (gp-*) ── */
+
+:root {
+  --gp-bg: #050608;
+  --gp-surface: #0c1018;
+  --gp-elevated: #121a24;
+  --gp-cyan: #3ee8ff;
+  --gp-emerald: #34d399;
+  --gp-glass: rgba(255, 255, 255, 0.03);
+}
+
+.gp-shell {
+  position: relative;
+  min-height: 100vh;
+  background: var(--gp-bg);
+  color: var(--text);
+}
+
+.gp-ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 20% 0%, rgba(255, 43, 43, 0.12), transparent 50%),
+    radial-gradient(ellipse 50% 40% at 90% 20%, rgba(62, 232, 255, 0.06), transparent 45%),
+    linear-gradient(180deg, #06080c 0%, #050608 100%);
+}
+
+.gp-grid-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 20%, black, transparent);
+}
+
+.gp-card {
+  position: relative;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(
+    160deg,
+    rgba(18, 26, 36, 0.92) 0%,
+    rgba(10, 14, 20, 0.96) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 32px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(12px);
+}
+
+.gp-glow {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 40px rgba(255, 43, 43, 0.08),
+    0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.gp-label {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.gp-metric-hero {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(145deg, rgba(22, 31, 42, 0.95), rgba(12, 16, 24, 0.98));
+  padding: 1.25rem 1.5rem;
+  min-height: 120px;
+}
+
+.gp-metric-hero--accent {
+  border-color: rgba(255, 43, 43, 0.25);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 43, 43, 0.08) 0%,
+    rgba(12, 16, 24, 0.98) 55%
+  );
+}
+
+.gp-metric-value {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.gp-metric-sub {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.gp-sidebar {
+  background: rgba(5, 6, 8, 0.85);
+  backdrop-filter: blur(20px);
+}
+
+.gp-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  transition: color 0.2s, background 0.2s;
+}
+
+.gp-nav-item:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.gp-nav-item--active {
+  color: var(--text);
+  background: rgba(255, 43, 43, 0.08);
+}
+
+.gp-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 10px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(135deg, #ff2b2b 0%, #c41e1e 100%);
+  box-shadow: 0 0 24px rgba(255, 43, 43, 0.35);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.gp-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 32px rgba(255, 43, 43, 0.45);
+}
+
+.gp-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--muted);
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.gp-btn-ghost:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text);
+}
+
+.gp-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.gp-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+
+.text-emerald-400 {
+  color: var(--gp-emerald);
+}

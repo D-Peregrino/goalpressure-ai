@@ -518,6 +518,131 @@ create index if not exists meta_consensus_metrics_grade_idx
   on public.meta_consensus_metrics (execution_grade, created_at desc);
 
 -- =============================================================================
+-- DATA_QUALITY_METRICS — fixture reliability for signal gating
+-- =============================================================================
+
+create table if not exists public.data_quality_metrics (
+  id uuid primary key default gen_random_uuid(),
+  fixture_id text not null,
+  minute int not null default 0,
+  data_quality_score numeric(5, 2) not null default 0,
+  missing_fields text[] not null default '{}',
+  stale_risk numeric(5, 2) not null default 0,
+  reliability text not null default 'MEDIUM',
+  usable_for_signal boolean not null default false,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists data_quality_metrics_fixture_id_idx
+  on public.data_quality_metrics (fixture_id);
+
+create index if not exists data_quality_metrics_created_at_idx
+  on public.data_quality_metrics (created_at desc);
+
+create index if not exists data_quality_metrics_usable_idx
+  on public.data_quality_metrics (usable_for_signal, created_at desc);
+
+-- =============================================================================
+-- TELEGRAM_DISPATCHES — auto dispatch controller audit trail
+-- =============================================================================
+
+create table if not exists public.telegram_dispatches (
+  id uuid primary key default gen_random_uuid(),
+  fixture_id text not null,
+  match_id text not null,
+  market text not null,
+  status text not null,
+  block_reason text,
+  signal_id text,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists telegram_dispatches_fixture_idx
+  on public.telegram_dispatches (fixture_id, created_at desc);
+
+create index if not exists telegram_dispatches_status_idx
+  on public.telegram_dispatches (status, created_at desc);
+
+-- =============================================================================
+-- VALIDATION_METRICS — per-fixture live validation scores
+-- =============================================================================
+
+create table if not exists public.validation_metrics (
+  id uuid primary key default gen_random_uuid(),
+  fixture_id text not null,
+  minute int not null default 0,
+  validation_score numeric(5, 2) not null default 0,
+  false_positive_risk numeric(5, 2) not null default 0,
+  reliability text not null default 'MEDIUM',
+  segment_tags text[] not null default '{}',
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists validation_metrics_fixture_idx
+  on public.validation_metrics (fixture_id, created_at desc);
+
+create index if not exists validation_metrics_created_at_idx
+  on public.validation_metrics (created_at desc);
+
+create index if not exists validation_metrics_score_idx
+  on public.validation_metrics (validation_score desc, created_at desc);
+
+-- =============================================================================
+-- VALIDATION_SNAPSHOTS — aggregated lab payload per cycle
+-- =============================================================================
+
+create table if not exists public.validation_snapshots (
+  id uuid primary key default gen_random_uuid(),
+  snapshot_type text not null default 'live_cycle',
+  trade_count int not null default 0,
+  hit_rate numeric(8, 4) not null default 0,
+  roi numeric(10, 4) not null default 0,
+  profit_units numeric(10, 4) not null default 0,
+  lab_payload jsonb not null default '{}'::jsonb,
+  suggestions jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists validation_snapshots_created_at_idx
+  on public.validation_snapshots (created_at desc);
+
+create index if not exists validation_snapshots_type_idx
+  on public.validation_snapshots (snapshot_type, created_at desc);
+
+-- =============================================================================
+-- API_USAGE_METRICS — SportMonks consumption monitor
+-- =============================================================================
+
+create table if not exists public.api_usage_metrics (
+  id uuid primary key default gen_random_uuid(),
+  provider text not null default 'sportmonks',
+  requests_per_minute numeric(10, 2) not null default 0,
+  requests_per_hour numeric(10, 2) not null default 0,
+  requests_per_day numeric(10, 2) not null default 0,
+  month_projection numeric(12, 2) not null default 0,
+  estimated_remaining_quota numeric(12, 2),
+  alert_level text not null default 'SAFE',
+  active_fixtures int not null default 0,
+  polling_frequency_ms int not null default 15000,
+  top_endpoints jsonb not null default '[]'::jsonb,
+  heatmap jsonb not null default '[]'::jsonb,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists api_usage_metrics_created_at_idx
+  on public.api_usage_metrics (created_at desc);
+
+create index if not exists api_usage_metrics_alert_idx
+  on public.api_usage_metrics (alert_level, created_at desc);
+
+create index if not exists api_usage_metrics_provider_idx
+  on public.api_usage_metrics (provider, created_at desc);
+
+-- =============================================================================
 -- DISPATCH_LOGS — Telegram / notification dispatch observability
 -- =============================================================================
 

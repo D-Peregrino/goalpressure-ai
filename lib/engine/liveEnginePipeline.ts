@@ -67,8 +67,12 @@ export function processLiveEngineBatch(
 
   if (options.dispatchTelegram !== false && signals.length > 0) {
     const modelId = options.modelId ?? getActiveModelId();
-    const queueSize = dispatchLiveSignalsToTelegram(signals, modelId, insights);
-    snapshot = { ...snapshot, queueSize };
+    void dispatchLiveSignalsToTelegram(signals, modelId, insights, {
+      matches: enrichedMatches,
+    }).then((sent) => {
+      snapshot = { ...snapshot, queueSize: sent };
+      setLiveEngineSnapshot(snapshot);
+    });
   }
 
   setLiveEngineSnapshot(snapshot);

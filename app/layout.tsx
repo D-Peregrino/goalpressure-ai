@@ -13,9 +13,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GoalPressure AI",
+  title: "GoalPressure AI — Institutional Sports Intelligence",
   description:
-    "Real-time offensive pressure detection platform for live football matches.",
+    "Premium real-time quantitative football intelligence. Pressure, edge, meta consensus and execution grades.",
+  metadataBase: new URL("https://goalpressure.com.br"),
 };
 
 export default function RootLayout({
@@ -28,7 +29,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-mono">{children}</body>
+      <body className="min-h-full flex flex-col font-mono antialiased">{children}</body>
     </html>
   );
 }

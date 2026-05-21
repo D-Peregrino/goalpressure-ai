@@ -60,6 +60,7 @@ export async function fetchLiveMatchesDirect(options?: {
           cache: "HIT",
           rateLimitRemaining: cached.rateLimitRemaining,
           rateLimitResetsInSeconds: cached.rateLimitResetsInSeconds,
+          activeFixtures: engineResult.matches.length,
         },
       };
     }
@@ -102,6 +103,7 @@ export async function fetchLiveMatchesDirect(options?: {
         cache: "MISS",
         rateLimitRemaining: rateLimit?.remaining,
         rateLimitResetsInSeconds: rateLimit?.resetsInSeconds,
+        activeFixtures: mapped.length,
       },
     };
   } catch (error) {

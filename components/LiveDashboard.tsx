@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo } from "react";
 import { useLiveMatches } from "@/hooks/useLiveMatches";
 import { useSystemMetrics } from "@/hooks/useSystemMetrics";
@@ -105,17 +106,22 @@ export default function LiveDashboard() {
               {matches.map((match) => {
                 const view = toLiveMatchView(match);
                 return (
-                  <LiveGameCard
+                  <Link
                     key={view.id}
-                    id={view.id}
-                    league={view.league}
-                    homeTeam={view.homeTeam}
-                    awayTeam={view.awayTeam}
-                    minute={view.minute}
-                    pressureScore={view.pressureScore}
-                    shots={view.shots}
-                    dangerousAttacks={view.dangerousAttacks}
-                  />
+                    href={`/live/${encodeURIComponent(view.id)}`}
+                    className="block transition hover:-translate-y-0.5"
+                  >
+                    <LiveGameCard
+                      id={view.id}
+                      league={view.league}
+                      homeTeam={view.homeTeam}
+                      awayTeam={view.awayTeam}
+                      minute={view.minute}
+                      pressureScore={view.pressureScore}
+                      shots={view.shots}
+                      dangerousAttacks={view.dangerousAttacks}
+                    />
+                  </Link>
                 );
               })}
             </div>

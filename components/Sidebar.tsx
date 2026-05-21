@@ -13,6 +13,9 @@ import {
   Radio,
   ScrollText,
   Server,
+  SlidersHorizontal,
+  Target,
+  TestTube2,
   X,
   Zap,
 } from "lucide-react";
@@ -22,7 +25,10 @@ const NAV_ITEMS = [
   { id: "live-games", label: "Live Feed", href: "/", icon: Radio },
   { id: "signals", label: "Signals", href: "/", icon: Zap },
   { id: "statistics", label: "Analytics", href: "/analytics", icon: BarChart3 },
+  { id: "backtest", label: "Backtest", href: "/backtest", icon: Target },
+  { id: "models", label: "Models", href: "/models", icon: SlidersHorizontal },
   { id: "research", label: "Research Lab", href: "/research", icon: FlaskConical },
+  { id: "validation", label: "Validation Lab", href: "/validation", icon: TestTube2 },
   { id: "ops", label: "Ops Terminal", href: "/ops", icon: Server },
   { id: "logs", label: "Logs", href: "/", icon: ScrollText },
 ] as const;
@@ -111,11 +117,17 @@ export default function Sidebar() {
               const isActive =
                 href === "/analytics"
                   ? pathname === "/analytics"
-                  : href === "/research"
-                    ? pathname === "/research"
-                    : href === "/ops"
-                      ? pathname === "/ops"
-                      : pathname === "/" && id === "dashboard";
+                  : href === "/backtest"
+                    ? pathname === "/backtest"
+                    : href === "/models"
+                      ? pathname === "/models"
+                      : href === "/research"
+                        ? pathname === "/research"
+                        : href === "/validation"
+                          ? pathname === "/validation"
+                          : href === "/ops"
+                            ? pathname === "/ops"
+                            : pathname === "/" && id === "dashboard";
               return (
                 <Link
                   key={id}

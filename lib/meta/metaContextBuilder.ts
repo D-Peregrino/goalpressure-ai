@@ -10,7 +10,11 @@ import { getMicroeventForFixture } from "@/lib/microevent/microeventSnapshot";
 import { getSequenceMemoryForFixture } from "@/lib/sequence/sequenceSnapshot";
 import { getMarketCalibrationOpsSnapshot } from "@/lib/market/marketSnapshot";
 import { getBacktestOpsSnapshot } from "@/lib/backtest/backtestSnapshot";
+import { getRuntimeSignalOpsSnapshot } from "@/lib/runtime/signalDispatcher";
 import type { MetaConsensusInput } from "@/types/meta";
+import { SIGNAL_DECISION_THRESHOLDS } from "@/lib/engine/signalDecisionEngine";
+
+const SIGNAL_PRESSURE_PROXY = SIGNAL_DECISION_THRESHOLDS.minPressureScore;
 
 function strongestMarketEdge(fixtureId: string): {
   edgePercent: number;
@@ -54,6 +58,16 @@ export function buildMetaConsensusInput(
   const marketScore = marketEdge
     ? Math.min(100, marketEdge.edgePercent * 8 + marketEdge.expectedValue * 40)
     : 40;
+  const activeSignal = getRuntimeSignalOpsSnapshot()?.activeSignals.find(
+    (s) => s.fixtureId === fixtureId
+  );
+  const signalDecision = activeSignal
+    ? roundScore(activeSignal.ev * 120 + activeSignal.confidence * 40)
+    : roundScore(
+        metric.goalProbability * 40 +
+          metric.confidence * 30 +
+          (metric.pressureScore >= SIGNAL_PRESSURE_PROXY ? 15 : 0)
+      );
   const signalReadiness = roundScore(
     metric.goalProbability * 55 +
       metric.confidence * 35 +
@@ -113,6 +127,7 @@ export function buildMetaConsensusInput(
       microevent: microScore,
       sequenceMemory: seqScore,
       marketCalibration: marketScore,
+      signalDecision,
       signalReadiness,
       backtestConfidence,
     },

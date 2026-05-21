@@ -12,6 +12,9 @@ export interface LivePollingCycleStats {
   microeventMetricsPersisted?: number;
   sequenceMemoryPersisted?: number;
   metaConsensusPersisted?: number;
+  dataQualityPersisted?: number;
+  validationPersisted?: number;
+  apiUsagePersisted?: number;
   durationMs: number;
   success: boolean;
   error?: string;

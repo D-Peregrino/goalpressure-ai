@@ -11,14 +11,15 @@ import type {
 } from "@/types/meta";
 
 const ENGINE_WEIGHTS: Record<keyof MetaConsensusInput["engines"], number> = {
-  pressure: 0.15,
-  temporal: 0.14,
-  playerImpact: 0.12,
-  microevent: 0.14,
-  sequenceMemory: 0.13,
-  marketCalibration: 0.14,
-  signalReadiness: 0.1,
-  backtestConfidence: 0.08,
+  pressure: 0.13,
+  temporal: 0.12,
+  playerImpact: 0.1,
+  microevent: 0.12,
+  sequenceMemory: 0.11,
+  marketCalibration: 0.12,
+  signalDecision: 0.12,
+  signalReadiness: 0.08,
+  backtestConfidence: 0.1,
 };
 
 function clamp(value: number, min: number, max: number): number {

@@ -14,7 +14,10 @@ import {
   isTelegramSandboxMode,
   sendTelegramMessageWithRetry,
 } from "@/lib/telegram/telegramClient";
+import { TELEGRAM_COOLDOWN_MS } from "@/lib/telegram/constants";
 import { logInfo, logWarn } from "@/lib/utils/logger";
+
+export { TELEGRAM_COOLDOWN_MS } from "@/lib/telegram/constants";
 import type {
   TelegramDispatchRequest,
   TelegramDispatchResult,
@@ -24,9 +27,6 @@ import type {
 } from "@/types/telegram";
 
 const LOG_SCOPE = "signal-dispatcher";
-
-/** 5 minutes — lock per fixture + market */
-export const TELEGRAM_COOLDOWN_MS = 5 * 60_000;
 
 interface CooldownEntry {
   lastDispatchedAt: number;

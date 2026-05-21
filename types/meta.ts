@@ -18,6 +18,7 @@ export interface MetaEngineScores {
   microevent: number;
   sequenceMemory: number;
   marketCalibration: number;
+  signalDecision: number;
   signalReadiness: number;
   backtestConfidence: number;
 }

@@ -13,6 +13,10 @@ import type {
   OpsMicroeventSnapshot,
   OpsSequenceMemorySnapshot,
   OpsMetaConsensusSnapshot,
+  OpsDataQualitySnapshot,
+  OpsAutoDispatchSnapshot,
+  OpsValidationSnapshot,
+  OpsApiUsageSnapshot,
   OpsSignalDecisionSnapshot,
   OpsLogEntry,
   OpsQueueMetrics,
@@ -43,6 +47,10 @@ export interface UseOpsResult {
   microevent: OpsMicroeventSnapshot | null;
   sequenceMemory: OpsSequenceMemorySnapshot | null;
   metaConsensus: OpsMetaConsensusSnapshot | null;
+  dataQuality: OpsDataQualitySnapshot | null;
+  autoDispatch: OpsAutoDispatchSnapshot | null;
+  validation: OpsValidationSnapshot | null;
+  apiUsage: OpsApiUsageSnapshot | null;
   status: OpsFeedStatus;
   error: string | null;
   lastUpdated: number | null;
@@ -77,6 +85,15 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
     useState<OpsSequenceMemorySnapshot | null>(null);
   const [metaConsensus, setMetaConsensus] =
     useState<OpsMetaConsensusSnapshot | null>(null);
+  const [dataQuality, setDataQuality] = useState<OpsDataQualitySnapshot | null>(
+    null
+  );
+  const [autoDispatch, setAutoDispatch] =
+    useState<OpsAutoDispatchSnapshot | null>(null);
+  const [validation, setValidation] = useState<OpsValidationSnapshot | null>(
+    null
+  );
+  const [apiUsage, setApiUsage] = useState<OpsApiUsageSnapshot | null>(null);
   const [status, setStatus] = useState<OpsFeedStatus>("loading");
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
@@ -127,6 +144,10 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
       setMicroevent(data.microevent);
       setSequenceMemory(data.sequenceMemory);
       setMetaConsensus(data.metaConsensus);
+      setDataQuality(data.dataQuality);
+      setAutoDispatch(data.autoDispatch);
+      setValidation(data.validation);
+      setApiUsage(data.apiUsage);
       setResponseTime(data.meta.responseTimeMs);
       setLastUpdated(Date.now());
       setError(null);
@@ -169,6 +190,10 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
     microevent,
     sequenceMemory,
     metaConsensus,
+    dataQuality,
+    autoDispatch,
+    validation,
+    apiUsage,
     status,
     error,
     lastUpdated,

@@ -35,6 +35,12 @@ import {
   processMetaConsensusLiveCycle,
   processMetaConsensusPreCycle,
 } from "@/lib/meta/metaCycle";
+import {
+  processDataQualityLiveCycle,
+  processDataQualityPreCycle,
+} from "@/lib/dataQuality/dataQualityCycle";
+import { processValidationLiveCycle } from "@/lib/validation/validationCycle";
+import { processApiUsageLiveCycle } from "@/lib/api/apiUsageCycle";
 import { processRuntimeSignalCycle } from "@/lib/runtime/signalDispatcher";
 import { recordRuntimeOpsLog } from "@/lib/ops/opsStore";
 import { logInfo, logOps, logWarn } from "@/lib/utils/logger";
@@ -296,6 +302,15 @@ export class LivePollingEngine {
         });
       }
 
+      try {
+        processDataQualityPreCycle({ matches });
+      } catch (dqPreErr) {
+        logWarn(LOG_SCOPE, "Data quality pre-cycle skipped", {
+          message:
+            dqPreErr instanceof Error ? dqPreErr.message : "dq_pre_failed",
+        });
+      }
+
       const signalCycle = await processRuntimeSignalCycle({
         matches,
         metrics: runtimeMetrics.snapshot.metrics,
@@ -396,6 +411,27 @@ export class LivePollingEngine {
       }
 
       try {
+        const dqLive = await processDataQualityLiveCycle({ matches });
+        stats.dataQualityPersisted = dqLive.persisted;
+      } catch (dqErr) {
+        logWarn(LOG_SCOPE, "Data quality live cycle skipped", {
+          message: dqErr instanceof Error ? dqErr.message : "dq_live_failed",
+        });
+      }
+
+      try {
+        const valLive = await processValidationLiveCycle({
+          matches,
+          metrics: runtimeMetrics.snapshot.metrics,
+        });
+        stats.validationPersisted = valLive.persisted;
+      } catch (valErr) {
+        logWarn(LOG_SCOPE, "Validation live cycle skipped", {
+          message: valErr instanceof Error ? valErr.message : "validation_live_failed",
+        });
+      }
+
+      try {
         const seqLive = await processSequenceMemoryLiveCycle({
           matches,
           metrics: runtimeMetrics.snapshot.metrics,
@@ -407,6 +443,26 @@ export class LivePollingEngine {
             seqErr instanceof Error
               ? seqErr.message
               : "sequence_live_failed",
+        });
+      }
+
+      try {
+        const apiUsage = await processApiUsageLiveCycle({
+          intervalMs: this.intervalMs,
+          activeFixtures:
+            fetchResult.meta.activeFixtures ?? stats.matchesFetched,
+          cacheHit:
+            fetchResult.meta.cache === "HIT" ||
+            fetchResult.meta.cache === "STALE" ||
+            Boolean(fetchResult.fromCache),
+        });
+        stats.apiUsagePersisted = apiUsage.persisted ? 1 : 0;
+      } catch (apiUsageErr) {
+        logWarn(LOG_SCOPE, "API usage cycle skipped", {
+          message:
+            apiUsageErr instanceof Error
+              ? apiUsageErr.message
+              : "api_usage_failed",
         });
       }
 

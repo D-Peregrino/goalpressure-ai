@@ -314,6 +314,54 @@ export interface OpsMetaConsensusSnapshot {
   }[];
 }
 
+export interface OpsDataQualitySnapshot {
+  updatedAt: string | null;
+  matchCount: number;
+  averageScore: number;
+  unreliableCount: number;
+  staleAlerts: { fixtureId: string; matchLabel?: string; staleRisk: number }[];
+  notUsableForSignal: { fixtureId: string; matchLabel?: string; score: number }[];
+}
+
+export interface OpsAutoDispatchSnapshot {
+  lastCycleAt: string | null;
+  lastDispatched: number;
+  lastBlocked: number;
+  lastBatchSize: number;
+  status: "IDLE" | "ACTIVE" | "DEGRADED";
+}
+
+export interface OpsApiUsageSnapshot {
+  updatedAt: string | null;
+  alertLevel: "SAFE" | "WARNING" | "CRITICAL" | "SATURATED";
+  requestsPerMinute: number;
+  requestsPerHour: number;
+  requestsPerDay: number;
+  requestsMonthProjection: number;
+  estimatedRemainingQuota: number | null;
+  monthlyQuota: number;
+  quotaUtilizationPercent: number;
+  averagePollingFrequencyMs: number;
+  activeFixtures: number;
+  planSupportDays: number | null;
+  planSupportHours: number | null;
+  topEndpoints: { endpoint: string; count: number; sharePercent: number }[];
+  requestHeatmap: { hour: number; count: number; intensity: number }[];
+  cacheHitRate: number;
+}
+
+export interface OpsValidationSnapshot {
+  updatedAt: string | null;
+  matchCount: number;
+  averageValidationScore: number;
+  tradeCount: number;
+  hitRate: number;
+  roi: number;
+  suggestionCount: number;
+  flaggedCount: number;
+  topSuggestions: { title: string; priority: string; action: string }[];
+}
+
 export interface OpsApiSuccessResponse {
   ok: true;
   telegram: OpsTelegramStatus;
@@ -330,6 +378,10 @@ export interface OpsApiSuccessResponse {
   microevent: OpsMicroeventSnapshot;
   sequenceMemory: OpsSequenceMemorySnapshot;
   metaConsensus: OpsMetaConsensusSnapshot;
+  dataQuality: OpsDataQualitySnapshot;
+  autoDispatch: OpsAutoDispatchSnapshot;
+  validation: OpsValidationSnapshot;
+  apiUsage: OpsApiUsageSnapshot;
   meta: {
     fetchedAt: string;
     responseTimeMs: number;

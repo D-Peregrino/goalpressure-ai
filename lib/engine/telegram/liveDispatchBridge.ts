@@ -4,52 +4,39 @@
 
 import type { Signal } from "@/types/domain";
 import type { MatchEngineInsight } from "@/types/engine";
-import { dispatchSignalsToTelegram } from "@/lib/telegram/signalDispatcher";
+import type { Match } from "@/types/domain";
+import type { LiveMetricRecord } from "@/lib/runtime/liveRuntime";
+import { dispatchApprovedLiveSignals } from "@/lib/telegram/autoDispatchController";
 import { signalDispatcher } from "@/lib/telegram/signalDispatcher";
 import { logInfo } from "@/lib/utils/logger";
 
 const LOG_SCOPE = "live-dispatch-bridge";
 
-export function dispatchLiveSignalsToTelegram(
+export async function dispatchLiveSignalsToTelegram(
   signals: Signal[],
   modelId: string,
-  insights: MatchEngineInsight[]
-): number {
+  insights: MatchEngineInsight[],
+  options?: {
+    matches?: Match[];
+    metrics?: LiveMetricRecord[];
+  }
+): Promise<number> {
   if (signals.length === 0) return 0;
 
-  const insightByMatch = new Map(insights.map((i) => [i.matchId, i]));
-
-  const minuteByMatchId: Record<string, number> = {};
-  const momentumByMatchId: Record<string, string> = {};
-  const reasonByMatchId: Record<string, string> = {};
-
-  for (const insight of insights) {
-    minuteByMatchId[insight.matchId] = insight.minute;
-    const flags = insight.momentum.flags;
-    momentumByMatchId[insight.matchId] =
-      flags.length > 0
-        ? flags[0].replace(/_/g, " ")
-        : insight.momentum.pressureGrowth > 2
-          ? "RISING"
-          : insight.momentum.pressureGrowth < -2
-            ? "FALLING"
-            : "STABLE";
-    reasonByMatchId[insight.matchId] = `Pressure ${insight.pressure.score}/100 · ${insight.pressure.level} · EV O0.5 ${insight.expectedValue.over05.evPercent.toFixed(1)}%`;
-  }
-
-  const results = dispatchSignalsToTelegram(signals, "production", modelId, {
-    minuteByMatchId,
-    momentumByMatchId,
-    reasonByMatchId,
+  const batch = await dispatchApprovedLiveSignals({
+    signals,
+    modelId,
+    matches: options?.matches ?? [],
+    metrics: options?.metrics ?? [],
+    insights,
   });
 
-  const queued = results.filter((r) => r.queued).length;
-
-  logInfo(LOG_SCOPE, "Live signals dispatched to Telegram pipeline", {
+  logInfo(LOG_SCOPE, "Live signals via auto dispatch controller", {
     total: signals.length,
-    queued,
+    dispatched: batch.dispatched,
+    blocked: batch.blocked,
     queueSize: signalDispatcher.getQueueStats().pending,
   });
 
-  return signalDispatcher.getQueueStats().pending;
+  return batch.dispatched;
 }
