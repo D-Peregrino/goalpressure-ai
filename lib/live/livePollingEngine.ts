@@ -13,6 +13,7 @@ import {
   scheduleLiveAnalyticsUpdate,
 } from "@/lib/live/liveAnalyticsUpdater";
 import { processLiveRuntimeMetrics } from "@/lib/runtime/liveRuntime";
+import { processMarketCalibrationCycle } from "@/lib/market/marketCalibrationCycle";
 import { processRuntimeSignalCycle } from "@/lib/runtime/signalDispatcher";
 import { recordRuntimeOpsLog } from "@/lib/ops/opsStore";
 import { logInfo, logOps, logWarn } from "@/lib/utils/logger";
@@ -225,6 +226,19 @@ export class LivePollingEngine {
       stats.metricsPersisted = runtimeMetrics.metricsPersisted;
       stats.decisionSignalsTriggered = signalCycle.triggered;
       stats.decisionSignalsDispatched = signalCycle.dispatched;
+
+      try {
+        const marketCal = await processMarketCalibrationCycle({
+          matches,
+          metrics: runtimeMetrics.snapshot.metrics,
+          activeSignals: signalCycle.snapshot.activeSignals,
+        });
+        stats.marketEdgesCalibrated = marketCal.calibrated;
+      } catch (marketErr) {
+        const msg =
+          marketErr instanceof Error ? marketErr.message : "market_calibration_failed";
+        logWarn(LOG_SCOPE, "Market calibration skipped", { message: msg });
+      }
 
       const matchResult = await persistLiveMatches(matches);
       stats.matchesUpserted = matchResult.upserted;

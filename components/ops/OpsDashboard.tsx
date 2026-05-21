@@ -173,6 +173,7 @@ export default function OpsDashboard() {
     livePressure,
     signalDecision,
     backtest,
+    marketCalibration,
     status,
     error,
     lastUpdated,
@@ -397,6 +398,87 @@ export default function OpsDashboard() {
               {backtest?.updatedAt
                 ? ` · last ${formatTime(backtest.updatedAt)}`
                 : " · no run yet"}
+            </p>
+          </section>
+
+          <section>
+            <h2 className="section-header mb-4">Market Calibration Engine</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 mb-4">
+              <KpiCard
+                label="Avg Edge"
+                value={
+                  marketCalibration && marketCalibration.calibrated > 0
+                    ? `${(marketCalibration.averageEdge * 100).toFixed(2)}%`
+                    : "—"
+                }
+                sub={`${marketCalibration?.calibrated ?? 0} calibrated`}
+                accent={Boolean(
+                  marketCalibration && marketCalibration.averageEdge > 0.02
+                )}
+              />
+              <KpiCard
+                label="Strongest Edge"
+                value={
+                  marketCalibration?.strongestEdgePercent != null
+                    ? `${marketCalibration.strongestEdgePercent.toFixed(2)}%`
+                    : "—"
+                }
+                sub={marketCalibration?.strongestEdgeFixture ?? "—"}
+              />
+              <KpiCard
+                label="Closing Line Eff."
+                value={
+                  marketCalibration
+                    ? `${marketCalibration.closingLineEfficiency}%`
+                    : "—"
+                }
+                sub="efficiency score"
+              />
+              <KpiCard
+                label="Market Drift"
+                value={
+                  marketCalibration
+                    ? marketCalibration.marketDrift.toFixed(3)
+                    : "—"
+                }
+                sub="avg odd move"
+              />
+              <KpiCard
+                label="Sharp Pressure"
+                value={
+                  marketCalibration
+                    ? String(marketCalibration.sharpPressure)
+                    : "—"
+                }
+                sub="P×edge align"
+              />
+              <KpiCard
+                label="Steam Moves"
+                value={String(marketCalibration?.steamMoves ?? 0)}
+                sub="sharp line drops"
+              />
+            </div>
+            <div className="module-panel overflow-hidden border-pressure/20 bg-[#06090d] mb-6">
+              <div className="max-h-[200px] overflow-y-auto p-3 font-mono text-[10px] leading-relaxed">
+                {(marketCalibration?.topEdges ?? []).length === 0 ? (
+                  <p className="text-muted">[market-calibration] awaiting live cycle…</p>
+                ) : (
+                  marketCalibration?.topEdges.map((e) => (
+                    <div
+                      key={`${e.fixtureId}-${e.market}`}
+                      className="mb-1 border-l-2 border-pressure/40 pl-2"
+                    >
+                      {e.matchLabel ?? e.fixtureId} · {e.market} · edge{" "}
+                      {e.edgePercent.toFixed(2)}% · {e.classification} · EV{" "}
+                      {e.expectedValue.toFixed(3)}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+            <p className="mb-6 font-mono text-[9px] text-muted">
+              API{" "}
+              <code className="text-foreground">GET /api/market/edges</code>
             </p>
           </section>
 

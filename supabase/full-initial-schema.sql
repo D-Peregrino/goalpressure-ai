@@ -284,6 +284,65 @@ create index if not exists backtest_results_strategy_market_idx
   on public.backtest_results (strategy, market, created_at desc);
 
 -- =============================================================================
+-- MARKET_EDGES / MARKET_SNAPSHOTS — proprietary vs implied calibration
+-- =============================================================================
+
+create table if not exists public.market_edges (
+  id uuid primary key default gen_random_uuid(),
+  fixture_id text not null,
+  market text not null,
+  proprietary_probability numeric(8, 4) not null default 0,
+  implied_probability numeric(8, 4) not null default 0,
+  edge numeric(8, 4) not null default 0,
+  edge_percent numeric(8, 3) not null default 0,
+  fair_odd numeric(8, 3) not null default 0,
+  market_odd numeric(8, 3) not null default 0,
+  expected_value numeric(8, 4) not null default 0,
+  confidence numeric(6, 4) not null default 0,
+  mispricing_score numeric(5, 2) not null default 0,
+  classification text not null default 'IGNORE',
+  closing_line_delta numeric(8, 4),
+  odds_drift numeric(8, 4),
+  steam_move boolean not null default false,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists market_edges_fixture_id_idx
+  on public.market_edges (fixture_id);
+
+create index if not exists market_edges_created_at_idx
+  on public.market_edges (created_at desc);
+
+create index if not exists market_edges_classification_idx
+  on public.market_edges (classification, created_at desc);
+
+create table if not exists public.market_snapshots (
+  id uuid primary key default gen_random_uuid(),
+  fixture_id text not null,
+  market text not null,
+  snapshot_type text not null default 'live_cycle',
+  market_odd numeric(8, 3) not null,
+  proprietary_probability numeric(8, 4) not null,
+  implied_probability numeric(8, 4) not null,
+  edge numeric(8, 4) not null,
+  expected_value numeric(8, 4) not null,
+  mispricing_score numeric(5, 2) not null default 0,
+  closing_line_delta numeric(8, 4),
+  odds_drift numeric(8, 4),
+  steam_move boolean not null default false,
+  sharp_pressure numeric(5, 2),
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists market_snapshots_fixture_market_idx
+  on public.market_snapshots (fixture_id, market, created_at desc);
+
+create index if not exists market_snapshots_type_idx
+  on public.market_snapshots (snapshot_type, created_at desc);
+
+-- =============================================================================
 -- DISPATCH_LOGS — Telegram / notification dispatch observability
 -- =============================================================================
 

@@ -7,12 +7,14 @@ import { getTelegramHealthDetail } from "@/lib/telegram/telegramHealth";
 import { getAverageDispatchLatencyMs } from "@/lib/telegram/telegramDispatchState";
 import { getLiveRuntimeMetricsSnapshot } from "@/lib/runtime/liveRuntime";
 import { getBacktestOpsSnapshot } from "@/lib/backtest/backtestSnapshot";
+import { getMarketCalibrationOpsSnapshot } from "@/lib/market/marketSnapshot";
 import { getRuntimeSignalOpsSnapshot } from "@/lib/runtime/signalDispatcher";
 import { getOpsStoreSnapshot } from "@/lib/ops/opsStore";
 import type {
   OpsApiSuccessResponse,
   OpsLivePressureSnapshot,
   OpsBacktestSnapshot,
+  OpsMarketCalibrationSnapshot,
   OpsSignalDecisionSnapshot,
   OpsTelegramStatus,
 } from "@/types/opsApi";
@@ -143,6 +145,44 @@ function buildBacktestSnapshot(): OpsBacktestSnapshot {
   };
 }
 
+function buildMarketCalibrationSnapshot(): OpsMarketCalibrationSnapshot {
+  const snap = getMarketCalibrationOpsSnapshot();
+  if (!snap) {
+    return {
+      updatedAt: null,
+      calibrated: 0,
+      averageEdge: 0,
+      strongestEdgeFixture: null,
+      strongestEdgePercent: 0,
+      closingLineEfficiency: 0,
+      marketDrift: 0,
+      sharpPressure: 0,
+      steamMoves: 0,
+      topEdges: [],
+    };
+  }
+
+  return {
+    updatedAt: snap.updatedAt,
+    calibrated: snap.calibrated,
+    averageEdge: snap.averageEdge,
+    strongestEdgeFixture: snap.strongestEdge?.fixtureId ?? null,
+    strongestEdgePercent: snap.strongestEdge?.edgePercent ?? 0,
+    closingLineEfficiency: snap.closingLineEfficiency,
+    marketDrift: snap.marketDrift,
+    sharpPressure: snap.sharpPressure,
+    steamMoves: snap.steamMoves,
+    topEdges: snap.edges.slice(0, 8).map((e) => ({
+      fixtureId: e.fixtureId,
+      matchLabel: e.matchLabel,
+      market: e.market,
+      edgePercent: e.edgePercent,
+      classification: e.classification,
+      expectedValue: e.expectedValue,
+    })),
+  };
+}
+
 export async function buildOpsApiPayload(
   responseTimeMs: number
 ): Promise<OpsApiSuccessResponse> {
@@ -155,6 +195,7 @@ export async function buildOpsApiPayload(
   const livePressure = buildLivePressureSnapshot();
   const signalDecision = buildSignalDecisionSnapshot();
   const backtest = buildBacktestSnapshot();
+  const marketCalibration = buildMarketCalibrationSnapshot();
 
   const counters = {
     ...store.counters,
@@ -175,6 +216,7 @@ export async function buildOpsApiPayload(
     livePressure,
     signalDecision,
     backtest,
+    marketCalibration,
     meta: {
       fetchedAt: new Date().toISOString(),
       responseTimeMs,

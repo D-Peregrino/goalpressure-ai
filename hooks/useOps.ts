@@ -7,6 +7,7 @@ import type {
   OpsDispatchRecord,
   OpsLivePressureSnapshot,
   OpsBacktestSnapshot,
+  OpsMarketCalibrationSnapshot,
   OpsSignalDecisionSnapshot,
   OpsLogEntry,
   OpsQueueMetrics,
@@ -31,6 +32,7 @@ export interface UseOpsResult {
   livePressure: OpsLivePressureSnapshot | null;
   signalDecision: OpsSignalDecisionSnapshot | null;
   backtest: OpsBacktestSnapshot | null;
+  marketCalibration: OpsMarketCalibrationSnapshot | null;
   status: OpsFeedStatus;
   error: string | null;
   lastUpdated: number | null;
@@ -53,6 +55,8 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
   const [signalDecision, setSignalDecision] =
     useState<OpsSignalDecisionSnapshot | null>(null);
   const [backtest, setBacktest] = useState<OpsBacktestSnapshot | null>(null);
+  const [marketCalibration, setMarketCalibration] =
+    useState<OpsMarketCalibrationSnapshot | null>(null);
   const [status, setStatus] = useState<OpsFeedStatus>("loading");
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
@@ -97,6 +101,7 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
       setLivePressure(data.livePressure);
       setSignalDecision(data.signalDecision);
       setBacktest(data.backtest);
+      setMarketCalibration(data.marketCalibration);
       setResponseTime(data.meta.responseTimeMs);
       setLastUpdated(Date.now());
       setError(null);
@@ -133,6 +138,7 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
     livePressure,
     signalDecision,
     backtest,
+    marketCalibration,
     status,
     error,
     lastUpdated,

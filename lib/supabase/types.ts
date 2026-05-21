@@ -70,6 +70,46 @@ export interface SignalDispatchRow {
   created_at?: string;
 }
 
+export interface MarketEdgeRow {
+  id?: string;
+  fixture_id: string;
+  market: string;
+  proprietary_probability: number;
+  implied_probability: number;
+  edge: number;
+  edge_percent: number;
+  fair_odd: number;
+  market_odd: number;
+  expected_value: number;
+  confidence: number;
+  mispricing_score: number;
+  classification: string;
+  closing_line_delta?: number | null;
+  odds_drift?: number | null;
+  steam_move?: boolean;
+  metadata?: Record<string, unknown>;
+  created_at?: string;
+}
+
+export interface MarketSnapshotRow {
+  id?: string;
+  fixture_id: string;
+  market: string;
+  snapshot_type: string;
+  market_odd: number;
+  proprietary_probability: number;
+  implied_probability: number;
+  edge: number;
+  expected_value: number;
+  mispricing_score: number;
+  closing_line_delta?: number | null;
+  odds_drift?: number | null;
+  steam_move?: boolean;
+  sharp_pressure?: number | null;
+  metadata?: Record<string, unknown>;
+  created_at?: string;
+}
+
 export interface BacktestResultsRow {
   id?: string;
   strategy: string;

@@ -135,6 +135,26 @@ export interface OpsSignalDecisionSnapshot {
   activeSignals: OpsActiveSignal[];
 }
 
+export interface OpsMarketCalibrationSnapshot {
+  updatedAt: string | null;
+  calibrated: number;
+  averageEdge: number;
+  strongestEdgeFixture: string | null;
+  strongestEdgePercent: number;
+  closingLineEfficiency: number;
+  marketDrift: number;
+  sharpPressure: number;
+  steamMoves: number;
+  topEdges: {
+    fixtureId: string;
+    matchLabel?: string;
+    market: string;
+    edgePercent: number;
+    classification: string;
+    expectedValue: number;
+  }[];
+}
+
 export interface OpsApiSuccessResponse {
   ok: true;
   telegram: OpsTelegramStatus;
@@ -145,6 +165,7 @@ export interface OpsApiSuccessResponse {
   livePressure: OpsLivePressureSnapshot;
   signalDecision: OpsSignalDecisionSnapshot;
   backtest: OpsBacktestSnapshot;
+  marketCalibration: OpsMarketCalibrationSnapshot;
   meta: {
     fetchedAt: string;
     responseTimeMs: number;
