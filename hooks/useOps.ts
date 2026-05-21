@@ -10,6 +10,8 @@ import type {
   OpsMarketCalibrationSnapshot,
   OpsTemporalSnapshot,
   OpsPlayerImpactSnapshot,
+  OpsMicroeventSnapshot,
+  OpsSequenceMemorySnapshot,
   OpsSignalDecisionSnapshot,
   OpsLogEntry,
   OpsQueueMetrics,
@@ -37,6 +39,8 @@ export interface UseOpsResult {
   marketCalibration: OpsMarketCalibrationSnapshot | null;
   temporal: OpsTemporalSnapshot | null;
   playerImpact: OpsPlayerImpactSnapshot | null;
+  microevent: OpsMicroeventSnapshot | null;
+  sequenceMemory: OpsSequenceMemorySnapshot | null;
   status: OpsFeedStatus;
   error: string | null;
   lastUpdated: number | null;
@@ -64,6 +68,11 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
   const [temporal, setTemporal] = useState<OpsTemporalSnapshot | null>(null);
   const [playerImpact, setPlayerImpact] =
     useState<OpsPlayerImpactSnapshot | null>(null);
+  const [microevent, setMicroevent] = useState<OpsMicroeventSnapshot | null>(
+    null
+  );
+  const [sequenceMemory, setSequenceMemory] =
+    useState<OpsSequenceMemorySnapshot | null>(null);
   const [status, setStatus] = useState<OpsFeedStatus>("loading");
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
@@ -111,6 +120,8 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
       setMarketCalibration(data.marketCalibration);
       setTemporal(data.temporal);
       setPlayerImpact(data.playerImpact);
+      setMicroevent(data.microevent);
+      setSequenceMemory(data.sequenceMemory);
       setResponseTime(data.meta.responseTimeMs);
       setLastUpdated(Date.now());
       setError(null);
@@ -150,6 +161,8 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
     marketCalibration,
     temporal,
     playerImpact,
+    microevent,
+    sequenceMemory,
     status,
     error,
     lastUpdated,

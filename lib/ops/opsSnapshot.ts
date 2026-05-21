@@ -10,6 +10,8 @@ import { getBacktestOpsSnapshot } from "@/lib/backtest/backtestSnapshot";
 import { getMarketCalibrationOpsSnapshot } from "@/lib/market/marketSnapshot";
 import { getTemporalOpsSnapshot } from "@/lib/temporal/temporalSnapshot";
 import { getPlayerOpsSnapshot } from "@/lib/player/playerSnapshot";
+import { getMicroeventOpsSnapshot } from "@/lib/microevent/microeventSnapshot";
+import { getSequenceOpsSnapshot } from "@/lib/sequence/sequenceSnapshot";
 import { getRuntimeSignalOpsSnapshot } from "@/lib/runtime/signalDispatcher";
 import { getOpsStoreSnapshot } from "@/lib/ops/opsStore";
 import type {
@@ -19,6 +21,8 @@ import type {
   OpsMarketCalibrationSnapshot,
   OpsTemporalSnapshot,
   OpsPlayerImpactSnapshot,
+  OpsMicroeventSnapshot,
+  OpsSequenceMemorySnapshot,
   OpsSignalDecisionSnapshot,
   OpsTelegramStatus,
 } from "@/types/opsApi";
@@ -187,6 +191,64 @@ function buildMarketCalibrationSnapshot(): OpsMarketCalibrationSnapshot {
   };
 }
 
+function buildSequenceMemorySnapshot(): OpsSequenceMemorySnapshot {
+  const snap = getSequenceOpsSnapshot();
+  if (!snap) {
+    return {
+      updatedAt: null,
+      matchCount: 0,
+      averageRecurrenceScore: 0,
+      recurrenceLeaders: [],
+      offensiveCycles: [],
+      fakeMomentumAlerts: [],
+      collapseCycles: [],
+      dominanceCurves: [],
+      sustainedChaos: [],
+    };
+  }
+
+  return {
+    updatedAt: snap.updatedAt,
+    matchCount: snap.matchCount,
+    averageRecurrenceScore: snap.averageRecurrenceScore,
+    recurrenceLeaders: snap.recurrenceLeaders,
+    offensiveCycles: snap.offensiveCycles,
+    fakeMomentumAlerts: snap.fakeMomentumAlerts,
+    collapseCycles: snap.collapseCycles,
+    dominanceCurves: snap.dominanceCurves,
+    sustainedChaos: snap.sustainedChaos,
+  };
+}
+
+function buildMicroeventSnapshot(): OpsMicroeventSnapshot {
+  const snap = getMicroeventOpsSnapshot();
+  if (!snap) {
+    return {
+      updatedAt: null,
+      matchCount: 0,
+      averageMicroeventScore: 0,
+      chaosBursts: [],
+      territorialPressure: [],
+      attackWaves: [],
+      collapseAlerts: [],
+      emotionalTilt: [],
+      topTriggerWindows: [],
+    };
+  }
+
+  return {
+    updatedAt: snap.updatedAt,
+    matchCount: snap.matchCount,
+    averageMicroeventScore: snap.averageMicroeventScore,
+    chaosBursts: snap.chaosBursts,
+    territorialPressure: snap.territorialPressure,
+    attackWaves: snap.attackWaves,
+    collapseAlerts: snap.collapseAlerts,
+    emotionalTilt: snap.emotionalTilt,
+    topTriggerWindows: snap.topTriggerWindows,
+  };
+}
+
 function buildPlayerImpactSnapshot(): OpsPlayerImpactSnapshot {
   const snap = getPlayerOpsSnapshot();
   if (!snap) {
@@ -256,6 +318,8 @@ export async function buildOpsApiPayload(
   const marketCalibration = buildMarketCalibrationSnapshot();
   const temporal = buildTemporalSnapshot();
   const playerImpact = buildPlayerImpactSnapshot();
+  const microevent = buildMicroeventSnapshot();
+  const sequenceMemory = buildSequenceMemorySnapshot();
 
   const counters = {
     ...store.counters,
@@ -279,6 +343,8 @@ export async function buildOpsApiPayload(
     marketCalibration,
     temporal,
     playerImpact,
+    microevent,
+    sequenceMemory,
     meta: {
       fetchedAt: new Date().toISOString(),
       responseTimeMs,

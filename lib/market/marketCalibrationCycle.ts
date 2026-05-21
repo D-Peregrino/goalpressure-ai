@@ -11,6 +11,10 @@ import { temporalMarketEdgeAdjustment } from "@/lib/temporal/temporalDynamicsEng
 import { getTemporalDynamicsForFixture } from "@/lib/temporal/temporalSnapshot";
 import { getPlayerImpactForFixture } from "@/lib/player/playerSnapshot";
 import { playerMarketEdgeBoost } from "@/lib/player/playerImpactEngine";
+import { getMicroeventForFixture } from "@/lib/microevent/microeventSnapshot";
+import { microeventMarketEdgeBoost } from "@/lib/microevent/microeventEngine";
+import { getSequenceMemoryForFixture } from "@/lib/sequence/sequenceSnapshot";
+import { sequenceMarketEdgeBoost } from "@/lib/sequence/sequenceMemoryEngine";
 import {
   detectSteamMove,
   recordMarketOdd,
@@ -127,6 +131,27 @@ export async function processMarketCalibrationCycle(
         cal.edgePercent = Math.round(cal.edge * 10000) / 100;
         if (playerImpact.substitutionSwing >= 30) {
           cal.steamMove = true;
+        }
+      }
+
+      const microevent = getMicroeventForFixture(fixtureId);
+      if (microevent) {
+        cal.edge += microeventMarketEdgeBoost(microevent);
+        cal.edgePercent = Math.round(cal.edge * 10000) / 100;
+        if (
+          microevent.triggerWindow === "30s" ||
+          microevent.triggerWindow === "60s"
+        ) {
+          cal.steamMove = cal.steamMove || microevent.microeventScore >= 65;
+        }
+      }
+
+      const sequenceMemory = getSequenceMemoryForFixture(fixtureId);
+      if (sequenceMemory) {
+        cal.edge += sequenceMarketEdgeBoost(sequenceMemory);
+        cal.edgePercent = Math.round(cal.edge * 10000) / 100;
+        if (sequenceMemory.sequenceState === "ESCALATING") {
+          cal.steamMove = cal.steamMove || sequenceMemory.recurrenceScore >= 60;
         }
       }
 

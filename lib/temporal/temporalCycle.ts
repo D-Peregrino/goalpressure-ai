@@ -11,6 +11,10 @@ import { persistTemporalMetricsBatch } from "@/lib/temporal/temporalPersistence"
 import { setTemporalOpsSnapshot } from "@/lib/temporal/temporalSnapshot";
 import { getPlayerImpactForFixture } from "@/lib/player/playerSnapshot";
 import { playerChaosBoost } from "@/lib/player/playerImpactEngine";
+import { getMicroeventForFixture } from "@/lib/microevent/microeventSnapshot";
+import { microeventTemporalBoost } from "@/lib/microevent/microeventEngine";
+import { getSequenceMemoryForFixture } from "@/lib/sequence/sequenceSnapshot";
+import { sequenceTemporalBoost } from "@/lib/sequence/sequenceMemoryEngine";
 import type { TemporalDynamicsResult } from "@/types/temporal";
 import { logOps } from "@/lib/utils/logger";
 import { recordRuntimeOpsLog } from "@/lib/ops/opsStore";
@@ -141,6 +145,53 @@ export async function processTemporalLiveCycle(
         ...temporal,
         chaosIndex: boostedChaos,
         volatilityScore: boostedVolatility,
+        flags,
+      };
+    }
+
+    const microevent = getMicroeventForFixture(fixtureId);
+    if (microevent) {
+      const microBoost = microeventTemporalBoost(microevent);
+      const flags = [...temporal.flags];
+      if (microevent.flags.includes("CHAOS_BURST")) {
+        flags.push("MICROEVENT_CHAOS");
+      }
+      if (microevent.flags.includes("RAPID_TRANSITION")) {
+        flags.push("MICROEVENT_TRANSITION");
+      }
+      temporal = {
+        ...temporal,
+        chaosIndex: Math.min(100, temporal.chaosIndex + microBoost),
+        accelerationScore: Math.min(
+          100,
+          temporal.accelerationScore + microevent.attackWaveIntensity * 0.08
+        ),
+        urgencyMultiplier: Math.min(
+          2,
+          temporal.urgencyMultiplier +
+            (microevent.microeventScore >= 70 ? 0.08 : 0.03)
+        ),
+        flags,
+      };
+    }
+
+    const sequenceMemory = getSequenceMemoryForFixture(fixtureId);
+    if (sequenceMemory) {
+      const seqBoost = sequenceTemporalBoost(sequenceMemory);
+      const flags = [...temporal.flags];
+      if (sequenceMemory.flags.includes("CHAOS_CYCLES")) {
+        flags.push("SEQUENCE_CHAOS");
+      }
+      if (sequenceMemory.flags.includes("OFFENSIVE_CYCLES")) {
+        flags.push("SEQUENCE_OFFENSIVE_CYCLE");
+      }
+      temporal = {
+        ...temporal,
+        chaosIndex: Math.min(100, temporal.chaosIndex + seqBoost),
+        temporalPressure: Math.min(
+          100,
+          temporal.temporalPressure + sequenceMemory.recurrenceScore * 0.06
+        ),
         flags,
       };
     }

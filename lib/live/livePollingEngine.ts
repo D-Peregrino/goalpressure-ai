@@ -23,6 +23,14 @@ import {
   processPlayerImpactLiveCycle,
   processPlayerImpactPreCycle,
 } from "@/lib/player/playerImpactCycle";
+import {
+  processMicroeventLiveCycle,
+  processMicroeventPreCycle,
+} from "@/lib/microevent/microeventCycle";
+import {
+  processSequenceMemoryLiveCycle,
+  processSequenceMemoryPreCycle,
+} from "@/lib/sequence/sequenceCycle";
 import { processRuntimeSignalCycle } from "@/lib/runtime/signalDispatcher";
 import { recordRuntimeOpsLog } from "@/lib/ops/opsStore";
 import { logInfo, logOps, logWarn } from "@/lib/utils/logger";
@@ -242,6 +250,34 @@ export class LivePollingEngine {
         });
       }
 
+      try {
+        processMicroeventPreCycle({
+          matches,
+          metrics: runtimeMetrics.snapshot.metrics,
+        });
+      } catch (microPreErr) {
+        logWarn(LOG_SCOPE, "Microevent pre-cycle skipped", {
+          message:
+            microPreErr instanceof Error
+              ? microPreErr.message
+              : "microevent_pre_failed",
+        });
+      }
+
+      try {
+        processSequenceMemoryPreCycle({
+          matches,
+          metrics: runtimeMetrics.snapshot.metrics,
+        });
+      } catch (seqPreErr) {
+        logWarn(LOG_SCOPE, "Sequence memory pre-cycle skipped", {
+          message:
+            seqPreErr instanceof Error
+              ? seqPreErr.message
+              : "sequence_pre_failed",
+        });
+      }
+
       const signalCycle = await processRuntimeSignalCycle({
         matches,
         metrics: runtimeMetrics.snapshot.metrics,
@@ -308,6 +344,36 @@ export class LivePollingEngine {
             playerErr instanceof Error
               ? playerErr.message
               : "player_live_failed",
+        });
+      }
+
+      try {
+        const microLive = await processMicroeventLiveCycle({
+          matches,
+          metrics: runtimeMetrics.snapshot.metrics,
+        });
+        stats.microeventMetricsPersisted = microLive.persisted;
+      } catch (microErr) {
+        logWarn(LOG_SCOPE, "Microevent live cycle skipped", {
+          message:
+            microErr instanceof Error
+              ? microErr.message
+              : "microevent_live_failed",
+        });
+      }
+
+      try {
+        const seqLive = await processSequenceMemoryLiveCycle({
+          matches,
+          metrics: runtimeMetrics.snapshot.metrics,
+        });
+        stats.sequenceMemoryPersisted = seqLive.persisted;
+      } catch (seqErr) {
+        logWarn(LOG_SCOPE, "Sequence memory live cycle skipped", {
+          message:
+            seqErr instanceof Error
+              ? seqErr.message
+              : "sequence_live_failed",
         });
       }
 

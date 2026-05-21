@@ -174,6 +174,82 @@ export interface OpsTemporalSnapshot {
   }[];
 }
 
+export interface OpsMicroeventSnapshot {
+  updatedAt: string | null;
+  matchCount: number;
+  averageMicroeventScore: number;
+  chaosBursts: {
+    fixtureId: string;
+    matchLabel?: string;
+    chaosBurst: number;
+    microeventScore: number;
+  }[];
+  territorialPressure: {
+    fixtureId: string;
+    matchLabel?: string;
+    territorialDominance: number;
+  }[];
+  attackWaves: {
+    fixtureId: string;
+    matchLabel?: string;
+    attackWaveIntensity: number;
+  }[];
+  collapseAlerts: {
+    fixtureId: string;
+    matchLabel?: string;
+    collapseProbability: number;
+  }[];
+  emotionalTilt: {
+    fixtureId: string;
+    matchLabel?: string;
+    emotionalTilt: number;
+  }[];
+  topTriggerWindows: {
+    fixtureId: string;
+    matchLabel?: string;
+    triggerWindow: string;
+    microeventScore: number;
+  }[];
+}
+
+export interface OpsSequenceMemorySnapshot {
+  updatedAt: string | null;
+  matchCount: number;
+  averageRecurrenceScore: number;
+  recurrenceLeaders: {
+    fixtureId: string;
+    matchLabel?: string;
+    recurrenceScore: number;
+    sequenceState: string;
+  }[];
+  offensiveCycles: {
+    fixtureId: string;
+    matchLabel?: string;
+    offensiveCycleStrength: number;
+  }[];
+  fakeMomentumAlerts: {
+    fixtureId: string;
+    matchLabel?: string;
+    fakeMomentumProbability: number;
+  }[];
+  collapseCycles: {
+    fixtureId: string;
+    matchLabel?: string;
+    collapseCycleProbability: number;
+  }[];
+  dominanceCurves: {
+    fixtureId: string;
+    matchLabel?: string;
+    lateGameDominance: number;
+  }[];
+  sustainedChaos: {
+    fixtureId: string;
+    matchLabel?: string;
+    sustainedChaosLevel: number;
+    sequenceState: string;
+  }[];
+}
+
 export interface OpsPlayerImpactSnapshot {
   updatedAt: string | null;
   matchCount: number;
@@ -217,6 +293,8 @@ export interface OpsApiSuccessResponse {
   marketCalibration: OpsMarketCalibrationSnapshot;
   temporal: OpsTemporalSnapshot;
   playerImpact: OpsPlayerImpactSnapshot;
+  microevent: OpsMicroeventSnapshot;
+  sequenceMemory: OpsSequenceMemorySnapshot;
   meta: {
     fetchedAt: string;
     responseTimeMs: number;

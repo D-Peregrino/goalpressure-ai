@@ -271,3 +271,71 @@ create index if not exists player_runtime_metrics_created_at_idx
 
 create index if not exists player_runtime_metrics_clutch_idx
   on public.player_runtime_metrics (clutch_factor desc, created_at desc);
+
+-- ─── Microevent detection metrics ───────────────────────────────────────────
+
+create table if not exists public.microevent_metrics (
+  id uuid primary key default gen_random_uuid(),
+  fixture_id text not null,
+  minute int not null default 0,
+  territorial_dominance numeric(5, 2) not null default 0,
+  sequence_pressure numeric(5, 2) not null default 0,
+  attack_wave_intensity numeric(5, 2) not null default 0,
+  chaos_burst numeric(5, 2) not null default 0,
+  transition_threat numeric(5, 2) not null default 0,
+  flank_overload numeric(5, 2) not null default 0,
+  counter_attack_risk numeric(5, 2) not null default 0,
+  set_piece_danger numeric(5, 2) not null default 0,
+  emotional_tilt numeric(5, 2) not null default 0,
+  collapse_probability numeric(5, 2) not null default 0,
+  microevent_score numeric(5, 2) not null default 0,
+  trigger_window text not null default '300s',
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists microevent_metrics_fixture_id_idx
+  on public.microevent_metrics (fixture_id);
+
+create index if not exists microevent_metrics_created_at_idx
+  on public.microevent_metrics (created_at desc);
+
+create index if not exists microevent_metrics_score_idx
+  on public.microevent_metrics (microevent_score desc, created_at desc);
+
+create index if not exists microevent_metrics_trigger_idx
+  on public.microevent_metrics (trigger_window, created_at desc);
+
+-- ─── Sequence memory metrics ────────────────────────────────────────────────
+
+create table if not exists public.sequence_memory_metrics (
+  id uuid primary key default gen_random_uuid(),
+  fixture_id text not null,
+  minute int not null default 0,
+  recurring_pressure_pattern numeric(5, 2) not null default 0,
+  pressure_persistence numeric(5, 2) not null default 0,
+  offensive_cycle_strength numeric(5, 2) not null default 0,
+  collapse_cycle_probability numeric(5, 2) not null default 0,
+  emotional_recovery_index numeric(5, 2) not null default 0,
+  fake_momentum_probability numeric(5, 2) not null default 0,
+  sustained_chaos_level numeric(5, 2) not null default 0,
+  defensive_fatigue_curve numeric(5, 2) not null default 0,
+  late_game_dominance numeric(5, 2) not null default 0,
+  recurrence_score numeric(5, 2) not null default 0,
+  memory_confidence numeric(5, 2) not null default 0,
+  sequence_state text not null default 'STABLE',
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists sequence_memory_metrics_fixture_id_idx
+  on public.sequence_memory_metrics (fixture_id);
+
+create index if not exists sequence_memory_metrics_created_at_idx
+  on public.sequence_memory_metrics (created_at desc);
+
+create index if not exists sequence_memory_metrics_recurrence_idx
+  on public.sequence_memory_metrics (recurrence_score desc, created_at desc);
+
+create index if not exists sequence_memory_metrics_state_idx
+  on public.sequence_memory_metrics (sequence_state, created_at desc);

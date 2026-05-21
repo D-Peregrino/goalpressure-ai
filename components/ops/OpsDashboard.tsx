@@ -176,6 +176,8 @@ export default function OpsDashboard() {
     marketCalibration,
     temporal,
     playerImpact,
+    microevent,
+    sequenceMemory,
     status,
     error,
     lastUpdated,
@@ -595,6 +597,287 @@ export default function OpsDashboard() {
             <p className="mb-6 font-mono text-[9px] text-muted">
               API{" "}
               <code className="text-foreground">GET /api/player/runtime</code>
+            </p>
+          </section>
+
+          <section>
+            <h2 className="section-header mb-4">Microevent Detection Engine</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 mb-4">
+              <KpiCard
+                label="Microevent Score"
+                value={
+                  microevent && microevent.matchCount > 0
+                    ? String(microevent.averageMicroeventScore)
+                    : "—"
+                }
+                sub="avg pre-goal index"
+                accent={Boolean(
+                  microevent && microevent.averageMicroeventScore >= 60
+                )}
+              />
+              <KpiCard
+                label="Chaos Burst"
+                value={
+                  microevent?.chaosBursts[0]
+                    ? String(microevent.chaosBursts[0].chaosBurst)
+                    : "—"
+                }
+                sub={microevent?.chaosBursts[0]?.matchLabel ?? "top fixture"}
+              />
+              <KpiCard
+                label="Territorial"
+                value={
+                  microevent?.territorialPressure[0]
+                    ? String(microevent.territorialPressure[0].territorialDominance)
+                    : "—"
+                }
+                sub="dominance index"
+              />
+              <KpiCard
+                label="Attack Waves"
+                value={
+                  microevent?.attackWaves[0]
+                    ? String(microevent.attackWaves[0].attackWaveIntensity)
+                    : "—"
+                }
+                sub={microevent?.attackWaves[0]?.matchLabel ?? "—"}
+              />
+              <KpiCard
+                label="Collapse"
+                value={String(microevent?.collapseAlerts.length ?? 0)}
+                sub="defensive alerts"
+                accent={(microevent?.collapseAlerts.length ?? 0) > 0}
+              />
+              <KpiCard
+                label="Trigger Window"
+                value={
+                  microevent?.topTriggerWindows[0]?.triggerWindow ?? "—"
+                }
+                sub={
+                  microevent?.topTriggerWindows[0]
+                    ? `score ${microevent.topTriggerWindows[0].microeventScore}`
+                    : "top fixture"
+                }
+                accent={
+                  microevent?.topTriggerWindows[0]?.triggerWindow === "30s" ||
+                  microevent?.topTriggerWindows[0]?.triggerWindow === "60s"
+                }
+              />
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 mb-6">
+              <div className="module-panel overflow-hidden border-pressure/20 bg-[#06090d]">
+                <div className="flex items-center gap-2 border-b border-card/80 bg-surface/80 px-3 py-2">
+                  <span className="font-mono text-[9px] font-bold uppercase tracking-[0.25em] text-muted">
+                    Chaos · Waves · Territorial
+                  </span>
+                </div>
+                <div className="max-h-[180px] overflow-y-auto p-3 font-mono text-[10px]">
+                  {(microevent?.chaosBursts ?? []).length === 0 ? (
+                    <p className="text-muted">[microevent-engine] awaiting cycle…</p>
+                  ) : (
+                    <>
+                      {microevent?.chaosBursts.slice(0, 4).map((e) => (
+                        <div
+                          key={`chaos-${e.fixtureId}`}
+                          className="mb-1 border-l-2 border-red-500/70 pl-2 text-red-400"
+                        >
+                          CHAOS {e.matchLabel ?? e.fixtureId} · burst {e.chaosBurst}{" "}
+                          · score {e.microeventScore}
+                        </div>
+                      ))}
+                      {microevent?.attackWaves.slice(0, 3).map((e) => (
+                        <div
+                          key={`wave-${e.fixtureId}`}
+                          className="mb-1 border-l-2 border-pressure pl-2"
+                        >
+                          WAVE {e.matchLabel ?? e.fixtureId} · {e.attackWaveIntensity}
+                        </div>
+                      ))}
+                      {microevent?.territorialPressure.slice(0, 2).map((e) => (
+                        <div
+                          key={`terr-${e.fixtureId}`}
+                          className="mb-1 border-l-2 border-card pl-2 text-muted"
+                        >
+                          TERR {e.matchLabel ?? e.fixtureId} · {e.territorialDominance}
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="module-panel overflow-hidden border-pressure/20 bg-[#06090d]">
+                <div className="flex items-center gap-2 border-b border-card/80 bg-surface/80 px-3 py-2">
+                  <span className="font-mono text-[9px] font-bold uppercase tracking-[0.25em] text-muted">
+                    Collapse · Tilt · Windows
+                  </span>
+                </div>
+                <div className="max-h-[180px] overflow-y-auto p-3 font-mono text-[10px]">
+                  {(microevent?.collapseAlerts ?? []).map((e) => (
+                    <div
+                      key={`col-${e.fixtureId}`}
+                      className="mb-1 border-l-2 border-amber-500 pl-2 text-amber-400"
+                    >
+                      COLLAPSE {e.matchLabel ?? e.fixtureId} · {e.collapseProbability}%
+                    </div>
+                  ))}
+                  {(microevent?.emotionalTilt ?? []).slice(0, 3).map((e) => (
+                    <div
+                      key={`tilt-${e.fixtureId}`}
+                      className="mb-1 border-l-2 border-purple-500/60 pl-2"
+                    >
+                      TILT {e.matchLabel ?? e.fixtureId} · {e.emotionalTilt}
+                    </div>
+                  ))}
+                  {(microevent?.topTriggerWindows ?? []).slice(0, 5).map((e) => (
+                    <div
+                      key={`win-${e.fixtureId}`}
+                      className="mb-1 border-l-2 border-pressure pl-2"
+                    >
+                      WINDOW {e.triggerWindow} · {e.matchLabel ?? e.fixtureId} ·{" "}
+                      score {e.microeventScore}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <p className="mb-6 font-mono text-[9px] text-muted">
+              API{" "}
+              <code className="text-foreground">GET /api/microevent/live</code>
+            </p>
+          </section>
+
+          <section>
+            <h2 className="section-header mb-4">Sequence Memory Engine</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 mb-4">
+              <KpiCard
+                label="Recurrence"
+                value={
+                  sequenceMemory && sequenceMemory.matchCount > 0
+                    ? String(sequenceMemory.averageRecurrenceScore)
+                    : "—"
+                }
+                sub="avg pattern score"
+                accent={Boolean(
+                  sequenceMemory && sequenceMemory.averageRecurrenceScore >= 55
+                )}
+              />
+              <KpiCard
+                label="State"
+                value={
+                  sequenceMemory?.recurrenceLeaders[0]?.sequenceState ?? "—"
+                }
+                sub={sequenceMemory?.recurrenceLeaders[0]?.matchLabel ?? "top"}
+              />
+              <KpiCard
+                label="Offensive Cycles"
+                value={
+                  sequenceMemory?.offensiveCycles[0]
+                    ? String(sequenceMemory.offensiveCycles[0].offensiveCycleStrength)
+                    : "—"
+                }
+                sub="cycle strength"
+              />
+              <KpiCard
+                label="Fake Momentum"
+                value={String(sequenceMemory?.fakeMomentumAlerts.length ?? 0)}
+                sub="alerts"
+                accent={(sequenceMemory?.fakeMomentumAlerts.length ?? 0) > 0}
+              />
+              <KpiCard
+                label="Collapse Cycles"
+                value={String(sequenceMemory?.collapseCycles.length ?? 0)}
+                sub="repeated collapse"
+                accent={(sequenceMemory?.collapseCycles.length ?? 0) > 0}
+              />
+              <KpiCard
+                label="Sustained Chaos"
+                value={
+                  sequenceMemory?.sustainedChaos[0]
+                    ? String(sequenceMemory.sustainedChaos[0].sustainedChaosLevel)
+                    : "—"
+                }
+                sub={sequenceMemory?.sustainedChaos[0]?.sequenceState ?? "—"}
+              />
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 mb-6">
+              <div className="module-panel overflow-hidden border-pressure/20 bg-[#06090d]">
+                <div className="flex items-center gap-2 border-b border-card/80 bg-surface/80 px-3 py-2">
+                  <span className="font-mono text-[9px] font-bold uppercase tracking-[0.25em] text-muted">
+                    Recurrence · Cycles · Dominance
+                  </span>
+                </div>
+                <div className="max-h-[180px] overflow-y-auto p-3 font-mono text-[10px]">
+                  {(sequenceMemory?.recurrenceLeaders ?? []).length === 0 ? (
+                    <p className="text-muted">[sequence-memory] awaiting cycle…</p>
+                  ) : (
+                    <>
+                      {sequenceMemory?.recurrenceLeaders.slice(0, 4).map((e) => (
+                        <div
+                          key={`rec-${e.fixtureId}`}
+                          className="mb-1 border-l-2 border-pressure pl-2"
+                        >
+                          REC {e.matchLabel ?? e.fixtureId} · {e.recurrenceScore} ·{" "}
+                          {e.sequenceState}
+                        </div>
+                      ))}
+                      {sequenceMemory?.offensiveCycles.slice(0, 3).map((e) => (
+                        <div
+                          key={`cyc-${e.fixtureId}`}
+                          className="mb-1 border-l-2 border-card pl-2"
+                        >
+                          CYCLE {e.matchLabel ?? e.fixtureId} · {e.offensiveCycleStrength}
+                        </div>
+                      ))}
+                      {sequenceMemory?.dominanceCurves.slice(0, 2).map((e) => (
+                        <div
+                          key={`dom-${e.fixtureId}`}
+                          className="mb-1 border-l-2 border-emerald-500/50 pl-2 text-emerald-400"
+                        >
+                          LATE {e.matchLabel ?? e.fixtureId} · {e.lateGameDominance}
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="module-panel overflow-hidden border-pressure/20 bg-[#06090d]">
+                <div className="flex items-center gap-2 border-b border-card/80 bg-surface/80 px-3 py-2">
+                  <span className="font-mono text-[9px] font-bold uppercase tracking-[0.25em] text-muted">
+                    Fake Mom · Collapse · Chaos
+                  </span>
+                </div>
+                <div className="max-h-[180px] overflow-y-auto p-3 font-mono text-[10px]">
+                  {(sequenceMemory?.fakeMomentumAlerts ?? []).map((e) => (
+                    <div
+                      key={`fake-${e.fixtureId}`}
+                      className="mb-1 border-l-2 border-amber-500 pl-2 text-amber-400"
+                    >
+                      FAKE {e.matchLabel ?? e.fixtureId} · {e.fakeMomentumProbability}
+                    </div>
+                  ))}
+                  {(sequenceMemory?.collapseCycles ?? []).map((e) => (
+                    <div
+                      key={`col-${e.fixtureId}`}
+                      className="mb-1 border-l-2 border-red-500/70 pl-2 text-red-400"
+                    >
+                      COLLAPSE {e.matchLabel ?? e.fixtureId} · {e.collapseCycleProbability}
+                    </div>
+                  ))}
+                  {(sequenceMemory?.sustainedChaos ?? []).slice(0, 4).map((e) => (
+                    <div
+                      key={`sch-${e.fixtureId}`}
+                      className="mb-1 border-l-2 border-purple-500/60 pl-2"
+                    >
+                      CHAOS {e.matchLabel ?? e.fixtureId} · {e.sustainedChaosLevel} ·{" "}
+                      {e.sequenceState}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <p className="mb-6 font-mono text-[9px] text-muted">
+              API{" "}
+              <code className="text-foreground">GET /api/sequence/live</code>
             </p>
           </section>
 

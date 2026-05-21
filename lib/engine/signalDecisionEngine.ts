@@ -9,6 +9,10 @@ import { getTemporalDynamicsForFixture } from "@/lib/temporal/temporalSnapshot";
 import { temporalUrgencyBoost } from "@/lib/temporal/temporalDynamicsEngine";
 import { getPlayerImpactForFixture } from "@/lib/player/playerSnapshot";
 import { playerImpactUrgencyBoost } from "@/lib/player/playerImpactEngine";
+import { getMicroeventForFixture } from "@/lib/microevent/microeventSnapshot";
+import { microeventUrgencyBoost } from "@/lib/microevent/microeventEngine";
+import { getSequenceMemoryForFixture } from "@/lib/sequence/sequenceSnapshot";
+import { sequenceUrgencyBoost } from "@/lib/sequence/sequenceMemoryEngine";
 
 // ─── Thresholds (todas obrigatórias para shouldTrigger) ───────────────────────
 
@@ -328,6 +332,38 @@ export function evaluateSignalOpportunity(
     }
     if (playerImpact.flags.includes("RED_CARD_CASCADE")) {
       reasons.push("red_card_cascade");
+    }
+  }
+
+  const microevent = getMicroeventForFixture(fixtureId);
+  if (microevent) {
+    urgency = Math.round(
+      clamp(urgency * microeventUrgencyBoost(microevent), 0, 100)
+    );
+    if (microevent.microeventScore >= 70) {
+      reasons.push(`microevent_${microevent.triggerWindow}`);
+    }
+    if (microevent.flags.includes("ATTACK_WAVES")) {
+      reasons.push("attack_waves");
+    }
+    if (microevent.flags.includes("DEFENSIVE_COLLAPSE")) {
+      reasons.push("defensive_collapse");
+    }
+  }
+
+  const sequenceMemory = getSequenceMemoryForFixture(fixtureId);
+  if (sequenceMemory) {
+    urgency = Math.round(
+      clamp(urgency * sequenceUrgencyBoost(sequenceMemory), 0, 100)
+    );
+    if (sequenceMemory.sequenceState === "ESCALATING") {
+      reasons.push("sequence_escalating");
+    }
+    if (sequenceMemory.flags.includes("FAKE_MOMENTUM")) {
+      reasons.push("fake_momentum");
+    }
+    if (sequenceMemory.flags.includes("RECURRING_PRESSURE")) {
+      reasons.push("recurring_pressure");
     }
   }
 
