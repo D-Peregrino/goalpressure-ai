@@ -1,10 +1,10 @@
 import AppShell from "@/components/layout/AppShell";
-import LiveCommandCenter from "@/components/terminal/LiveCommandCenter";
+import LiveMatchCenter from "@/components/terminal/LiveMatchCenter";
 
 export default function TerminalPage() {
   return (
     <AppShell>
-      <LiveCommandCenter />
+      <LiveMatchCenter />
     </AppShell>
   );
 }
