@@ -206,6 +206,11 @@ export async function processRuntimeSignalCycle(
 
     logLiveSignal(fixtureId, evaluation, record, telegramWillSend);
 
+    const goalsAtTrigger =
+      match.score != null
+        ? (match.score.home ?? 0) + (match.score.away ?? 0)
+        : 0;
+
     persistInputs.push({
       fixtureId,
       market: evaluation.market,
@@ -222,6 +227,7 @@ export async function processRuntimeSignalCycle(
         match_id: match.id,
         match_label: record.matchLabel,
         minute: record.minute,
+        goals_at_trigger: goalsAtTrigger,
         urgency: evaluation.urgency,
         reasons: evaluation.reason,
         source: "signal_decision_engine",

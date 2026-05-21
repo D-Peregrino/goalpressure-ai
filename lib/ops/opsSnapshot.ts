@@ -6,11 +6,13 @@ import {
 import { getTelegramHealthDetail } from "@/lib/telegram/telegramHealth";
 import { getAverageDispatchLatencyMs } from "@/lib/telegram/telegramDispatchState";
 import { getLiveRuntimeMetricsSnapshot } from "@/lib/runtime/liveRuntime";
+import { getBacktestOpsSnapshot } from "@/lib/backtest/backtestSnapshot";
 import { getRuntimeSignalOpsSnapshot } from "@/lib/runtime/signalDispatcher";
 import { getOpsStoreSnapshot } from "@/lib/ops/opsStore";
 import type {
   OpsApiSuccessResponse,
   OpsLivePressureSnapshot,
+  OpsBacktestSnapshot,
   OpsSignalDecisionSnapshot,
   OpsTelegramStatus,
 } from "@/types/opsApi";
@@ -105,6 +107,42 @@ function buildSignalDecisionSnapshot(): OpsSignalDecisionSnapshot {
   };
 }
 
+function buildBacktestSnapshot(): OpsBacktestSnapshot {
+  const snap = getBacktestOpsSnapshot();
+  if (!snap?.lastRun) {
+    return {
+      updatedAt: null,
+      roi: 0,
+      hitRate: 0,
+      averageEv: 0,
+      profitUnits: 0,
+      maxDrawdown: 0,
+      winStreak: 0,
+      loseStreak: 0,
+      totalSignals: 0,
+      wins: 0,
+      losses: 0,
+      sharpeLikeRatio: 0,
+    };
+  }
+
+  const r = snap.lastRun;
+  return {
+    updatedAt: snap.updatedAt,
+    roi: snap.roi,
+    hitRate: snap.hitRate,
+    averageEv: snap.averageEv,
+    profitUnits: snap.profitUnits,
+    maxDrawdown: snap.maxDrawdown,
+    winStreak: snap.winStreak,
+    loseStreak: snap.loseStreak,
+    totalSignals: r.totalSignals,
+    wins: r.wins,
+    losses: r.losses,
+    sharpeLikeRatio: r.sharpeLikeRatio,
+  };
+}
+
 export async function buildOpsApiPayload(
   responseTimeMs: number
 ): Promise<OpsApiSuccessResponse> {
@@ -116,6 +154,7 @@ export async function buildOpsApiPayload(
 
   const livePressure = buildLivePressureSnapshot();
   const signalDecision = buildSignalDecisionSnapshot();
+  const backtest = buildBacktestSnapshot();
 
   const counters = {
     ...store.counters,
@@ -135,6 +174,7 @@ export async function buildOpsApiPayload(
     logs: store.logs,
     livePressure,
     signalDecision,
+    backtest,
     meta: {
       fetchedAt: new Date().toISOString(),
       responseTimeMs,

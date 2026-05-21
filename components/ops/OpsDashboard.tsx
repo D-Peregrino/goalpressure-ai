@@ -172,6 +172,7 @@ export default function OpsDashboard() {
     logs,
     livePressure,
     signalDecision,
+    backtest,
     status,
     error,
     lastUpdated,
@@ -337,6 +338,66 @@ export default function OpsDashboard() {
                 sub={`${counters?.duplicateSkips ?? 0} dup · ${counters?.cooldownBlocked ?? 0} cd`}
               />
             </div>
+          </section>
+
+          <section>
+            <h2 className="section-header mb-4">Institutional Backtest</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 mb-4">
+              <KpiCard
+                label="ROI (hist.)"
+                value={
+                  backtest && backtest.totalSignals > 0
+                    ? `${(backtest.roi * 100).toFixed(1)}%`
+                    : "—"
+                }
+                sub={`${backtest?.totalSignals ?? 0} signals`}
+                accent={Boolean(backtest && backtest.roi > 0)}
+              />
+              <KpiCard
+                label="Hit Rate"
+                value={
+                  backtest && backtest.totalSignals > 0
+                    ? `${(backtest.hitRate * 100).toFixed(1)}%`
+                    : "—"
+                }
+                sub={`${backtest?.wins ?? 0}W / ${backtest?.losses ?? 0}L`}
+              />
+              <KpiCard
+                label="Win Streak"
+                value={String(backtest?.winStreak ?? 0)}
+                sub="current"
+              />
+              <KpiCard
+                label="Lose Streak"
+                value={String(backtest?.loseStreak ?? 0)}
+                sub="current"
+              />
+              <KpiCard
+                label="Realized EV"
+                value={
+                  backtest && backtest.averageEv !== 0
+                    ? backtest.averageEv.toFixed(3)
+                    : "—"
+                }
+                sub="avg per trade"
+              />
+              <KpiCard
+                label="Max Drawdown"
+                value={
+                  backtest ? backtest.maxDrawdown.toFixed(2) : "—"
+                }
+                sub={`P&L ${backtest?.profitUnits?.toFixed(2) ?? "0"}u`}
+              />
+            </div>
+            <p className="mb-6 font-mono text-[9px] text-muted">
+              Run via{" "}
+              <code className="text-foreground">GET /api/backtest/run</code> ·
+              Results{" "}
+              <code className="text-foreground">GET /api/backtest/results</code>
+              {backtest?.updatedAt
+                ? ` · last ${formatTime(backtest.updatedAt)}`
+                : " · no run yet"}
+            </p>
           </section>
 
           <section>

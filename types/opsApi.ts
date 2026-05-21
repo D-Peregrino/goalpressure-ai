@@ -109,6 +109,21 @@ export interface OpsActiveSignal {
   urgency: number;
 }
 
+export interface OpsBacktestSnapshot {
+  updatedAt: string | null;
+  roi: number;
+  hitRate: number;
+  averageEv: number;
+  profitUnits: number;
+  maxDrawdown: number;
+  winStreak: number;
+  loseStreak: number;
+  totalSignals: number;
+  wins: number;
+  losses: number;
+  sharpeLikeRatio: number;
+}
+
 export interface OpsSignalDecisionSnapshot {
   updatedAt: string | null;
   evaluated: number;
@@ -129,6 +144,7 @@ export interface OpsApiSuccessResponse {
   logs: OpsLogEntry[];
   livePressure: OpsLivePressureSnapshot;
   signalDecision: OpsSignalDecisionSnapshot;
+  backtest: OpsBacktestSnapshot;
   meta: {
     fetchedAt: string;
     responseTimeMs: number;

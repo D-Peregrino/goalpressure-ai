@@ -6,6 +6,7 @@ import type {
   OpsCounterMetrics,
   OpsDispatchRecord,
   OpsLivePressureSnapshot,
+  OpsBacktestSnapshot,
   OpsSignalDecisionSnapshot,
   OpsLogEntry,
   OpsQueueMetrics,
@@ -29,6 +30,7 @@ export interface UseOpsResult {
   logs: OpsLogEntry[];
   livePressure: OpsLivePressureSnapshot | null;
   signalDecision: OpsSignalDecisionSnapshot | null;
+  backtest: OpsBacktestSnapshot | null;
   status: OpsFeedStatus;
   error: string | null;
   lastUpdated: number | null;
@@ -50,6 +52,7 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
     useState<OpsLivePressureSnapshot | null>(null);
   const [signalDecision, setSignalDecision] =
     useState<OpsSignalDecisionSnapshot | null>(null);
+  const [backtest, setBacktest] = useState<OpsBacktestSnapshot | null>(null);
   const [status, setStatus] = useState<OpsFeedStatus>("loading");
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
@@ -93,6 +96,7 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
       setLogs(data.logs);
       setLivePressure(data.livePressure);
       setSignalDecision(data.signalDecision);
+      setBacktest(data.backtest);
       setResponseTime(data.meta.responseTimeMs);
       setLastUpdated(Date.now());
       setError(null);
@@ -128,6 +132,7 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
     logs,
     livePressure,
     signalDecision,
+    backtest,
     status,
     error,
     lastUpdated,

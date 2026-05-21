@@ -70,6 +70,22 @@ export interface SignalDispatchRow {
   created_at?: string;
 }
 
+export interface BacktestResultsRow {
+  id?: string;
+  strategy: string;
+  market: string;
+  total_signals: number;
+  wins: number;
+  losses: number;
+  roi: number;
+  yield: number;
+  hit_rate: number;
+  profit_units: number;
+  max_drawdown: number;
+  metadata?: Record<string, unknown>;
+  created_at?: string;
+}
+
 export interface LiveMetricsRow {
   id?: string;
   fixture_id: string;

@@ -258,6 +258,32 @@ create index if not exists signal_dispatches_triggered_idx
   on public.signal_dispatches (triggered, created_at desc);
 
 -- =============================================================================
+-- BACKTEST_RESULTS — institutional signal validation
+-- =============================================================================
+
+create table if not exists public.backtest_results (
+  id uuid primary key default gen_random_uuid(),
+  strategy text not null,
+  market text not null,
+  total_signals int not null default 0,
+  wins int not null default 0,
+  losses int not null default 0,
+  roi numeric(10, 4) not null default 0,
+  yield numeric(10, 4) not null default 0,
+  hit_rate numeric(8, 4) not null default 0,
+  profit_units numeric(12, 4) not null default 0,
+  max_drawdown numeric(10, 4) not null default 0,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists backtest_results_created_at_idx
+  on public.backtest_results (created_at desc);
+
+create index if not exists backtest_results_strategy_market_idx
+  on public.backtest_results (strategy, market, created_at desc);
+
+-- =============================================================================
 -- DISPATCH_LOGS — Telegram / notification dispatch observability
 -- =============================================================================
 
