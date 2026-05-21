@@ -73,7 +73,7 @@ function computeDispatchRatePerMin(records: OpsDispatchRecord[]): number {
   return records.filter(
     (r) =>
       new Date(r.timestamp).getTime() >= cutoff &&
-      (r.status === "dispatched" || r.status === "sandbox")
+      (r.status === "dispatched" || r.status === "sandbox" || r.status === "queued")
   ).length;
 }
 
@@ -144,6 +144,10 @@ function incrementCounter(event: OpsEventType): void {
       counters.totalDispatched += 1;
       counters.sendSuccess += 1;
       break;
+    case "telegram_sent":
+      counters.totalDispatched += 1;
+      counters.sendSuccess += 1;
+      break;
     case "sandbox_dispatch":
       counters.sandboxDispatches += 1;
       counters.sendSuccess += 1;
@@ -156,6 +160,7 @@ function incrementCounter(event: OpsEventType): void {
       counters.cooldownBlocked += 1;
       break;
     case "failed":
+    case "telegram_failed":
       counters.sendFailed += 1;
       break;
   }

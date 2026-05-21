@@ -1,4 +1,5 @@
 import type { Match, MatchStats } from "@/types/domain";
+import { calculatePressureScore as calculateQuantitativePressure } from "@/lib/engine/pressureScore";
 
 /** Raw score cap before normalization (typical live ceiling ~120–140). */
 const NORMALIZATION_CAP = 120;
@@ -39,10 +40,12 @@ export function calculateProductionPressureRaw(match: Match): {
     corners * 3 +
     xG * 18;
 
-  const score = Math.min(
+  const legacyScore = Math.min(
     100,
     Math.max(0, Math.round((raw / NORMALIZATION_CAP) * 100))
   );
+  const quant = calculateQuantitativePressure(match, { skipTickRecord: true });
+  const score = quant.pressureScore;
 
-  return { raw, score, xG, shotsOnTarget };
+  return { raw, score: score || legacyScore, xG, shotsOnTarget };
 }

@@ -39,7 +39,7 @@ export async function fetchLiveMatchesDirect(options?: {
     const cached = getLiveMatchesCacheEntry();
     if (cached && isLiveMatchesCacheValid(cached)) {
       const engineResult = processLiveEngineBatch(cached.matches, {
-        enqueueTelegram: true,
+        dispatchTelegram: true,
         modelId: options?.modelId,
       });
 
@@ -75,7 +75,7 @@ export async function fetchLiveMatchesDirect(options?: {
     });
 
     const engineResult = processLiveEngineBatch(mapped, {
-      enqueueTelegram: true,
+      dispatchTelegram: true,
       modelId: options?.modelId,
     });
 
@@ -115,7 +115,7 @@ export async function fetchLiveMatchesDirect(options?: {
     const cached = getLiveMatchesCacheEntry();
     if (cached) {
       const engineResult = processLiveEngineBatch(cached.matches, {
-        enqueueTelegram: false,
+        dispatchTelegram: false,
         modelId: options?.modelId,
       });
 
@@ -137,7 +137,7 @@ export async function fetchLiveMatchesDirect(options?: {
       };
     }
 
-    const emptyEngine = processLiveEngineBatch([], { enqueueTelegram: false });
+    const emptyEngine = processLiveEngineBatch([], { dispatchTelegram: false });
 
     return {
       ok: false,

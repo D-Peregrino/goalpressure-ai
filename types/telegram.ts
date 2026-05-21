@@ -13,8 +13,11 @@ export interface TelegramDispatchRequest {
   signal: Signal;
   source: TelegramSignalSource;
   modelId: string;
-  /** Match minute at dispatch time (optional until wired to live feed) */
   minute?: number;
+  momentum?: string;
+  reason?: string;
+  signalIdOverride?: string;
+  fixtureId?: string;
 }
 
 export interface TelegramFormattedMessage {

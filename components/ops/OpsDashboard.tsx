@@ -5,11 +5,13 @@ import {
   AlertTriangle,
   Ban,
   Copy,
+  Gauge,
   Radio,
   Send,
   Shield,
   Terminal,
 } from "lucide-react";
+import type { OpsLivePressureMetric } from "@/types/opsApi";
 import EngineTelemetryStrip from "@/components/engine/EngineTelemetryStrip";
 import { useEngineInsights } from "@/hooks/useEngineInsights";
 import { useOps } from "@/hooks/useOps";
@@ -76,6 +78,54 @@ function statusBadge(status: OpsDispatchRecord["status"]): string {
   }
 }
 
+function LivePressureTerminal({
+  snapshot,
+}: {
+  snapshot: { metrics: OpsLivePressureMetric[]; topPressure: OpsLivePressureMetric | null; updatedAt: string | null };
+}) {
+  const { metrics, topPressure, updatedAt } = snapshot;
+
+  return (
+    <div className="module-panel overflow-hidden border-pressure/20 bg-[#06090d]">
+      <div className="flex items-center gap-2 border-b border-card/80 bg-surface/80 px-3 py-2">
+        <Gauge className="h-3.5 w-3.5 text-pressure" />
+        <span className="font-mono text-[9px] font-bold uppercase tracking-[0.25em] text-muted">
+          Live Pressure Metrics
+        </span>
+        {updatedAt && (
+          <span className="ml-auto font-mono text-[9px] text-muted">
+            {formatTime(updatedAt)}
+          </span>
+        )}
+      </div>
+      <div className="max-h-[280px] overflow-y-auto p-3 font-mono text-[10px] leading-relaxed">
+        {topPressure && (
+          <p className="mb-2 text-pressure">
+            [top] {topPressure.matchLabel} {topPressure.minute}&apos; P=
+            {topPressure.pressureScore} H={topPressure.homePressure} A=
+            {topPressure.awayPressure} M={topPressure.momentum}
+          </p>
+        )}
+        {metrics.length === 0 ? (
+          <p className="text-muted">[pressure] awaiting runtime cycle…</p>
+        ) : (
+          metrics.slice(0, 12).map((m) => (
+            <div
+              key={m.fixtureId}
+              className="mb-1 border-l-2 border-pressure/30 pl-2 text-foreground/85"
+            >
+              {m.matchLabel} {m.minute}&apos; | P={m.pressureScore} H=
+              {m.homePressure} A={m.awayPressure} M={m.momentum} GP=
+              {(m.goalProbability * 100).toFixed(0)}% conf=
+              {(m.confidence * 100).toFixed(0)}%
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 function OpsLogTerminal({ logs }: { logs: OpsLogEntry[] }) {
   return (
     <div className="module-panel overflow-hidden border-pressure/20 bg-[#06090d]">
@@ -118,6 +168,7 @@ export default function OpsDashboard() {
     counters,
     recentDispatches,
     logs,
+    livePressure,
     status,
     error,
     lastUpdated,
@@ -154,8 +205,8 @@ export default function OpsDashboard() {
               Operations Terminal
             </h1>
             <p className="mt-2 max-w-2xl font-mono text-[10px] leading-relaxed text-muted">
-              Telegram dispatch observability · queue · cooldown · sandbox · no
-              production send until authorized
+              Telegram live dispatch · 5 min cooldown · dedup · Supabase
+              dispatch_logs · real send when sandbox off
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -236,18 +287,37 @@ export default function OpsDashboard() {
                 sub={`${counters?.totalDispatched ?? 0} total`}
               />
               <KpiCard
-                label="Sandbox Status"
-                value={telegram?.sandboxMode ? "ACTIVE" : "OFF"}
-                sub="No real Telegram send"
-                accent={telegram?.sandboxMode}
+                label="Telegram"
+                value={
+                  telegram?.status === "ONLINE"
+                    ? "ONLINE"
+                    : telegram?.status ?? "OFFLINE"
+                }
+                sub={
+                  telegram?.sandboxMode
+                    ? "Sandbox mode"
+                    : telegram?.connected
+                      ? "Real send active"
+                      : "Not connected"
+                }
+                accent={telegram?.status === "ONLINE"}
               />
               <KpiCard
-                label="Telegram Status"
-                value={telegramLabel}
+                label="Total Dispatches"
+                value={String(telegram?.totalSent ?? counters?.totalDispatched ?? 0)}
+                sub={`${telegram?.totalFailed ?? counters?.sendFailed ?? 0} failed`}
+              />
+              <KpiCard
+                label="Avg Latency"
+                value={
+                  (telegram?.averageLatencyMs ?? counters?.averageLatencyMs ?? 0) > 0
+                    ? `${telegram?.averageLatencyMs ?? counters?.averageLatencyMs}ms`
+                    : "—"
+                }
                 sub={
-                  telegram?.configured
-                    ? "Credentials present"
-                    : "Not configured"
+                  telegram?.lastDispatch
+                    ? new Date(telegram.lastDispatch).toLocaleTimeString()
+                    : "No dispatch yet"
                 }
               />
               <KpiCard
@@ -264,6 +334,68 @@ export default function OpsDashboard() {
                 sub={`${counters?.duplicateSkips ?? 0} dup · ${counters?.cooldownBlocked ?? 0} cd`}
               />
             </div>
+          </section>
+
+          <section>
+            <h2 className="section-header mb-4">Quantitative Pressure Engine</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5 mb-4">
+              <KpiCard
+                label="Live Fixtures"
+                value={String(livePressure?.matchCount ?? 0)}
+                sub={livePressure?.updatedAt ? "Runtime synced" : "No cycle yet"}
+              />
+              <KpiCard
+                label="Top Pressure"
+                value={
+                  livePressure?.topPressure
+                    ? String(livePressure.topPressure.pressureScore)
+                    : "—"
+                }
+                sub={livePressure?.topPressure?.matchLabel ?? "—"}
+                accent={Boolean(
+                  livePressure?.topPressure &&
+                    livePressure.topPressure.pressureScore >= 70
+                )}
+              />
+              <KpiCard
+                label="Home P (top)"
+                value={
+                  livePressure?.topPressure
+                    ? String(livePressure.topPressure.homePressure)
+                    : "—"
+                }
+              />
+              <KpiCard
+                label="Away P (top)"
+                value={
+                  livePressure?.topPressure
+                    ? String(livePressure.topPressure.awayPressure)
+                    : "—"
+                }
+              />
+              <KpiCard
+                label="Goal P (top)"
+                value={
+                  livePressure?.topPressure
+                    ? `${(livePressure.topPressure.goalProbability * 100).toFixed(0)}%`
+                    : "—"
+                }
+                sub={
+                  livePressure?.topPressure
+                    ? `M ${livePressure.topPressure.momentum}`
+                    : undefined
+                }
+              />
+            </div>
+            <LivePressureTerminal
+              snapshot={
+                livePressure ?? {
+                  metrics: [],
+                  topPressure: null,
+                  updatedAt: null,
+                }
+              }
+            />
           </section>
 
           <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">

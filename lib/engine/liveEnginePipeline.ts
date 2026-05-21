@@ -6,7 +6,7 @@ import {
   pruneEngineMemory,
   setLiveEngineSnapshot,
 } from "@/lib/engine/engineSnapshotStore";
-import { enqueueLiveDispatchBatch } from "@/lib/engine/telegram/liveDispatchQueue";
+import { dispatchLiveSignalsToTelegram } from "@/lib/engine/telegram/liveDispatchBridge";
 import { getActiveModelId } from "@/lib/signalEngine";
 import { logInfo } from "@/lib/utils/logger";
 
@@ -47,8 +47,8 @@ function buildSnapshot(
 }
 
 export interface ProcessLiveEngineOptions {
-  /** Queue Telegram payloads (sandbox — no real send) */
-  enqueueTelegram?: boolean;
+  /** Dispatch signals to Telegram (real when TELEGRAM_SANDBOX_MODE=false) */
+  dispatchTelegram?: boolean;
   modelId?: string;
 }
 
@@ -65,10 +65,10 @@ export function processLiveEngineBatch(
 
   let snapshot = buildSnapshot(enrichedMatches, signals, insights);
 
-  if (options.enqueueTelegram !== false && signals.length > 0) {
+  if (options.dispatchTelegram !== false && signals.length > 0) {
     const modelId = options.modelId ?? getActiveModelId();
-    const queued = enqueueLiveDispatchBatch(signals, modelId, insights);
-    snapshot = { ...snapshot, queueSize: queued };
+    const queueSize = dispatchLiveSignalsToTelegram(signals, modelId, insights);
+    snapshot = { ...snapshot, queueSize };
   }
 
   setLiveEngineSnapshot(snapshot);

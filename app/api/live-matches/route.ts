@@ -115,7 +115,7 @@ function buildSuccessFromCache(
   const totalMs = now - routeStartedAt;
 
   const engineResult = processLiveEngineBatch(entry.matches, {
-    enqueueTelegram: true,
+    dispatchTelegram: true,
   });
 
   const body: LiveMatchesSuccessResponse = {
@@ -167,7 +167,7 @@ function buildSuccessFromCache(
 }
 
 function runEngineOnMatches(matches: LiveMatchesSuccessResponse["matches"]) {
-  return processLiveEngineBatch(matches, { enqueueTelegram: true });
+  return processLiveEngineBatch(matches, { dispatchTelegram: true });
 }
 
 async function fetchAndCacheMatches(routeStartedAt: number): Promise<

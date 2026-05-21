@@ -75,11 +75,29 @@ export interface MatchStats {
   /** Shots on target — estimated from shots when missing at ingest */
   shotsOnTarget: number;
   dangerousAttacks: number;
+  /** Total attacks (SportMonks); fallback from dangerousAttacks when absent */
+  totalAttacks?: number;
   corners: number;
   /** Expected goals (SportMonks or estimated) */
   xG?: number;
   /** Offensive possession % proxy (0–100) */
   possession?: number;
+}
+
+/** Per-side live stats for home/away pressure split */
+export interface TeamSideStats {
+  shots: number;
+  shotsOnTarget: number;
+  dangerousAttacks: number;
+  totalAttacks: number;
+  corners: number;
+  xG?: number;
+  possession?: number;
+}
+
+export interface MatchTeamStats {
+  home: TeamSideStats;
+  away: TeamSideStats;
 }
 
 export interface Odds {
@@ -121,6 +139,8 @@ export interface Match {
   externalId?: string;
   /** Last upstream sync — epoch ms */
   updatedAt?: number;
+  /** Per-team stats when SportMonks provides participant breakdown */
+  teamStats?: MatchTeamStats;
 }
 
 // ─── Signal ──────────────────────────────────────────────────────────────────

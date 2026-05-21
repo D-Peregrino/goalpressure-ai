@@ -52,3 +52,15 @@ export interface AnalyticsSnapshotRow {
   payload: Record<string, unknown>;
   generated_at?: string;
 }
+
+export interface LiveMetricsRow {
+  id?: string;
+  fixture_id: string;
+  home_pressure: number;
+  away_pressure: number;
+  momentum: number;
+  goal_probability: number;
+  confidence: number;
+  metadata?: Record<string, unknown>;
+  created_at?: string;
+}

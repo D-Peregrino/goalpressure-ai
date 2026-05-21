@@ -1,5 +1,13 @@
 export {
   calculatePressureScore,
+  calculateFixtureTeamPressures,
+  applyQuantitativePressureToMatch,
+  type QuantitativePressureResult,
+  type FixtureTeamPressure,
+} from "@/lib/engine/pressureScore";
+
+export {
+  calculatePressureScore as calculateLegacyPressureScore,
   applyPressureResultToMatch,
   classifyPressureLevel,
   pressureLevelToConfidence,

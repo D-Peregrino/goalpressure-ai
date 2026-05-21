@@ -5,6 +5,7 @@ import type {
   OpsApiResponse,
   OpsCounterMetrics,
   OpsDispatchRecord,
+  OpsLivePressureSnapshot,
   OpsLogEntry,
   OpsQueueMetrics,
   OpsTelegramStatus,
@@ -25,6 +26,7 @@ export interface UseOpsResult {
   counters: OpsCounterMetrics | null;
   recentDispatches: OpsDispatchRecord[];
   logs: OpsLogEntry[];
+  livePressure: OpsLivePressureSnapshot | null;
   status: OpsFeedStatus;
   error: string | null;
   lastUpdated: number | null;
@@ -42,6 +44,8 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
     []
   );
   const [logs, setLogs] = useState<OpsLogEntry[]>([]);
+  const [livePressure, setLivePressure] =
+    useState<OpsLivePressureSnapshot | null>(null);
   const [status, setStatus] = useState<OpsFeedStatus>("loading");
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
@@ -83,6 +87,7 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
       setCounters(data.counters);
       setRecentDispatches(data.recentDispatches);
       setLogs(data.logs);
+      setLivePressure(data.livePressure);
       setResponseTime(data.meta.responseTimeMs);
       setLastUpdated(Date.now());
       setError(null);
@@ -116,6 +121,7 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
     counters,
     recentDispatches,
     logs,
+    livePressure,
     status,
     error,
     lastUpdated,

@@ -5,6 +5,7 @@ import type {
   PressureTriggerReason,
 } from "@/types/engine";
 import { calculateProductionPressureRaw } from "@/lib/engine/pressure/productionPressureFormula";
+import { calculatePressureScore as calculateQuantitativePressure } from "@/lib/engine/pressureScore";
 import { calculateLiveMomentum } from "@/lib/engine/momentum/liveMomentum";
 import {
   computeRollingWindowStats,
@@ -98,6 +99,9 @@ export function calculatePressureScore(
   options?: CalculatePressureOptions
 ): PressureScoreResult {
   const production = calculateProductionPressureRaw(match);
+  const quantitative = calculateQuantitativePressure(match, {
+    skipTickRecord: options?.skipTickRecord,
+  });
   const rolling = computeRollingWindowStats(match);
   const momentum = calculateLiveMomentum(match);
 
@@ -125,7 +129,7 @@ export function calculatePressureScore(
     productionRaw: normalize(production.raw, NORMALIZATION_CAP),
   };
 
-  const score = production.score;
+  const score = quantitative.pressureScore || production.score;
   const level = classifyPressureLevel(score);
   const confidence = pressureLevelToConfidence(level);
   const triggerReasons = buildTriggerReasons(components);

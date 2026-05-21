@@ -5,10 +5,7 @@
 import { mkdir, writeFile, unlink } from "fs/promises";
 import path from "path";
 import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/client";
-import {
-  getTelegramConfig,
-  isTelegramConfigured,
-} from "@/lib/telegram/telegramClient";
+import { getTelegramHealthDetail } from "@/lib/telegram/telegramHealth";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const PROBE_FILE = path.join(DATA_DIR, ".health-probe");
@@ -25,7 +22,10 @@ export interface DatabaseHealth {
 export interface TelegramHealth {
   sandbox: boolean;
   configured: boolean;
-  status: "SANDBOX" | "READY" | "OFFLINE";
+  connected: boolean;
+  status: "SANDBOX" | "READY" | "OFFLINE" | "ONLINE";
+  lastDispatch: string | null;
+  averageLatencyMs: number;
 }
 
 export interface LiveFeedHealth {
@@ -100,18 +100,16 @@ async function probeSupabase(): Promise<DatabaseHealth> {
   }
 }
 
-function probeTelegram(): TelegramHealth {
-  const config = getTelegramConfig();
-  const configured = isTelegramConfigured();
-
-  let status: TelegramHealth["status"] = "OFFLINE";
-  if (config.sandboxMode) status = "SANDBOX";
-  else if (configured) status = "READY";
+async function probeTelegram(): Promise<TelegramHealth> {
+  const detail = await getTelegramHealthDetail();
 
   return {
-    sandbox: config.sandboxMode,
-    configured,
-    status,
+    sandbox: detail.sandbox,
+    configured: detail.configured,
+    connected: detail.connected,
+    status: detail.status,
+    lastDispatch: detail.lastDispatch,
+    averageLatencyMs: detail.averageLatencyMs,
   };
 }
 
@@ -162,7 +160,7 @@ export async function getSystemHealthReport(): Promise<SystemHealthReport> {
     probeStorage(),
   ]);
 
-  const telegram = probeTelegram();
+  const telegram = await probeTelegram();
   const liveFeed = probeLiveFeed();
   const environment = process.env.NODE_ENV ?? "development";
 

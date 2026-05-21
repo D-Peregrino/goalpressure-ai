@@ -1,14 +1,19 @@
 /**
- * Telegram signal dispatcher — queue, deduplication, cooldown, sandbox-safe delivery.
- *
- * Pipeline: signalEngine → dispatcher → formatter → telegramClient
- * (Not wired to production runtime yet.)
+ * Telegram signal dispatcher — real send, queue, dedup, 5 min cooldown, retry.
  */
 
 import type { Signal } from "@/types/domain";
 import { recordOpsEvent } from "@/lib/ops/opsStore";
 import { formatSignalForTelegram } from "@/lib/telegram/signalFormatter";
-import { sendTelegramMessage } from "@/lib/telegram/telegramClient";
+import { persistDispatchLog } from "@/lib/telegram/telegramDispatchPersistence";
+import {
+  recordTelegramDispatchFailure,
+  recordTelegramDispatchSuccess,
+} from "@/lib/telegram/telegramDispatchState";
+import {
+  isTelegramSandboxMode,
+  sendTelegramMessageWithRetry,
+} from "@/lib/telegram/telegramClient";
 import { logInfo, logWarn } from "@/lib/utils/logger";
 import type {
   TelegramDispatchRequest,
@@ -19,10 +24,12 @@ import type {
 } from "@/types/telegram";
 
 const LOG_SCOPE = "signal-dispatcher";
-export const TELEGRAM_COOLDOWN_MS = 3 * 60 * 1000;
+
+/** 5 minutes — lock per fixture + market */
+export const TELEGRAM_COOLDOWN_MS = 5 * 60_000;
 
 interface CooldownEntry {
-  lastQueuedAt: number;
+  lastDispatchedAt: number;
   signalId: string;
 }
 
@@ -30,82 +37,36 @@ export class SignalDispatcher {
   private readonly queue: TelegramFormattedMessage[] = [];
   private processing = false;
   private readonly cooldownByFingerprint = new Map<string, CooldownEntry>();
+  private readonly locks = new Set<string>();
 
-  /**
-   * Enqueue a single signal for Telegram delivery.
-   */
   dispatch(request: TelegramDispatchRequest): TelegramDispatchResult {
     const formatted = formatSignalForTelegram(request);
 
+    if (this.locks.has(formatted.fingerprint)) {
+      return this.skip(formatted, "lock_active", "skipped_duplicate");
+    }
+
     if (this.isInQueue(formatted.fingerprint)) {
-      logInfo(LOG_SCOPE, "Signal skipped duplicate", {
-        signalId: formatted.signalId,
-        fingerprint: formatted.fingerprint,
-        reason: "already_in_queue",
-      });
-
-      void recordOpsEvent({
-        event: "skipped_duplicate",
-        signalId: formatted.signalId,
-        modelId: formatted.modelId,
-        source: formatted.source,
-        matchId: formatted.matchId,
-        market: formatted.market,
-        status: "skipped",
-        message: `Duplicate skipped (in queue): ${formatted.signalId}`,
-      });
-
-      return {
-        signalId: formatted.signalId,
-        fingerprint: formatted.fingerprint,
-        queued: false,
-        skipped: true,
-        skipReason: "already_in_queue",
-      };
+      return this.skip(formatted, "already_in_queue", "skipped_duplicate");
     }
 
     if (this.isOnCooldown(formatted.fingerprint)) {
-      logInfo(LOG_SCOPE, "Signal skipped duplicate", {
-        signalId: formatted.signalId,
-        fingerprint: formatted.fingerprint,
-        reason: "cooldown",
-      });
-
-      void recordOpsEvent({
-        event: "cooldown_blocked",
-        signalId: formatted.signalId,
-        modelId: formatted.modelId,
-        source: formatted.source,
-        matchId: formatted.matchId,
-        market: formatted.market,
-        status: "cooldown",
-        message: `Cooldown blocked (${TELEGRAM_COOLDOWN_MS / 1000}s): ${formatted.signalId}`,
-        level: "warn",
-      });
-
-      return {
-        signalId: formatted.signalId,
-        fingerprint: formatted.fingerprint,
-        queued: false,
-        skipped: true,
-        skipReason: "cooldown",
-      };
+      return this.skip(formatted, "cooldown", "cooldown_blocked");
     }
 
+    this.locks.add(formatted.fingerprint);
     this.cooldownByFingerprint.set(formatted.fingerprint, {
-      lastQueuedAt: Date.now(),
+      lastDispatchedAt: Date.now(),
       signalId: formatted.signalId,
     });
 
     this.queue.push(formatted);
 
-    logInfo(LOG_SCOPE, "Signal queued", {
+    logInfo(LOG_SCOPE, "Signal queued for Telegram", {
       signalId: formatted.signalId,
-      source: formatted.source,
-      modelId: formatted.modelId,
-      matchId: formatted.matchId,
-      market: formatted.market,
+      fingerprint: formatted.fingerprint,
       queueDepth: this.queue.length,
+      sandbox: isTelegramSandboxMode(),
     });
 
     void recordOpsEvent({
@@ -116,7 +77,7 @@ export class SignalDispatcher {
       matchId: formatted.matchId,
       market: formatted.market,
       status: "queued",
-      message: `Signal queued: ${formatted.signalId} · ${formatted.source}`,
+      message: `Telegram queued: ${formatted.signalId}`,
     });
 
     void this.processQueue();
@@ -129,11 +90,14 @@ export class SignalDispatcher {
     };
   }
 
-  /** Queue multiple production signals from the active model. */
   dispatchProductionSignals(
     signals: Signal[],
     modelId: string,
-    options?: { minuteByMatchId?: Record<string, number> }
+    options?: {
+      minuteByMatchId?: Record<string, number>;
+      momentumByMatchId?: Record<string, string>;
+      reasonByMatchId?: Record<string, string>;
+    }
   ): TelegramDispatchResult[] {
     return signals.map((signal) =>
       this.dispatch({
@@ -141,11 +105,13 @@ export class SignalDispatcher {
         source: "production",
         modelId,
         minute: options?.minuteByMatchId?.[signal.matchId],
+        momentum: options?.momentumByMatchId?.[signal.matchId],
+        reason: options?.reasonByMatchId?.[signal.matchId] ?? signal.reason,
+        fixtureId: signal.matchId.replace(/^sm-/, ""),
       })
     );
   }
 
-  /** Queue experimental A/B signals for a specific model version. */
   dispatchExperimentalSignals(
     signals: Signal[],
     modelId: string,
@@ -169,6 +135,38 @@ export class SignalDispatcher {
     };
   }
 
+  private skip(
+    formatted: TelegramFormattedMessage,
+    reason: string,
+    event: "skipped_duplicate" | "cooldown_blocked"
+  ): TelegramDispatchResult {
+    logInfo(LOG_SCOPE, "Signal skipped", {
+      signalId: formatted.signalId,
+      fingerprint: formatted.fingerprint,
+      reason,
+    });
+
+    void recordOpsEvent({
+      event,
+      signalId: formatted.signalId,
+      modelId: formatted.modelId,
+      source: formatted.source,
+      matchId: formatted.matchId,
+      market: formatted.market,
+      status: event === "cooldown_blocked" ? "cooldown" : "skipped",
+      message: `Skipped (${reason}): ${formatted.signalId}`,
+      level: event === "cooldown_blocked" ? "warn" : undefined,
+    });
+
+    return {
+      signalId: formatted.signalId,
+      fingerprint: formatted.fingerprint,
+      queued: false,
+      skipped: true,
+      skipReason: reason,
+    };
+  }
+
   private isInQueue(fingerprint: string): boolean {
     return this.queue.some((m) => m.fingerprint === fingerprint);
   }
@@ -176,7 +174,7 @@ export class SignalDispatcher {
   private isOnCooldown(fingerprint: string): boolean {
     const entry = this.cooldownByFingerprint.get(fingerprint);
     if (!entry) return false;
-    return Date.now() - entry.lastQueuedAt < TELEGRAM_COOLDOWN_MS;
+    return Date.now() - entry.lastDispatchedAt < TELEGRAM_COOLDOWN_MS;
   }
 
   private async processQueue(): Promise<void> {
@@ -189,13 +187,28 @@ export class SignalDispatcher {
         if (!message) continue;
 
         const startedAt = Date.now();
-        const result = await sendTelegramMessage(message.text, {
+        const result = await sendTelegramMessageWithRetry(message.text, {
           signalId: message.signalId,
           source: message.source,
         });
         const latencyMs = Date.now() - startedAt;
 
+        const fixtureId = message.matchId.replace(/^sm-/, "");
+
         if (result.sandbox) {
+          recordTelegramDispatchSuccess(message.signalId, latencyMs);
+          void persistDispatchLog({
+            dispatchId: message.signalId,
+            signalId: message.signalId,
+            modelId: message.modelId,
+            source: message.source,
+            matchId: message.matchId,
+            fixtureId,
+            market: message.market,
+            status: "sandbox",
+            latencyMs,
+            message: "Sandbox dispatch",
+          });
           void recordOpsEvent({
             event: "sandbox_dispatch",
             signalId: message.signalId,
@@ -208,8 +221,22 @@ export class SignalDispatcher {
             message: `Sandbox dispatch: ${message.signalId}`,
           });
         } else if (result.ok) {
+          recordTelegramDispatchSuccess(message.signalId, latencyMs);
+          void persistDispatchLog({
+            dispatchId: message.signalId,
+            signalId: message.signalId,
+            modelId: message.modelId,
+            source: message.source,
+            matchId: message.matchId,
+            fixtureId,
+            market: message.market,
+            status: "dispatched",
+            latencyMs,
+            message: "Telegram sent",
+            metadata: { messageId: result.messageId },
+          });
           void recordOpsEvent({
-            event: "dispatched",
+            event: "telegram_sent",
             signalId: message.signalId,
             modelId: message.modelId,
             source: message.source,
@@ -217,9 +244,39 @@ export class SignalDispatcher {
             market: message.market,
             status: "dispatched",
             latencyMs,
-            message: `Dispatched: ${message.signalId}`,
+            message: `Telegram sent: ${message.signalId}`,
           });
         } else {
+          recordTelegramDispatchFailure(
+            message.signalId,
+            result.error ?? "unknown",
+            latencyMs
+          );
+          void persistDispatchLog({
+            dispatchId: message.signalId,
+            signalId: message.signalId,
+            modelId: message.modelId,
+            source: message.source,
+            matchId: message.matchId,
+            fixtureId,
+            market: message.market,
+            status: "failed",
+            latencyMs,
+            errorMessage: result.error,
+          });
+          void recordOpsEvent({
+            event: "telegram_failed",
+            signalId: message.signalId,
+            modelId: message.modelId,
+            source: message.source,
+            matchId: message.matchId,
+            market: message.market,
+            status: "failed",
+            latencyMs,
+            error: result.error,
+            message: `Telegram failed: ${message.signalId} — ${result.error ?? "unknown"}`,
+            level: "error",
+          });
           void recordOpsEvent({
             event: "failed",
             signalId: message.signalId,
@@ -230,9 +287,20 @@ export class SignalDispatcher {
             status: "failed",
             latencyMs,
             error: result.error,
-            message: `Dispatch failed: ${message.signalId} — ${result.error ?? "unknown"}`,
+            message: `Dispatch failed: ${message.signalId}`,
             level: "error",
           });
+        }
+
+        this.locks.delete(message.fingerprint);
+
+        if (this.cooldownByFingerprint.size > 500) {
+          const cutoff = Date.now() - TELEGRAM_COOLDOWN_MS * 2;
+          for (const [fp, entry] of this.cooldownByFingerprint.entries()) {
+            if (entry.lastDispatchedAt < cutoff) {
+              this.cooldownByFingerprint.delete(fp);
+            }
+          }
         }
       }
     } catch (error) {
@@ -240,20 +308,13 @@ export class SignalDispatcher {
       logWarn(LOG_SCOPE, "Queue processing error", { message: errMessage });
     } finally {
       this.processing = false;
-
-      if (this.queue.length > 0) {
-        void this.processQueue();
-      }
+      if (this.queue.length > 0) void this.processQueue();
     }
   }
 }
 
-/** Shared dispatcher instance (not connected to live runtime yet). */
 export const signalDispatcher = new SignalDispatcher();
 
-/**
- * Convenience entry: format + queue + deliver via Telegram client.
- */
 export function dispatchSignalToTelegram(
   request: TelegramDispatchRequest
 ): TelegramDispatchResult {
@@ -264,7 +325,11 @@ export function dispatchSignalsToTelegram(
   signals: Signal[],
   source: TelegramSignalSource,
   modelId: string,
-  options?: { minuteByMatchId?: Record<string, number> }
+  options?: {
+    minuteByMatchId?: Record<string, number>;
+    momentumByMatchId?: Record<string, string>;
+    reasonByMatchId?: Record<string, string>;
+  }
 ): TelegramDispatchResult[] {
   if (source === "production") {
     return signalDispatcher.dispatchProductionSignals(signals, modelId, options);

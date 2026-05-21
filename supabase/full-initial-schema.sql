@@ -200,6 +200,31 @@ for each row
 execute function public.set_updated_at();
 
 -- =============================================================================
+-- LIVE_METRICS — quantitative pressure engine (per polling cycle)
+-- =============================================================================
+
+create table if not exists public.live_metrics (
+  id uuid primary key default gen_random_uuid(),
+  fixture_id text not null,
+  home_pressure numeric(5, 2) not null default 0,
+  away_pressure numeric(5, 2) not null default 0,
+  momentum numeric(5, 2) not null default 0,
+  goal_probability numeric(6, 4) not null default 0,
+  confidence numeric(6, 4) not null default 0,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists live_metrics_fixture_id_idx
+  on public.live_metrics (fixture_id);
+
+create index if not exists live_metrics_created_at_idx
+  on public.live_metrics (created_at desc);
+
+create index if not exists live_metrics_fixture_created_idx
+  on public.live_metrics (fixture_id, created_at desc);
+
+-- =============================================================================
 -- DISPATCH_LOGS — Telegram / notification dispatch observability
 -- =============================================================================
 

@@ -35,6 +35,67 @@ export function isTelegramConfigured(): boolean {
   return Boolean(botToken && chatId);
 }
 
+let lastProbeAt = 0;
+let lastProbeResult = false;
+const PROBE_CACHE_MS = 60_000;
+
+/**
+ * Verifies bot token via getMe (cached 60s). Sandbox returns true when configured.
+ */
+export async function probeTelegramConnection(): Promise<boolean> {
+  const config = getTelegramConfig();
+
+  if (config.sandboxMode) {
+    return isTelegramConfigured();
+  }
+
+  if (!config.botToken) return false;
+
+  const now = Date.now();
+  if (now - lastProbeAt < PROBE_CACHE_MS) return lastProbeResult;
+
+  try {
+    const url = `${TELEGRAM_API_BASE}/bot${config.botToken}/getMe`;
+    const response = await fetch(url, { method: "GET", cache: "no-store" });
+    const body = (await response.json()) as { ok?: boolean };
+    lastProbeResult = Boolean(response.ok && body.ok);
+    lastProbeAt = now;
+    return lastProbeResult;
+  } catch {
+    lastProbeResult = false;
+    lastProbeAt = now;
+    return false;
+  }
+}
+
+const RETRY_DELAYS_MS = [500, 1500, 3000];
+
+/**
+ * Sends with up to 3 attempts — never throws.
+ */
+export async function sendTelegramMessageWithRetry(
+  text: string,
+  options?: { signalId?: string; source?: string; maxAttempts?: number }
+): Promise<TelegramSendResult> {
+  const maxAttempts = options?.maxAttempts ?? 3;
+  let lastResult: TelegramSendResult = { ok: false, sandbox: false, error: "no_attempt" };
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    lastResult = await sendTelegramMessage(text, {
+      signalId: options?.signalId,
+      source: options?.source,
+    });
+
+    if (lastResult.ok || lastResult.sandbox) return lastResult;
+
+    if (attempt < maxAttempts) {
+      await new Promise((r) => setTimeout(r, RETRY_DELAYS_MS[attempt - 1] ?? 2000));
+    }
+  }
+
+  return lastResult;
+}
+
 /**
  * Sends a message via Telegram Bot API, or logs payload in sandbox mode.
  */

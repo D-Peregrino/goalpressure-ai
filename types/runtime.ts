@@ -3,6 +3,7 @@ export interface LivePollingCycleStats {
   matchesUpserted: number;
   signalsGenerated: number;
   signalsPersisted: number;
+  metricsPersisted?: number;
   durationMs: number;
   success: boolean;
   error?: string;

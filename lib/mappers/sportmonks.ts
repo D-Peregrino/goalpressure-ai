@@ -10,7 +10,9 @@ import type {
   MatchScore,
   MatchStats,
   MatchStatus,
+  MatchTeamStats,
   Odds,
+  TeamSideStats,
 } from "@/types/domain";
 
 // ─── Raw Sportmonks payload (minimal, tolerant shapes) ───────────────────────
@@ -213,6 +215,9 @@ const STAT_NAME_ALIASES: Record<string, keyof MatchStats> = {
   dangerousattacks: "dangerousAttacks",
   "attacks dangerous": "dangerousAttacks",
   "dangerous attack": "dangerousAttacks",
+  attacks: "totalAttacks",
+  "total attacks": "totalAttacks",
+  "attacks total": "totalAttacks",
   corners: "corners",
   "corner kicks": "corners",
   corner: "corners",
@@ -369,7 +374,115 @@ function extractStatValue(stat: SportmonksStatistic): number {
   return Math.max(0, Math.floor(safeNumber(raw, 0)));
 }
 
+function emptySideStats(): TeamSideStats {
+  return {
+    shots: 0,
+    shotsOnTarget: 0,
+    dangerousAttacks: 0,
+    totalAttacks: 0,
+    corners: 0,
+    xG: 0,
+    possession: 50,
+  };
+}
+
+function addToSide(side: TeamSideStats, field: keyof MatchStats, value: number): void {
+  switch (field) {
+    case "shots":
+      side.shots += value;
+      break;
+    case "shotsOnTarget":
+      side.shotsOnTarget += value;
+      break;
+    case "dangerousAttacks":
+      side.dangerousAttacks += value;
+      break;
+    case "totalAttacks":
+      side.totalAttacks += value;
+      break;
+    case "corners":
+      side.corners += value;
+      break;
+    case "xG":
+      side.xG = (side.xG ?? 0) + value;
+      break;
+    case "possession":
+      side.possession = Math.max(side.possession ?? 50, value);
+      break;
+    default:
+      break;
+  }
+}
+
+function mapTeamStats(fixture: SportmonksFixture): MatchTeamStats | undefined {
+  const statistics = fixture.statistics ?? [];
+  if (statistics.length === 0) return undefined;
+
+  const { home, away } = resolveParticipants(fixture);
+  const homeId = home?.id;
+  const awayId = away?.id;
+  if (homeId === undefined && awayId === undefined) return undefined;
+
+  const homeSide = emptySideStats();
+  const awaySide = emptySideStats();
+  let hasParticipantStats = false;
+
+  for (const stat of statistics) {
+    const field =
+      normalizeStatKey(stat.type?.developer_name) ??
+      normalizeStatKey(stat.type?.code) ??
+      normalizeStatKey(stat.type?.name);
+    if (!field) continue;
+
+    const value = extractStatValue(stat);
+    const pid = stat.participant_id;
+
+    if (pid === homeId) {
+      addToSide(homeSide, field, value);
+      hasParticipantStats = true;
+    } else if (pid === awayId) {
+      addToSide(awaySide, field, value);
+      hasParticipantStats = true;
+    }
+  }
+
+  if (!hasParticipantStats) return undefined;
+
+  if (homeSide.totalAttacks <= 0 && homeSide.dangerousAttacks > 0) {
+    homeSide.totalAttacks = Math.round(homeSide.dangerousAttacks * 1.45);
+  }
+  if (awaySide.totalAttacks <= 0 && awaySide.dangerousAttacks > 0) {
+    awaySide.totalAttacks = Math.round(awaySide.dangerousAttacks * 1.45);
+  }
+
+  return { home: homeSide, away: awaySide };
+}
+
 function mapStats(fixture: SportmonksFixture): MatchStats {
+  const teamStats = mapTeamStats(fixture);
+  if (teamStats) {
+    const sum = (a: number, b: number) => a + b;
+    const totalAttacks =
+      teamStats.home.totalAttacks + teamStats.away.totalAttacks;
+    const possession =
+      teamStats.home.possession && teamStats.away.possession
+        ? Math.max(teamStats.home.possession, teamStats.away.possession)
+        : 50;
+
+    return {
+      shots: sum(teamStats.home.shots, teamStats.away.shots),
+      shotsOnTarget: sum(teamStats.home.shotsOnTarget, teamStats.away.shotsOnTarget),
+      dangerousAttacks: sum(
+        teamStats.home.dangerousAttacks,
+        teamStats.away.dangerousAttacks
+      ),
+      totalAttacks: totalAttacks > 0 ? totalAttacks : undefined,
+      corners: sum(teamStats.home.corners, teamStats.away.corners),
+      xG: sum(teamStats.home.xG ?? 0, teamStats.away.xG ?? 0),
+      possession,
+    };
+  }
+
   const statistics = fixture.statistics ?? [];
   if (statistics.length === 0) {
     return { ...DEFAULT_STATS };
@@ -405,16 +518,32 @@ function mapStats(fixture: SportmonksFixture): MatchStats {
     }
 
     if (pid === homeId || pid === awayId) {
-      totals[field] += value;
+      if (field === "totalAttacks") {
+        totals.totalAttacks = (totals.totalAttacks ?? 0) + value;
+      } else {
+        totals[field] = (totals[field] as number) + value;
+      }
     } else if (pid === undefined) {
-      totals[field] = Math.max(totals[field] as number, value);
+      if (field === "totalAttacks") {
+        totals.totalAttacks = Math.max(totals.totalAttacks ?? 0, value);
+      } else {
+        totals[field] = Math.max(totals[field] as number, value);
+      }
     }
   }
+
+  const totalAttacks =
+    totals.totalAttacks && totals.totalAttacks > 0
+      ? totals.totalAttacks
+      : totals.dangerousAttacks > 0
+        ? Math.round(totals.dangerousAttacks * 1.45)
+        : undefined;
 
   return {
     shots: totals.shots,
     shotsOnTarget: totals.shotsOnTarget,
     dangerousAttacks: totals.dangerousAttacks,
+    totalAttacks,
     corners: totals.corners,
     xG: totals.xG ?? 0,
     possession: totals.possession && totals.possession > 0 ? totals.possession : 50,
@@ -522,6 +651,7 @@ export function buildMatchFromSportmonksFixture(
     status: mapStatus(fixture),
     score: mapScore(fixture),
     stats: mapStats(fixture),
+    teamStats: mapTeamStats(fixture),
     odds: mapOdds(fixture),
     pressure: { score: 0 },
     updatedAt: now,

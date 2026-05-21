@@ -14,6 +14,8 @@ export type OpsLogLevel = "info" | "warn" | "error";
 export type OpsEventType =
   | "queued"
   | "dispatched"
+  | "telegram_sent"
+  | "telegram_failed"
   | "skipped_duplicate"
   | "cooldown_blocked"
   | "failed"
@@ -57,6 +59,7 @@ export interface OpsCounterMetrics {
   sandboxDispatches: number;
   dispatchRatePerMin: number;
   failRate: number;
+  averageLatencyMs?: number;
   runtimeCycles?: number;
   pollingSuccess?: number;
   pollingFailures?: number;
@@ -65,9 +68,33 @@ export interface OpsCounterMetrics {
 export interface OpsTelegramStatus {
   sandboxMode: boolean;
   configured: boolean;
-  status: "SANDBOX" | "READY" | "OFFLINE";
+  connected: boolean;
+  status: "SANDBOX" | "READY" | "OFFLINE" | "ONLINE";
   botTokenSet: boolean;
   chatIdSet: boolean;
+  lastDispatch: string | null;
+  averageLatencyMs: number;
+  totalSent: number;
+  totalFailed: number;
+}
+
+export interface OpsLivePressureMetric {
+  fixtureId: string;
+  matchLabel: string;
+  minute: number;
+  homePressure: number;
+  awayPressure: number;
+  pressureScore: number;
+  momentum: number;
+  goalProbability: number;
+  confidence: number;
+}
+
+export interface OpsLivePressureSnapshot {
+  updatedAt: string | null;
+  matchCount: number;
+  topPressure: OpsLivePressureMetric | null;
+  metrics: OpsLivePressureMetric[];
 }
 
 export interface OpsApiSuccessResponse {
@@ -77,6 +104,7 @@ export interface OpsApiSuccessResponse {
   counters: OpsCounterMetrics;
   recentDispatches: OpsDispatchRecord[];
   logs: OpsLogEntry[];
+  livePressure: OpsLivePressureSnapshot;
   meta: {
     fetchedAt: string;
     responseTimeMs: number;

@@ -12,6 +12,7 @@ import {
   scheduleExperimentalUpdate,
   scheduleLiveAnalyticsUpdate,
 } from "@/lib/live/liveAnalyticsUpdater";
+import { processLiveRuntimeMetrics } from "@/lib/runtime/liveRuntime";
 import { recordRuntimeOpsLog } from "@/lib/ops/opsStore";
 import { logInfo, logOps, logWarn } from "@/lib/utils/logger";
 import type {
@@ -199,8 +200,11 @@ export class LivePollingEngine {
         });
       }
 
-      const matches = fetchResult.matches;
+      const runtimeMetrics = await processLiveRuntimeMetrics(fetchResult.matches);
+      const matches = runtimeMetrics.matches;
       const signals = fetchResult.signals;
+
+      stats.metricsPersisted = runtimeMetrics.metricsPersisted;
 
       const matchResult = await persistLiveMatches(matches);
       stats.matchesUpserted = matchResult.upserted;
