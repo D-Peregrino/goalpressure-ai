@@ -3,11 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLiveMatches } from "@/hooks/useLiveMatches";
 import { useOps } from "@/hooks/useOps";
-import {
-  fixtureIdFromMatch,
-  normalizeFixtureId,
-  toDisplayStatus,
-} from "@/lib/ui/matchFormatting";
+import { fixtureIdFromMatch, normalizeFixtureId } from "@/lib/ui/matchFormatting";
+import { normalizeLiveMatch } from "@/lib/ui/normalizeLiveMatch";
 import type { Match, MatchStatus, Odds } from "@/types/domain";
 
 export type MatchCenterFilter =
@@ -28,9 +25,14 @@ export interface EnrichedLiveMatch {
   awayTeam: string;
   homeScore: number | null;
   awayScore: number | null;
-  minute: number;
+  scoreKnown: boolean;
+  minute: number | null;
+  minuteLabel: string;
   status: MatchStatus | undefined;
   displayStatus: ReturnType<typeof import("@/lib/ui/matchFormatting").toDisplayStatus>;
+  homeLogo: string | null;
+  awayLogo: string | null;
+  debug?: { scoreMissing?: boolean; fixtureMissing?: boolean };
   odds: Odds;
   pressureScore: number;
   homePressure: number;
@@ -205,17 +207,27 @@ export function useLiveMatchCenter() {
       if ((micro?.microeventScore ?? 0) >= 55) microeventBadges.push("Burst");
       if ((micro?.chaosBurst ?? 0) >= 50) microeventBadges.push("Chaos wave");
 
+      const core = normalizeLiveMatch(match, {
+        opsMinute: pressureOps?.minute,
+        warnContext: fixtureId,
+      });
+
       return {
-        fixtureId,
+        fixtureId: core.fixtureId,
         matchId: match.id,
         league: match.league,
-        homeTeam: match.homeTeam,
-        awayTeam: match.awayTeam,
-        homeScore: match.score?.home ?? null,
-        awayScore: match.score?.away ?? null,
-        minute: pressureOps?.minute ?? match.minute,
-        status: match.status,
-        displayStatus: toDisplayStatus(match.status),
+        homeTeam: core.homeTeam,
+        awayTeam: core.awayTeam,
+        homeScore: core.homeScore,
+        awayScore: core.awayScore,
+        scoreKnown: core.scoreKnown,
+        minute: core.minute,
+        minuteLabel: core.minuteLabel,
+        status: core.status,
+        displayStatus: core.displayStatus,
+        homeLogo: core.homeLogo,
+        awayLogo: core.awayLogo,
+        debug: core.debug,
         odds: match.odds,
         pressureScore: split.total,
         homePressure: homeP,

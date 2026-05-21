@@ -31,14 +31,14 @@ export default function MatchFilters({
   liveCount: number;
 }) {
   return (
-    <div className="space-y-4">
+    <div className="match-center-filters space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         {FILTERS.map((f) => (
           <button
             key={f.id}
             type="button"
             onClick={() => onFilter(f.id)}
-            className={`rounded-lg border px-3 py-1.5 font-body text-sm transition-colors ${
+            className={`h-9 rounded-lg border px-3.5 font-body text-sm transition-colors ${
               filter === f.id
                 ? "border-[rgba(255,43,43,0.3)] bg-[rgba(255,43,43,0.08)] font-semibold text-[var(--text)]"
                 : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--text)]"
@@ -52,21 +52,21 @@ export default function MatchFilters({
         ))}
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative min-w-[200px] flex-1 max-w-md">
+        <div className="relative min-w-[220px] flex-1 max-w-lg">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
           <input
             type="search"
             value={search}
             onChange={(e) => onSearch(e.target.value)}
             placeholder="Buscar time ou liga…"
-            className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] py-2.5 pl-10 pr-3 font-body text-sm outline-none focus:border-[rgba(255,43,43,0.35)]"
+            className="h-10 w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] py-0 pl-10 pr-3 font-body text-sm outline-none focus:border-[rgba(255,43,43,0.35)]"
           />
         </div>
-        <div className="flex rounded-lg border border-[var(--border)] bg-[var(--surface)] p-0.5">
+        <div className="flex h-10 shrink-0 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-1">
           <button
             type="button"
             onClick={() => onViewMode("grid")}
-            className={`rounded-md p-2 ${viewMode === "grid" ? "bg-[var(--gp-white-tech)] text-[var(--text)]" : "text-[var(--muted)]"}`}
+            className={`flex h-8 w-10 items-center justify-center rounded-md ${viewMode === "grid" ? "bg-[var(--gp-white-tech)] text-[var(--text)]" : "text-[var(--muted)]"}`}
             aria-label="Grade"
           >
             <Grid3X3 className="h-4 w-4" />
@@ -74,7 +74,7 @@ export default function MatchFilters({
           <button
             type="button"
             onClick={() => onViewMode("list")}
-            className={`rounded-md p-2 ${viewMode === "list" ? "bg-[var(--gp-white-tech)] text-[var(--text)]" : "text-[var(--muted)]"}`}
+            className={`flex h-8 w-10 items-center justify-center rounded-md ${viewMode === "list" ? "bg-[var(--gp-white-tech)] text-[var(--text)]" : "text-[var(--muted)]"}`}
             aria-label="Lista"
           >
             <List className="h-4 w-4" />

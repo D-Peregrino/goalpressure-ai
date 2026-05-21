@@ -13,7 +13,7 @@ export default function MiniPressureTimeline({
   collecting?: boolean;
 }) {
   const bars = useMemo(() => {
-    if (points && points.length >= 4) return points.slice(-24);
+    if (points && points.length >= 4) return points.slice(-20);
     return null;
   }, [points]);
 
@@ -21,9 +21,9 @@ export default function MiniPressureTimeline({
 
   if (!bars) {
     return (
-      <div className="flex h-10 items-center justify-center rounded-lg border border-dashed border-[var(--border)] bg-[var(--gp-white-tech)]">
-        <p className="font-mono-data text-[10px] text-[var(--muted)]">
-          {collecting ? "Coletando histórico…" : "Timeline indisponível"}
+      <div className="match-card__timeline flex items-center justify-center rounded-xl border border-dashed border-[var(--border)] bg-[var(--gp-white-tech)]">
+        <p className="font-mono-data text-[11px] text-[var(--muted)]">
+          {collecting ? "Coletando histórico de pressão…" : "Timeline indisponível"}
         </p>
       </div>
     );
@@ -31,14 +31,15 @@ export default function MiniPressureTimeline({
 
   const max = Math.max(...bars, 1);
   return (
-    <div className="flex h-10 items-end gap-px rounded-lg bg-[var(--gp-white-tech)] px-1 py-1">
+    <div className="match-card__timeline flex items-end gap-px rounded-xl bg-[var(--gp-white-tech)] px-2 py-2">
       {bars.map((v, i) => (
         <div
           key={i}
-          className="min-w-0 flex-1 rounded-t-sm opacity-80"
+          className="min-w-0 flex-1 rounded-t-sm"
           style={{
-            height: `${Math.max(12, (v / max) * 100)}%`,
+            height: `${Math.max(14, (v / max) * 100)}%`,
             background: accent,
+            opacity: 0.65,
           }}
         />
       ))}

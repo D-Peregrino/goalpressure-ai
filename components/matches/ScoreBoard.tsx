@@ -1,5 +1,6 @@
 "use client";
 
+import { formatScoreDisplay } from "@/lib/ui/normalizeLiveMatch";
 import TeamBadge from "@/components/matches/TeamBadge";
 
 export default function ScoreBoard({
@@ -7,30 +8,38 @@ export default function ScoreBoard({
   awayTeam,
   homeScore,
   awayScore,
-  compact,
+  scoreKnown,
+  homeLogo,
+  awayLogo,
 }: {
   homeTeam: string;
   awayTeam: string;
-  homeScore: string;
-  awayScore: string;
-  compact?: boolean;
+  homeScore: number | null;
+  awayScore: number | null;
+  scoreKnown: boolean;
+  homeLogo?: string | null;
+  awayLogo?: string | null;
 }) {
+  const score = formatScoreDisplay(homeScore, awayScore, scoreKnown);
+
   return (
-    <div className={`grid grid-cols-[1fr_auto_1fr] items-center gap-2 ${compact ? "gap-1" : "gap-3"}`}>
-      <div className="flex min-w-0 items-center justify-end gap-2">
-        <span className={`truncate text-right font-medium ${compact ? "text-xs" : "text-sm"}`}>
+    <div className="match-card__score-row">
+      <div className="match-card__team-col match-card__team-col--home">
+        <TeamBadge teamName={homeTeam} logoUrl={homeLogo} size="lg" />
+        <span className="match-card__team-name" title={homeTeam}>
           {homeTeam}
         </span>
-        <TeamBadge teamName={homeTeam} size={compact ? "sm" : "md"} />
       </div>
-      <div className={`tabular-nums text-center font-display font-bold tracking-tight ${compact ? "text-xl" : "text-3xl"}`}>
-        <span>{homeScore}</span>
-        <span className="mx-1.5 text-[var(--muted)] font-normal">:</span>
-        <span>{awayScore}</span>
+      <div className="match-card__score-center font-display">
+        <span>{score.home}</span>
+        <span className="mx-2 text-[var(--muted)] font-normal">:</span>
+        <span>{score.away}</span>
       </div>
-      <div className="flex min-w-0 items-center gap-2">
-        <TeamBadge teamName={awayTeam} size={compact ? "sm" : "md"} />
-        <span className={`truncate font-medium ${compact ? "text-xs" : "text-sm"}`}>{awayTeam}</span>
+      <div className="match-card__team-col">
+        <TeamBadge teamName={awayTeam} logoUrl={awayLogo} size="lg" />
+        <span className="match-card__team-name" title={awayTeam}>
+          {awayTeam}
+        </span>
       </div>
     </div>
   );

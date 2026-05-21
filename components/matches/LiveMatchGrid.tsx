@@ -32,7 +32,7 @@ export default function LiveMatchGrid({
 
   if (isLoading && matches.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] py-16 text-center">
+      <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] py-20 text-center">
         <p className="font-body text-sm text-[var(--muted)]">Carregando partidas ao vivo…</p>
       </div>
     );
@@ -40,7 +40,7 @@ export default function LiveMatchGrid({
 
   if (matches.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] py-16 text-center">
+      <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] py-20 text-center">
         <p className="font-body text-sm text-[var(--muted)]">
           Nenhuma partida neste filtro. Ajuste filtros ou aguarde o feed live.
         </p>
@@ -49,9 +49,7 @@ export default function LiveMatchGrid({
   }
 
   const gridClass =
-    viewMode === "list"
-      ? "flex flex-col gap-4"
-      : "grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3";
+    viewMode === "list" ? "match-center-grid match-center-grid--list" : "match-center-grid";
 
   return (
     <motion.div layout className={`w-full min-w-0 ${gridClass}`}>
@@ -62,7 +60,6 @@ export default function LiveMatchGrid({
           isFavorite={favorites.has(m.fixtureId)}
           onToggleFavorite={() => onToggleFavorite(m.fixtureId)}
           pressureHistory={historyRef.current.get(m.fixtureId)}
-          listMode={viewMode === "list"}
         />
       ))}
     </motion.div>

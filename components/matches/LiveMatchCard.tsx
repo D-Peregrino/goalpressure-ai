@@ -5,7 +5,6 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ChevronRight, Star } from "lucide-react";
 import type { EnrichedLiveMatch } from "@/hooks/useLiveMatchCenter";
-import { formatMinute, formatScore } from "@/lib/ui/matchFormatting";
 import { getTeamColor } from "@/lib/ui/teamColors";
 import ScoreBoard from "@/components/matches/ScoreBoard";
 import MatchStatusPill from "@/components/matches/MatchStatusPill";
@@ -17,84 +16,92 @@ import MarketMiniPanel from "@/components/matches/MarketMiniPanel";
 const TABS = ["Live", "Odds", "Stats", "Players", "Engines"] as const;
 type TabId = (typeof TABS)[number];
 
+const METRICS = [
+  { key: "pressureScore", label: "Pressure" },
+  { key: "momentum", label: "Momentum" },
+  { key: "chaosIndex", label: "Chaos" },
+  { key: "edgePercent", label: "Edge" },
+  { key: "confidence", label: "Conf." },
+  { key: "ev", label: "EV" },
+] as const;
+
 export default function LiveMatchCard({
   match,
   isFavorite,
   onToggleFavorite,
   pressureHistory,
-  listMode,
 }: {
   match: EnrichedLiveMatch;
   isFavorite: boolean;
   onToggleFavorite: () => void;
   pressureHistory?: number[];
-  listMode?: boolean;
 }) {
   const [tab, setTab] = useState<TabId>("Live");
-  const score = formatScore(
-    match.homeScore != null && match.awayScore != null
-      ? { home: match.homeScore, away: match.awayScore }
-      : null
-  );
-  const minuteLabel = formatMinute(match.minute, match.status);
   const homeColor = getTeamColor(match.homeTeam);
   const awayColor = getTeamColor(match.awayTeam);
+  const isDev = process.env.NODE_ENV === "development";
 
   return (
     <motion.article
       layout
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`match-card overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[0_2px_12px_rgba(32,38,46,0.06)] ${
-        listMode ? "flex flex-col sm:flex-row" : ""
-      }`}
+      className="match-card"
     >
       <div
-        className="h-1 w-full shrink-0"
-        style={{
-          background: `linear-gradient(90deg, ${homeColor} 0%, ${awayColor} 100%)`,
-        }}
+        className="h-1 shrink-0 w-full"
+        style={{ background: `linear-gradient(90deg, ${homeColor}, ${awayColor})` }}
       />
 
-      <div className={`flex min-w-0 flex-1 flex-col p-4 sm:p-5 ${listMode ? "sm:pr-6" : ""}`}>
-        <header className="mb-4 flex items-start justify-between gap-2">
-          <div className="min-w-0">
+      <div className="match-card__body">
+        <header className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
             <p className="truncate font-mono-data text-[11px] uppercase tracking-wide text-[var(--muted)]">
               {match.league}
             </p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
               <MatchStatusPill
                 status={match.displayStatus}
-                minuteLabel={minuteLabel}
+                minuteLabel={match.minuteLabel}
                 pulse={match.displayStatus === "LIVE"}
               />
               {match.matchPhase && (
-                <span className="rounded-md bg-[var(--gp-white-tech)] px-2 py-0.5 font-mono-data text-[10px] text-[var(--muted)]">
+                <span className="rounded-full border border-[var(--border)] bg-[var(--gp-white-tech)] px-2 py-0.5 font-mono-data text-[10px] text-[var(--muted)]">
                   {match.matchPhase}
                 </span>
               )}
             </div>
           </div>
-          <div className="flex shrink-0 gap-1">
+          <div className="flex shrink-0 items-center gap-1">
+            {isDev && match.debug?.scoreMissing && (
+              <span className="rounded bg-amber-100 px-1.5 py-0.5 font-mono-data text-[9px] text-amber-800">
+                score missing
+              </span>
+            )}
+            {isDev && match.debug?.fixtureMissing && (
+              <span className="rounded bg-amber-100 px-1.5 py-0.5 font-mono-data text-[9px] text-amber-800">
+                fixture missing
+              </span>
+            )}
             <button
               type="button"
               onClick={(e) => {
                 e.preventDefault();
                 onToggleFavorite();
               }}
-              className="rounded-lg p-1.5 text-[var(--muted)] hover:bg-[var(--gp-white-tech)]"
+              className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-[var(--gp-white-tech)]"
               aria-label={isFavorite ? "Remover favorito" : "Favoritar"}
             >
               <Star
-                className={`h-4 w-4 ${isFavorite ? "fill-[#FF2B2B] text-[#FF2B2B]" : ""}`}
+                className={`h-4 w-4 ${isFavorite ? "fill-[#FF2B2B] text-[#FF2B2B]" : "text-[var(--muted)]"}`}
               />
             </button>
             <Link
               href={`/match/${encodeURIComponent(match.fixtureId)}`}
-              className="rounded-lg p-1.5 text-[var(--muted)] hover:bg-[var(--gp-white-tech)] hover:text-[#FF2B2B]"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--muted)] hover:bg-[var(--gp-white-tech)] hover:text-[#FF2B2B]"
               aria-label="Abrir partida"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-5 w-5" />
             </Link>
           </div>
         </header>
@@ -102,31 +109,36 @@ export default function LiveMatchCard({
         <ScoreBoard
           homeTeam={match.homeTeam}
           awayTeam={match.awayTeam}
-          homeScore={score.home}
-          awayScore={score.away}
-          compact={listMode}
+          homeScore={match.homeScore}
+          awayScore={match.awayScore}
+          scoreKnown={match.scoreKnown}
+          homeLogo={match.homeLogo}
+          awayLogo={match.awayLogo}
         />
 
-        <div className="mt-4 grid grid-cols-3 gap-2 font-mono-data text-center text-[11px] sm:grid-cols-6">
-          {[
-            { l: "Pressure", v: Math.round(match.pressureScore), accent: true },
-            { l: "Momentum", v: Math.round(match.momentum) },
-            { l: "Chaos", v: Math.round(match.chaosIndex) },
-            { l: "Edge", v: match.edgePercent != null ? `${match.edgePercent.toFixed(1)}%` : "—" },
-            { l: "Conf.", v: Math.round(match.confidence) },
-            {
-              l: "EV",
-              v: match.ev != null ? `${(match.ev * 100).toFixed(1)}%` : "—",
-              accent: true,
-            },
-          ].map((m) => (
-            <div key={m.l} className="rounded-lg bg-[var(--gp-white-tech)] px-1 py-2">
-              <p className="text-[9px] uppercase text-[var(--muted)]">{m.l}</p>
-              <p className={`mt-0.5 font-semibold tabular-nums ${m.accent ? "text-[#FF2B2B]" : ""}`}>
-                {m.v}
-              </p>
-            </div>
-          ))}
+        <div className="match-card__metrics-row">
+          {METRICS.map(({ key, label }) => {
+            const raw = match[key as keyof EnrichedLiveMatch];
+            let display: string;
+            if (key === "edgePercent") {
+              display = raw != null ? `${Number(raw).toFixed(1)}%` : "—";
+            } else if (key === "ev") {
+              display = raw != null ? `${(Number(raw) * 100).toFixed(1)}%` : "—";
+            } else {
+              display = raw != null ? String(Math.round(Number(raw))) : "—";
+            }
+            const accent = key === "pressureScore" || key === "ev";
+            return (
+              <div key={key} className="match-card__metric-chip">
+                <p className="text-[9px] uppercase tracking-wide text-[var(--muted)]">{label}</p>
+                <p
+                  className={`mt-1 text-sm font-semibold tabular-nums ${accent ? "text-[#FF2B2B]" : "text-[var(--text)]"}`}
+                >
+                  {display}
+                </p>
+              </div>
+            );
+          })}
         </div>
 
         <div className="mt-4">
@@ -139,26 +151,24 @@ export default function LiveMatchCard({
           />
         </div>
 
-        <div className="mt-3">
-          <MiniPressureTimeline
-            points={pressureHistory}
-            teamName={
-              match.dominantSide === "home"
-                ? match.homeTeam
-                : match.dominantSide === "away"
-                  ? match.awayTeam
-                  : undefined
-            }
-            collecting={match.displayStatus === "LIVE" && !pressureHistory?.length}
-          />
-        </div>
+        <MiniPressureTimeline
+          points={pressureHistory}
+          teamName={
+            match.dominantSide === "home"
+              ? match.homeTeam
+              : match.dominantSide === "away"
+                ? match.awayTeam
+                : undefined
+          }
+          collecting={match.displayStatus === "LIVE" && !pressureHistory?.length}
+        />
 
         {match.recentEvents.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1">
+          <div className="mt-3 flex flex-wrap gap-1.5">
             {match.recentEvents.map((ev) => (
               <span
                 key={ev}
-                className="rounded-full border border-[var(--border)] px-2 py-0.5 font-mono-data text-[10px] text-[var(--muted)]"
+                className="rounded-full border border-[var(--border)] px-2.5 py-0.5 font-mono-data text-[10px] text-[var(--muted)]"
               >
                 {ev}
               </span>
@@ -166,7 +176,7 @@ export default function LiveMatchCard({
           </div>
         )}
 
-        <div className="mt-4">
+        <div className="mt-3">
           <EngineBadges
             executionDecision={match.executionDecision}
             executionGrade={match.executionGrade}
@@ -176,14 +186,14 @@ export default function LiveMatchCard({
           />
         </div>
 
-        <footer className="mt-4 border-t border-[var(--border)] pt-3">
-          <div className="flex gap-1 overflow-x-auto">
+        <footer className="mt-auto pt-4">
+          <div className="match-card__tabs">
             {TABS.map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
-                className={`shrink-0 rounded-md px-2.5 py-1 font-mono-data text-[10px] font-medium uppercase tracking-wide ${
+                className={`shrink-0 rounded-lg px-3 py-1.5 font-mono-data text-[10px] font-semibold uppercase tracking-wide transition-colors ${
                   tab === t
                     ? "bg-[var(--card-dark)] text-[var(--text-on-dark)]"
                     : "text-[var(--muted)] hover:bg-[var(--gp-white-tech)]"
@@ -193,42 +203,27 @@ export default function LiveMatchCard({
               </button>
             ))}
           </div>
-          <div className="mt-3 min-h-[72px]">
+          <div className="mt-3 min-h-[64px] font-mono-data text-[11px] text-[var(--muted)]">
             {tab === "Live" && (
-              <div className="space-y-2 font-mono-data text-[11px] text-[var(--muted)]">
-                <p>
-                  Pressão total <span className="font-semibold text-[#FF2B2B]">{Math.round(match.pressureScore)}</span>
-                  {" · "}
-                  Janela {match.triggerWindow ?? "—"}
-                </p>
-                <p>Estado {match.sequenceState ?? "—"}</p>
-              </div>
+              <p>
+                Pressão {Math.round(match.pressureScore)} · Janela {match.triggerWindow ?? "—"} ·{" "}
+                {match.sequenceState ?? "—"}
+              </p>
             )}
             {tab === "Odds" && (
               <MarketMiniPanel markets={match.markets} primaryOdd={match.odds.primary} />
             )}
             {tab === "Stats" && (
-              <div className="grid grid-cols-2 gap-2 font-mono-data text-[11px]">
-                <div>
-                  <span className="text-[var(--muted)]">Chaos</span>
-                  <p className="font-semibold">{Math.round(match.chaosIndex)}</p>
-                </div>
-                <div>
-                  <span className="text-[var(--muted)]">Momentum</span>
-                  <p className="font-semibold">{Math.round(match.momentum)}</p>
-                </div>
-              </div>
-            )}
-            {tab === "Players" && (
-              <p className="font-mono-data text-[11px] text-[var(--muted)]">
-                Impacto de elenco · dados em consolidação via player runtime
+              <p>
+                Chaos {Math.round(match.chaosIndex)} · Momentum {Math.round(match.momentum)} · Conf.{" "}
+                {Math.round(match.confidence)}
               </p>
             )}
+            {tab === "Players" && <p>Player impact · runtime em consolidação</p>}
             {tab === "Engines" && (
-              <div className="font-mono-data text-[11px] text-[var(--muted)] space-y-1">
-                <p>Meta consensus · {match.executionDecision ?? "WATCH"}</p>
-                <p>Grade {match.executionGrade ?? "—"}</p>
-              </div>
+              <p>
+                {match.executionDecision ?? "WATCH"} · Grade {match.executionGrade ?? "—"}
+              </p>
             )}
           </div>
         </footer>

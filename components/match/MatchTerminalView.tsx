@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { useMatchIntel } from "@/hooks/useMatchIntel";
+import { formatScoreDisplay, normalizeLiveMatch } from "@/lib/ui/normalizeLiveMatch";
 import {
   TerminalCard,
   ExecutionBadge,
@@ -51,7 +52,8 @@ export default function MatchTerminalView({ fixtureId }: { fixtureId: string }) 
     );
   }
 
-  const score = match.score;
+  const core = normalizeLiveMatch(match, { opsMinute: pressure?.minute });
+  const scoreDisplay = formatScoreDisplay(core.homeScore, core.awayScore, core.scoreKnown);
 
   return (
     <motion.div
@@ -75,7 +77,7 @@ export default function MatchTerminalView({ fixtureId }: { fixtureId: string }) 
             <span className="font-normal t-muted">vs</span> {match.awayTeam}
           </h1>
           <p className="mt-3 font-mono-data t-muted">
-            {match.minute}&apos; · Placar {score ? `${score.home}-${score.away}` : "—"}
+            {core.minuteLabel} · Placar {scoreDisplay.home}:{scoreDisplay.away}
           </p>
         </div>
         <ExecutionBadge decision={decision} size="lg" />

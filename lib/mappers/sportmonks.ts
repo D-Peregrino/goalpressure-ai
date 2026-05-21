@@ -152,11 +152,6 @@ const DEFAULT_ODDS: Odds = {
   over15: 1,
 };
 
-const DEFAULT_SCORE: MatchScore = {
-  home: 0,
-  away: 0,
-};
-
 /** Sportmonks state_id → domain status (common football API v3 ids) */
 const STATE_ID_TO_STATUS: Record<number, MatchStatus> = {
   1: "NOT_STARTED",
@@ -330,7 +325,7 @@ function isCurrentScoreEntry(entry: SportmonksScoreEntry): boolean {
   );
 }
 
-function mapScore(fixture: SportmonksFixture): MatchScore {
+function mapScore(fixture: SportmonksFixture): MatchScore | undefined {
   const scores = fixture.scores ?? [];
   const { home, away } = resolveParticipants(fixture);
   const homeId = home?.id;
@@ -339,9 +334,8 @@ function mapScore(fixture: SportmonksFixture): MatchScore {
   const currentEntries = scores.filter(isCurrentScoreEntry);
   const entries = currentEntries.length > 0 ? currentEntries : scores;
 
-  let homeGoals = 0;
-  let awayGoals = 0;
-  let matched = false;
+  let homeGoals: number | undefined;
+  let awayGoals: number | undefined;
 
   for (const entry of entries) {
     const goals = safeNumber(entry.score?.goals, -1);
@@ -349,21 +343,13 @@ function mapScore(fixture: SportmonksFixture): MatchScore {
 
     if (homeId !== undefined && entry.participant_id === homeId) {
       homeGoals = goals;
-      matched = true;
     } else if (awayId !== undefined && entry.participant_id === awayId) {
       awayGoals = goals;
-      matched = true;
     }
   }
 
-  if (!matched && entries.length >= 2) {
-    homeGoals = safeNumber(entries[0]?.score?.goals, 0);
-    awayGoals = safeNumber(entries[1]?.score?.goals, 0);
-    matched = true;
-  }
-
-  if (!matched) {
-    return { ...DEFAULT_SCORE };
+  if (homeGoals === undefined || awayGoals === undefined) {
+    return undefined;
   }
 
   return { home: homeGoals, away: awayGoals };
@@ -649,7 +635,10 @@ export function buildMatchFromSportmonksFixture(
     awayTeam,
     minute: mapMinute(fixture),
     status: mapStatus(fixture),
-    score: mapScore(fixture),
+    ...((): { score?: MatchScore } => {
+      const score = mapScore(fixture);
+      return score ? { score } : {};
+    })(),
     stats: mapStats(fixture),
     teamStats: mapTeamStats(fixture),
     odds: mapOdds(fixture),

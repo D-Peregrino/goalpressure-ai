@@ -39,12 +39,15 @@ export function formatMinute(minute: number, status?: MatchStatus): string {
   return `${minute}'`;
 }
 
+/** @deprecated Prefer formatScoreDisplay from normalizeLiveMatch */
 export function formatScore(
   score?: { home: number; away: number } | null
 ): { home: string; away: string } {
   if (!score) return { home: "—", away: "—" };
   return { home: String(score.home), away: String(score.away) };
 }
+
+export { formatScoreDisplay, formatMinuteLabel } from "@/lib/ui/normalizeLiveMatch";
 
 export function clampPercent(n: number): number {
   return Math.min(100, Math.max(0, n));
