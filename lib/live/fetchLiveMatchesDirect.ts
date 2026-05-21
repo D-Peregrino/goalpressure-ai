@@ -31,7 +31,10 @@ export interface DirectLiveFetchResult {
 export async function fetchLiveMatchesDirect(options?: {
   modelId?: string;
   useCache?: boolean;
+  /** When false, Telegram is handled by runtime signalDispatcher (polling path) */
+  dispatchTelegram?: boolean;
 }): Promise<DirectLiveFetchResult> {
+  const dispatchTelegram = options?.dispatchTelegram !== false;
   const startedAt = Date.now();
   const useCache = options?.useCache !== false;
 
@@ -39,7 +42,7 @@ export async function fetchLiveMatchesDirect(options?: {
     const cached = getLiveMatchesCacheEntry();
     if (cached && isLiveMatchesCacheValid(cached)) {
       const engineResult = processLiveEngineBatch(cached.matches, {
-        dispatchTelegram: true,
+        dispatchTelegram,
         modelId: options?.modelId,
       });
 
@@ -75,7 +78,7 @@ export async function fetchLiveMatchesDirect(options?: {
     });
 
     const engineResult = processLiveEngineBatch(mapped, {
-      dispatchTelegram: true,
+      dispatchTelegram,
       modelId: options?.modelId,
     });
 

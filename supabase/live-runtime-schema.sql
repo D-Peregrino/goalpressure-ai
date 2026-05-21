@@ -97,3 +97,34 @@ create index if not exists live_metrics_created_at_idx
 
 create index if not exists live_metrics_fixture_created_idx
   on public.live_metrics (fixture_id, created_at desc);
+
+-- ─── Signal dispatches (decision engine + Telegram outcome) ─────────────────
+
+create table if not exists public.signal_dispatches (
+  id uuid primary key default gen_random_uuid(),
+  fixture_id text not null,
+  market text not null,
+  pressure_score numeric(5, 2) not null default 0,
+  momentum numeric(5, 2) not null default 0,
+  goal_probability numeric(6, 4) not null default 0,
+  confidence numeric(6, 4) not null default 0,
+  ev numeric(8, 4) not null default 0,
+  fair_odd numeric(8, 3) not null default 0,
+  market_odd numeric(8, 3) not null default 0,
+  triggered boolean not null default false,
+  telegram_sent boolean not null default false,
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists signal_dispatches_fixture_id_idx
+  on public.signal_dispatches (fixture_id);
+
+create index if not exists signal_dispatches_created_at_idx
+  on public.signal_dispatches (created_at desc);
+
+create index if not exists signal_dispatches_fixture_market_idx
+  on public.signal_dispatches (fixture_id, market, created_at desc);
+
+create index if not exists signal_dispatches_triggered_idx
+  on public.signal_dispatches (triggered, created_at desc);

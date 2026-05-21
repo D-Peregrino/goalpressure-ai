@@ -13,6 +13,7 @@ import {
   scheduleLiveAnalyticsUpdate,
 } from "@/lib/live/liveAnalyticsUpdater";
 import { processLiveRuntimeMetrics } from "@/lib/runtime/liveRuntime";
+import { processRuntimeSignalCycle } from "@/lib/runtime/signalDispatcher";
 import { recordRuntimeOpsLog } from "@/lib/ops/opsStore";
 import { logInfo, logOps, logWarn } from "@/lib/utils/logger";
 import type {
@@ -202,9 +203,28 @@ export class LivePollingEngine {
 
       const runtimeMetrics = await processLiveRuntimeMetrics(fetchResult.matches);
       const matches = runtimeMetrics.matches;
-      const signals = fetchResult.signals;
+
+      const signalCycle = await processRuntimeSignalCycle({
+        matches,
+        metrics: runtimeMetrics.snapshot.metrics,
+        modelId,
+        dispatchTelegram: true,
+      });
+
+      const signals = [
+        ...fetchResult.signals,
+        ...signalCycle.signals.filter(
+          (s) =>
+            !fetchResult.signals.some(
+              (existing) =>
+                existing.matchId === s.matchId && existing.market === s.market
+            )
+        ),
+      ];
 
       stats.metricsPersisted = runtimeMetrics.metricsPersisted;
+      stats.decisionSignalsTriggered = signalCycle.triggered;
+      stats.decisionSignalsDispatched = signalCycle.dispatched;
 
       const matchResult = await persistLiveMatches(matches);
       stats.matchesUpserted = matchResult.upserted;
@@ -295,7 +315,11 @@ export class LivePollingEngine {
 
     while (attempt < 3) {
       attempt += 1;
-      const result = await fetchLiveMatchesDirect({ modelId, useCache: attempt > 1 });
+      const result = await fetchLiveMatchesDirect({
+        modelId,
+        useCache: attempt > 1,
+        dispatchTelegram: false,
+      });
 
       if (result.ok) return result;
 
@@ -314,7 +338,11 @@ export class LivePollingEngine {
 
     if (lastResult) return lastResult;
 
-    return fetchLiveMatchesDirect({ modelId, useCache: false });
+    return fetchLiveMatchesDirect({
+      modelId,
+      useCache: false,
+      dispatchTelegram: false,
+    });
   }
 }
 

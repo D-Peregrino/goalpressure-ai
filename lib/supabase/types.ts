@@ -53,6 +53,23 @@ export interface AnalyticsSnapshotRow {
   generated_at?: string;
 }
 
+export interface SignalDispatchRow {
+  id?: string;
+  fixture_id: string;
+  market: string;
+  pressure_score: number;
+  momentum: number;
+  goal_probability: number;
+  confidence: number;
+  ev: number;
+  fair_odd: number;
+  market_odd: number;
+  triggered: boolean;
+  telegram_sent: boolean;
+  metadata?: Record<string, unknown>;
+  created_at?: string;
+}
+
 export interface LiveMetricsRow {
   id?: string;
   fixture_id: string;

@@ -4,6 +4,8 @@ export interface LivePollingCycleStats {
   signalsGenerated: number;
   signalsPersisted: number;
   metricsPersisted?: number;
+  decisionSignalsTriggered?: number;
+  decisionSignalsDispatched?: number;
   durationMs: number;
   success: boolean;
   error?: string;

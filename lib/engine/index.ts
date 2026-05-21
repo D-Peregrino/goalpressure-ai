@@ -20,6 +20,14 @@ export {
   hasPositiveEV,
 } from "@/lib/engine/ev/expectedValue";
 export { generateLiveSignals, buildMatchEngineInsight } from "@/lib/engine/signals/liveSignalGenerator";
+export {
+  evaluateSignalOpportunity,
+  metricsFromLiveRecord,
+  SIGNAL_DECISION_THRESHOLDS,
+  type SignalDecisionMetrics,
+  type SignalOpportunityEvaluation,
+} from "@/lib/engine/signalDecisionEngine";
+
 export { processLiveEngineBatch, getLatestEngineSnapshot } from "@/lib/engine/liveEnginePipeline";
 export {
   getLiveEngineSnapshot,

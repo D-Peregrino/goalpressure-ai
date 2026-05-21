@@ -97,6 +97,29 @@ export interface OpsLivePressureSnapshot {
   metrics: OpsLivePressureMetric[];
 }
 
+export interface OpsActiveSignal {
+  fixtureId: string;
+  matchLabel: string;
+  minute: number;
+  market: string;
+  pressureScore: number;
+  momentum: number;
+  ev: number;
+  confidence: number;
+  urgency: number;
+}
+
+export interface OpsSignalDecisionSnapshot {
+  updatedAt: string | null;
+  evaluated: number;
+  triggered: number;
+  dispatched: number;
+  blocked: number;
+  averageEv: number;
+  approvalRate: number;
+  activeSignals: OpsActiveSignal[];
+}
+
 export interface OpsApiSuccessResponse {
   ok: true;
   telegram: OpsTelegramStatus;
@@ -105,6 +128,7 @@ export interface OpsApiSuccessResponse {
   recentDispatches: OpsDispatchRecord[];
   logs: OpsLogEntry[];
   livePressure: OpsLivePressureSnapshot;
+  signalDecision: OpsSignalDecisionSnapshot;
   meta: {
     fetchedAt: string;
     responseTimeMs: number;

@@ -9,9 +9,11 @@ import {
   Radio,
   Send,
   Shield,
+  Target,
   Terminal,
+  Zap,
 } from "lucide-react";
-import type { OpsLivePressureMetric } from "@/types/opsApi";
+import type { OpsActiveSignal, OpsLivePressureMetric } from "@/types/opsApi";
 import EngineTelemetryStrip from "@/components/engine/EngineTelemetryStrip";
 import { useEngineInsights } from "@/hooks/useEngineInsights";
 import { useOps } from "@/hooks/useOps";
@@ -169,6 +171,7 @@ export default function OpsDashboard() {
     recentDispatches,
     logs,
     livePressure,
+    signalDecision,
     status,
     error,
     lastUpdated,
@@ -337,7 +340,75 @@ export default function OpsDashboard() {
           </section>
 
           <section>
-            <h2 className="section-header mb-4">Quantitative Pressure Engine</h2>
+            <h2 className="section-header mb-4">Signal Decision Engine (EV+)</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 mb-4">
+              <KpiCard
+                label="Active Signals"
+                value={String(signalDecision?.activeSignals.length ?? 0)}
+                sub={`${signalDecision?.triggered ?? 0} triggered`}
+                accent={(signalDecision?.activeSignals.length ?? 0) > 0}
+              />
+              <KpiCard
+                label="Avg EV"
+                value={
+                  signalDecision && signalDecision.averageEv > 0
+                    ? `${(signalDecision.averageEv * 100).toFixed(1)}%`
+                    : "—"
+                }
+                sub="EV+ opportunities"
+              />
+              <KpiCard
+                label="Dispatched"
+                value={String(signalDecision?.dispatched ?? 0)}
+                sub="Telegram queue"
+              />
+              <KpiCard
+                label="Approval Rate"
+                value={
+                  signalDecision
+                    ? `${(signalDecision.approvalRate * 100).toFixed(0)}%`
+                    : "—"
+                }
+                sub={`${signalDecision?.evaluated ?? 0} evaluated`}
+              />
+              <KpiCard
+                label="Blocked"
+                value={String(signalDecision?.blocked ?? 0)}
+                sub="Cooldown / dedup"
+              />
+            </div>
+            <div className="module-panel overflow-hidden border-pressure/20 bg-[#06090d] mb-6">
+              <div className="flex items-center gap-2 border-b border-card/80 bg-surface/80 px-3 py-2">
+                <Target className="h-3.5 w-3.5 text-pressure" />
+                <span className="font-mono text-[9px] font-bold uppercase tracking-[0.25em] text-muted">
+                  EV+ Active Signals
+                </span>
+              </div>
+              <div className="max-h-[240px] overflow-y-auto p-3 font-mono text-[10px] leading-relaxed">
+                {(signalDecision?.activeSignals ?? []).length === 0 ? (
+                  <p className="text-muted">[live-signal] awaiting EV+ triggers…</p>
+                ) : (
+                  signalDecision?.activeSignals.map((s: OpsActiveSignal) => (
+                    <div
+                      key={`${s.fixtureId}-${s.market}`}
+                      className="mb-1.5 border-l-2 border-pressure/50 pl-2"
+                    >
+                      <span className="text-pressure">{s.matchLabel}</span>{" "}
+                      {s.minute}&apos; · {s.market} · EV+
+                      {(s.ev * 100).toFixed(1)}% · P{s.pressureScore} · M
+                      {s.momentum} · U{s.urgency}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="section-header mb-4 flex items-center gap-2">
+              <Zap className="h-4 w-4 text-pressure" />
+              Quantitative Pressure Engine
+            </h2>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5 mb-4">
               <KpiCard
                 label="Live Fixtures"

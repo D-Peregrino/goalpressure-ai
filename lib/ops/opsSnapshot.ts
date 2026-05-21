@@ -6,10 +6,12 @@ import {
 import { getTelegramHealthDetail } from "@/lib/telegram/telegramHealth";
 import { getAverageDispatchLatencyMs } from "@/lib/telegram/telegramDispatchState";
 import { getLiveRuntimeMetricsSnapshot } from "@/lib/runtime/liveRuntime";
+import { getRuntimeSignalOpsSnapshot } from "@/lib/runtime/signalDispatcher";
 import { getOpsStoreSnapshot } from "@/lib/ops/opsStore";
 import type {
   OpsApiSuccessResponse,
   OpsLivePressureSnapshot,
+  OpsSignalDecisionSnapshot,
   OpsTelegramStatus,
 } from "@/types/opsApi";
 
@@ -66,6 +68,43 @@ function buildLivePressureSnapshot(): OpsLivePressureSnapshot {
   };
 }
 
+function buildSignalDecisionSnapshot(): OpsSignalDecisionSnapshot {
+  const snap = getRuntimeSignalOpsSnapshot();
+  if (!snap) {
+    return {
+      updatedAt: null,
+      evaluated: 0,
+      triggered: 0,
+      dispatched: 0,
+      blocked: 0,
+      averageEv: 0,
+      approvalRate: 0,
+      activeSignals: [],
+    };
+  }
+
+  return {
+    updatedAt: snap.updatedAt,
+    evaluated: snap.evaluated,
+    triggered: snap.triggered,
+    dispatched: snap.dispatched,
+    blocked: snap.blocked,
+    averageEv: snap.averageEv,
+    approvalRate: snap.approvalRate,
+    activeSignals: snap.activeSignals.map((s) => ({
+      fixtureId: s.fixtureId,
+      matchLabel: s.matchLabel,
+      minute: s.minute,
+      market: s.market,
+      pressureScore: s.pressureScore,
+      momentum: s.momentum,
+      ev: s.ev,
+      confidence: s.confidence,
+      urgency: s.urgency,
+    })),
+  };
+}
+
 export async function buildOpsApiPayload(
   responseTimeMs: number
 ): Promise<OpsApiSuccessResponse> {
@@ -76,6 +115,7 @@ export async function buildOpsApiPayload(
   ]);
 
   const livePressure = buildLivePressureSnapshot();
+  const signalDecision = buildSignalDecisionSnapshot();
 
   const counters = {
     ...store.counters,
@@ -94,6 +134,7 @@ export async function buildOpsApiPayload(
     recentDispatches: store.recentDispatches,
     logs: store.logs,
     livePressure,
+    signalDecision,
     meta: {
       fetchedAt: new Date().toISOString(),
       responseTimeMs,
