@@ -1,7 +1,50 @@
 /**
- * GoalPressure AI — Premium Design System tokens (UI only).
+ * GoalPressure AI — design tokens (institutional terminal + legacy UI).
  */
 
+/** Institutional v2 — Bloomberg / Sofascore / trading terminal */
+export const TOKENS = {
+  color: {
+    ice: "#F8FAFC",
+    iceMuted: "#EEF2F6",
+    navy: "#0F1729",
+    navySoft: "#1A2744",
+    navyCard: "#141E33",
+    graphite: "#20262E",
+    red: "#FF2B2B",
+    redSoft: "#FF4D4D",
+    redGlow: "rgba(255, 43, 43, 0.18)",
+    muted: "#5C6B7A",
+    border: "#DCE3EA",
+    borderSubtle: "#C8D0D9",
+    live: "#22C55E",
+    liveGlow: "rgba(34, 197, 94, 0.25)",
+  },
+  radius: {
+    sm: "8px",
+    md: "12px",
+    lg: "16px",
+    xl: "20px",
+    card: "18px",
+  },
+  shadow: {
+    card: "0 2px 16px rgba(15, 23, 41, 0.06), 0 1px 3px rgba(15, 23, 41, 0.04)",
+    cardHover: "0 8px 32px rgba(15, 23, 41, 0.1), 0 0 0 1px rgba(255, 43, 43, 0.08)",
+    glowLive: "0 0 0 1px rgba(255, 43, 43, 0.12), 0 12px 40px rgba(255, 43, 43, 0.08)",
+  },
+  motion: {
+    fast: "150ms",
+    base: "220ms",
+    slow: "380ms",
+  },
+  layout: {
+    sidebarExpanded: 272,
+    sidebarCollapsed: 76,
+    contentMax: 1440,
+  },
+} as const;
+
+/** Legacy premium dark tokens (ops, validation, command center) */
 export const colors = {
   bg: "#050608",
   surface: "#0c1018",
