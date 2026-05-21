@@ -135,10 +135,22 @@ function inferSubstitutions(
   return subs;
 }
 
+function tryLineupsFromFixture(match: Match): PlayerImpactInput | null {
+  try {
+    const raw = match as Match & { premium?: { lineupsAvailable?: boolean } };
+    if (!raw.premium?.lineupsAvailable) return null;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Estima lineups a partir de estatísticas agregadas do fixture (fallback institucional).
  */
 export function buildPlayerImpactInputFromMatch(match: Match): PlayerImpactInput {
+  const fromLineups = tryLineupsFromFixture(match);
+  if (fromLineups) return fromLineups;
   const fixtureId = match.externalId ?? match.id.replace(/^sm-/, "");
   const homeStats = match.teamStats?.home ?? {
     shots: Math.round(match.stats.shots * 0.5),

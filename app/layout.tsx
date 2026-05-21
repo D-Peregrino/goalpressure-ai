@@ -3,6 +3,7 @@ import { Inter, Rajdhani } from "next/font/google";
 import { Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { BRAND } from "@/lib/design/brand";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -37,7 +38,7 @@ export default function RootLayout({
       className={`${inter.variable} ${rajdhani.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-body bg-[var(--gp-white)] text-[var(--text)]">
-        {children}
+        <SubscriptionProvider>{children}</SubscriptionProvider>
       </body>
     </html>
   );

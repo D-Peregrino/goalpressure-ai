@@ -46,5 +46,11 @@ export interface LoadedActiveModel {
 }
 
 export function isMarketType(value: string): value is MarketType {
-  return value === "OVER_0_5" || value === "OVER_1_5";
+  return (
+    value === "OVER_0_5" ||
+    value === "OVER_1_5" ||
+    value === "OVER_2_5" ||
+    value === "BTTS" ||
+    value === "FULL_TIME_RESULT"
+  );
 }

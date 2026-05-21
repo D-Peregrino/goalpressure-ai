@@ -3,7 +3,6 @@
  */
 
 import type { Match } from "@/types/domain";
-import type { MarketType } from "@/types/domain";
 import type { LiveMetricRecord } from "@/lib/runtime/liveRuntime";
 import type { RuntimeActiveSignal } from "@/lib/runtime/signalDispatcher";
 import { calibrateMarketEdge } from "@/lib/market/marketCalibrationEngine";
@@ -24,18 +23,13 @@ import { buildMarketOpsSnapshot } from "@/lib/market/marketSnapshot";
 import type { MarketEdgeCalibration } from "@/types/market";
 import { logOps } from "@/lib/utils/logger";
 import { recordRuntimeOpsLog } from "@/lib/ops/opsStore";
+import { getCalibrationQuotes } from "@/lib/mappers/normalizeSportmonksOdds";
 
 const LOG_SCOPE = "market-calibration-cycle";
 
-const LIVE_MARKETS: MarketType[] = ["OVER_0_5", "OVER_1_5"];
-
-function resolveMarketOdd(match: Match, market: MarketType): number {
-  return market === "OVER_0_5" ? match.odds.over05 : match.odds.over15;
-}
-
 function findActiveSignal(
   fixtureId: string,
-  market: MarketType,
+  market: string,
   activeSignals: RuntimeActiveSignal[]
 ): RuntimeActiveSignal | undefined {
   return activeSignals.find(
@@ -56,7 +50,7 @@ export interface ProcessMarketCalibrationResult {
 }
 
 /**
- * Calibra edges para cada fixture×mercado do ciclo live.
+ * Calibra edges para cada fixture×mercado do ciclo live (odds bet365 reais).
  */
 export async function processMarketCalibrationCycle(
   input: ProcessMarketCalibrationInput
@@ -71,8 +65,12 @@ export async function processMarketCalibrationCycle(
     const metric = metricByFixture.get(fixtureId);
     if (!metric) continue;
 
-    for (const market of LIVE_MARKETS) {
-      const marketOdd = resolveMarketOdd(match, market);
+    const quotes = getCalibrationQuotes(match);
+    if (quotes.length === 0) continue;
+
+    for (const quote of quotes) {
+      const market = String(quote.marketCode);
+      const marketOdd = quote.odd;
       if (marketOdd < 1.01) continue;
 
       const { previousOdd, openingOdd } = recordMarketOdd(
@@ -108,6 +106,7 @@ export async function processMarketCalibrationCycle(
             }
           : undefined,
         marketOdd,
+        impliedProbability: quote.impliedProbability,
         previousMarketOdd: previousOdd,
         openingMarketOdd: openingOdd,
       });
@@ -160,7 +159,7 @@ export async function processMarketCalibrationCycle(
       if (cal.classification !== "IGNORE") {
         logOps(
           LOG_SCOPE,
-          `[market-calibration] fixture=${fixtureId} market=${market} edge=${cal.edgePercent}% EV=${cal.expectedValue} class=${cal.classification} mispricing=${cal.marketMispricingScore}`
+          `[market-calibration] fixture=${fixtureId} market=${market} odd=${marketOdd} edge=${cal.edgePercent}% EV=${cal.expectedValue} class=${cal.classification} mispricing=${cal.marketMispricingScore}`
         );
       }
     }

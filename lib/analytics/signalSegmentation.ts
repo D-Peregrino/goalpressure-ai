@@ -234,6 +234,9 @@ function buildEmptyByMarket(): Record<MarketType, SegmentMetrics> {
   return {
     OVER_0_5: emptySegmentMetrics(),
     OVER_1_5: emptySegmentMetrics(),
+    OVER_2_5: emptySegmentMetrics(),
+    BTTS: emptySegmentMetrics(),
+    FULL_TIME_RESULT: emptySegmentMetrics(),
   };
 }
 

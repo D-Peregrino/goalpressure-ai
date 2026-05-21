@@ -5,13 +5,27 @@
  */
 
 import { applyPressureToMatch } from "@/lib/pressureScore";
+import { buildPremiumContext } from "@/lib/mappers/buildPremiumContext";
+import { normalizeFixtureOdds } from "@/lib/mappers/normalizeSportmonksOdds";
+import {
+  inferStatsFromEvents,
+  inferPressureTrendFromTrends,
+  mergeXgIntoStats,
+  resolveAllFixtureOdds,
+  STAT_TYPE_ID_TO_FIELD,
+  sumXgFromFixture,
+  type SportmonksEvent,
+  type SportmonksXgEntry,
+} from "@/lib/mappers/sportmonksPremium";
 import type {
   Match,
+  MatchFeedMeta,
   MatchScore,
   MatchStats,
   MatchStatus,
   MatchTeamStats,
   Odds,
+  PressureTrend,
   TeamSideStats,
 } from "@/types/domain";
 
@@ -79,6 +93,8 @@ export interface SportmonksOdds {
   value?: string | number;
   market_description?: string;
   probability?: string;
+  bookmaker?: { id?: number; name?: string };
+  market?: { id?: number; name?: string; developer_name?: string };
 }
 
 export interface SportmonksStats {
@@ -130,7 +146,18 @@ export interface SportmonksFixture {
   odds?: SportmonksOdds[];
   /** Correct include name for inplay livescores endpoint */
   inplayOdds?: SportmonksOdds[];
+  premiumOdds?: SportmonksOdds[];
   periods?: SportmonksPeriod[];
+  events?: SportmonksEvent[];
+  lineups?: unknown[];
+  formations?: unknown[];
+  trends?: unknown[];
+  timeline?: unknown[];
+  xGFixture?: SportmonksXgEntry[];
+  xgfixture?: SportmonksXgEntry[];
+  venue?: { id?: number; name?: string; city?: string };
+  standings?: unknown;
+  ballCoordinates?: { pressure?: number; value?: number }[];
   /** Some responses expose minute at root */
   minute?: number;
 }
@@ -182,7 +209,10 @@ const STATE_ID_TO_STATUS: Record<number, MatchStatus> = {
 
 const STATE_NAME_TO_STATUS: Record<string, MatchStatus> = {
   NS: "NOT_STARTED",
+  PRE: "NOT_STARTED",
   "NOT STARTED": "NOT_STARTED",
+  UPCOMING: "NOT_STARTED",
+  SCHEDULED: "NOT_STARTED",
   LIVE: "LIVE",
   INPLAY: "LIVE",
   INPLAY_ET: "LIVE",
@@ -205,6 +235,7 @@ const STATE_NAME_TO_STATUS: Record<string, MatchStatus> = {
 const STAT_NAME_ALIASES: Record<string, keyof MatchStats> = {
   shots: "shots",
   "shots total": "shots",
+  shotstotal: "shots",
   "goal attempts": "shots",
   "shots on target": "shotsOnTarget",
   shotsontarget: "shotsOnTarget",
@@ -225,6 +256,7 @@ const STAT_NAME_ALIASES: Record<string, keyof MatchStats> = {
   "ball possession": "possession",
   possession: "possession",
   "possession %": "possession",
+  ballpossession: "possession",
 };
 
 // ─── Internal helpers ──────────────────────────────────────────────────────────
@@ -249,8 +281,20 @@ function safeNumber(value: unknown, fallback = 0): number {
 
 function normalizeStatKey(raw: string | undefined): keyof MatchStats | null {
   if (!raw) return null;
-  const key = raw.toLowerCase().trim();
-  return STAT_NAME_ALIASES[key] ?? null;
+  const key = raw.toLowerCase().trim().replace(/_/g, " ");
+  const compact = key.replace(/\s+/g, "");
+  return STAT_NAME_ALIASES[key] ?? STAT_NAME_ALIASES[compact] ?? null;
+}
+
+function resolveStatField(stat: SportmonksStatistic): keyof MatchStats | null {
+  if (stat.type_id != null && STAT_TYPE_ID_TO_FIELD[stat.type_id]) {
+    return STAT_TYPE_ID_TO_FIELD[stat.type_id];
+  }
+  return (
+    normalizeStatKey(stat.type?.developer_name) ??
+    normalizeStatKey(stat.type?.code) ??
+    normalizeStatKey(stat.type?.name)
+  );
 }
 
 function resolveParticipants(fixture: SportmonksFixture): {
@@ -422,10 +466,7 @@ function mapTeamStats(fixture: SportmonksFixture): MatchTeamStats | undefined {
   let hasParticipantStats = false;
 
   for (const stat of statistics) {
-    const field =
-      normalizeStatKey(stat.type?.developer_name) ??
-      normalizeStatKey(stat.type?.code) ??
-      normalizeStatKey(stat.type?.name);
+    const field = resolveStatField(stat);
     if (!field) continue;
 
     const value = extractStatValue(stat);
@@ -495,10 +536,7 @@ function mapStats(fixture: SportmonksFixture): MatchStats {
   const awayId = away?.id;
 
   for (const stat of statistics) {
-    const field =
-      normalizeStatKey(stat.type?.developer_name) ??
-      normalizeStatKey(stat.type?.code) ??
-      normalizeStatKey(stat.type?.name);
+    const field = resolveStatField(stat);
     if (!field) continue;
 
     const value = extractStatValue(stat);
@@ -556,12 +594,13 @@ function findOddValue(
   return null;
 }
 
-function resolveFixtureOdds(fixture: SportmonksFixture): SportmonksOdds[] {
-  return fixture.inplayOdds ?? fixture.odds ?? [];
-}
-
 function mapOdds(fixture: SportmonksFixture): Odds {
-  const odds = resolveFixtureOdds(fixture);
+  const bundle = normalizeFixtureOdds(fixture);
+  if (bundle.quotes.length > 0) {
+    return bundle.summary;
+  }
+
+  const odds = resolveAllFixtureOdds(fixture);
   if (odds.length === 0) {
     return { ...DEFAULT_ODDS };
   }
@@ -588,16 +627,79 @@ function mapOdds(fixture: SportmonksFixture): Odds {
       );
     }) ?? null;
 
-  const primary =
-    over05 ??
-    findOddValue(odds, (o) => safeNumber(o.value, 0) >= 1) ??
-    DEFAULT_ODDS.primary;
+  const anyValid = findOddValue(odds, (o) => safeNumber(o.value, 0) >= 1.01);
+
+  const primary = over05 ?? anyValid ?? DEFAULT_ODDS.primary;
+  const resolvedOver05 = over05 ?? (anyValid != null && anyValid >= 1.01 ? anyValid : primary);
+  const resolvedOver15 = over15 ?? resolvedOver05;
 
   return {
-    primary,
-    over05: over05 ?? primary,
-    over15: over15 ?? primary,
+    primary: primary >= 1.01 ? primary : DEFAULT_ODDS.primary,
+    over05: resolvedOver05 >= 1.01 ? resolvedOver05 : primary >= 1.01 ? primary : DEFAULT_ODDS.over05,
+    over15: resolvedOver15 >= 1.01 ? resolvedOver15 : primary >= 1.01 ? primary : DEFAULT_ODDS.over15,
   };
+}
+
+function buildFeedMeta(fixture: SportmonksFixture, stats: MatchStats): MatchFeedMeta {
+  const events = fixture.events ?? [];
+  const hasStats =
+    stats.shots > 0 ||
+    stats.dangerousAttacks > 0 ||
+    stats.shotsOnTarget > 0 ||
+    (stats.xG ?? 0) > 0;
+  const odds = resolveAllFixtureOdds(fixture);
+
+  return {
+    hasStatistics: (fixture.statistics?.length ?? 0) > 0,
+    hasInplayOdds: odds.length > 0,
+    hasEvents: events.length > 0,
+    hasLineups: Array.isArray(fixture.lineups) && fixture.lineups.length > 0,
+    hasXg: sumXgFromFixture(fixture) > 0 || (stats.xG ?? 0) > 0,
+    eventCount: events.length,
+    premiumStatsActive: hasStats,
+    pressureTrend: undefined,
+  };
+}
+
+function applyPremiumEnrichment(
+  fixture: SportmonksFixture,
+  stats: MatchStats,
+  teamStats: MatchTeamStats | undefined
+): { stats: MatchStats; teamStats?: MatchTeamStats } {
+  const xgTotal = sumXgFromFixture(fixture);
+  let nextStats = mergeXgIntoStats(stats, xgTotal);
+
+  const { home, away } = resolveParticipants(fixture);
+  const eventInfer = inferStatsFromEvents(fixture, home?.id, away?.id);
+
+  if (eventInfer && teamStats) {
+    if ((teamStats.home.corners ?? 0) === 0 && (eventInfer.home.corners ?? 0) > 0) {
+      teamStats.home.corners = eventInfer.home.corners ?? 0;
+    }
+    if ((teamStats.away.corners ?? 0) === 0 && (eventInfer.away.corners ?? 0) > 0) {
+      teamStats.away.corners = eventInfer.away.corners ?? 0;
+    }
+    nextStats = {
+      ...nextStats,
+      corners: teamStats.home.corners + teamStats.away.corners,
+    };
+  }
+
+  if (
+    !teamStats &&
+    nextStats.shots === 0 &&
+    nextStats.dangerousAttacks === 0 &&
+    xgTotal > 0
+  ) {
+    nextStats = {
+      ...nextStats,
+      shots: Math.max(1, Math.round(xgTotal * 4)),
+      shotsOnTarget: Math.max(0, Math.round(xgTotal * 2)),
+      dangerousAttacks: Math.max(0, Math.round(xgTotal * 6)),
+    };
+  }
+
+  return { stats: nextStats, teamStats };
 }
 
 function mapMinute(fixture: SportmonksFixture): number {
@@ -635,6 +737,28 @@ export function buildMatchFromSportmonksFixture(
   const now = Date.now();
   const { homeTeam, awayTeam } = mapTeams(fixture);
 
+  let stats = mapStats(fixture);
+  let teamStats = mapTeamStats(fixture);
+  const enriched = applyPremiumEnrichment(fixture, stats, teamStats);
+  stats = enriched.stats;
+  teamStats = enriched.teamStats;
+
+  const premium = buildPremiumContext(fixture, stats, teamStats);
+  const oddsBundle = normalizeFixtureOdds(fixture);
+
+  const pressureTrend: PressureTrend | undefined =
+    inferPressureTrendFromTrends(fixture) ??
+    (premium.momentumScore >= 60
+      ? "RISING"
+      : stats.shotsOnTarget > stats.shots * 0.35
+        ? "RISING"
+        : "STABLE");
+
+  const feedMeta: MatchFeedMeta = {
+    ...buildFeedMeta(fixture, stats),
+    pressureTrend,
+  };
+
   return {
     id: buildInternalId(fixture.id),
     externalId: String(fixture.id),
@@ -643,14 +767,19 @@ export function buildMatchFromSportmonksFixture(
     awayTeam,
     minute: mapMinute(fixture),
     status: mapStatus(fixture),
+    startingAt: fixture.starting_at ?? null,
+    startingAtTimestamp: fixture.starting_at_timestamp ?? null,
     ...((): { score?: MatchScore } => {
       const score = mapScore(fixture);
       return score ? { score } : {};
     })(),
-    stats: mapStats(fixture),
-    teamStats: mapTeamStats(fixture),
-    odds: mapOdds(fixture),
-    pressure: { score: 0 },
+    stats,
+    teamStats,
+    odds: oddsBundle.quotes.length > 0 ? oddsBundle.summary : mapOdds(fixture),
+    oddsQuotes: oddsBundle.quotes.length > 0 ? oddsBundle.quotes : undefined,
+    pressure: { score: 0, trend: pressureTrend },
+    feedMeta,
+    premium,
     updatedAt: now,
   };
 }
@@ -669,10 +798,17 @@ export function mapSportmonksFixtureToMatch(fixture: SportmonksFixture): Match {
 export function mapSportmonksFixturesToMatches(
   fixtures: SportmonksFixture[]
 ): Match[] {
-  return fixtures
-    .filter((fixture): fixture is SportmonksFixture => typeof fixture?.id === "number")
-    .map((fixture) => {
+  const out: Match[] = [];
+
+  for (const fixture of fixtures) {
+    if (typeof fixture?.id !== "number") continue;
+    try {
       const base = buildMatchFromSportmonksFixture(fixture);
-      return applyPressureToMatch(base);
-    });
+      out.push(applyPressureToMatch(base));
+    } catch {
+      /* skip malformed fixture — never break batch ingest */
+    }
+  }
+
+  return out;
 }

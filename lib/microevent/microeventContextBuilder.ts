@@ -39,10 +39,11 @@ export function buildMicroeventInput(
   player: PlayerImpactResult | null
 ): MicroeventDetectionInput {
   const fixtureId = metric.fixtureId;
+  const trendMomentum = match.premium?.momentumScore ?? 0;
   const attacks =
     match.stats.totalAttacks ??
     match.teamStats?.home.totalAttacks ??
-    match.stats.dangerousAttacks * 1.4;
+    match.stats.dangerousAttacks * 1.4 + trendMomentum * 0.15;
 
   return {
     fixtureId,

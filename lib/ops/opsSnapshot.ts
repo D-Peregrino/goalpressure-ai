@@ -194,9 +194,13 @@ function buildMarketCalibrationSnapshot(): OpsMarketCalibrationSnapshot {
       fixtureId: e.fixtureId,
       matchLabel: e.matchLabel,
       market: e.market,
+      marketOdd: e.marketOdd,
+      fairOdd: e.fairOdd,
       edgePercent: e.edgePercent,
       classification: e.classification,
       expectedValue: e.expectedValue,
+      steamMove: e.steamMove,
+      oddsDrift: e.oddsDrift,
     })),
   };
 }

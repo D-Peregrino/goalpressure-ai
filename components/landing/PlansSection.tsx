@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { PRICING, AUDIENCE } from "@/lib/design/brand";
+import { TIERS as TIER_DEFS } from "@/lib/subscription/tiers";
 
 export default function PlansSection() {
   return (
@@ -21,35 +22,37 @@ export default function PlansSection() {
         </div>
       </section>
 
-      <section className="gp-landing-section">
+      <section id="pricing" className="gp-landing-section">
         <div className="gp-landing-container">
-          <p className="gp-landing-eyebrow text-center">Planos</p>
-          <h2 className="gp-landing-section__title text-center">Acesso institucional</h2>
+          <p className="gp-landing-eyebrow text-center">Pricing</p>
+          <h2 className="gp-landing-section__title text-center">Free · Pro · Institutional</h2>
           <div className="gp-pricing-grid">
-            {PRICING.map((p, i) => (
-              <div
-                key={p.name}
-                className={`gp-pricing-card ${i === 1 ? "gp-pricing-card--featured" : ""}`}
-              >
-                <p className="gp-landing-eyebrow">{p.name}</p>
-                <p className="gp-pricing-card__price">{p.price}</p>
-                <p className="gp-pricing-card__desc">{p.desc}</p>
-              </div>
-            ))}
+            {PRICING.map((p) => {
+              const tier = TIER_DEFS[p.tier];
+              return (
+                <div
+                  key={p.name}
+                  className={`gp-pricing-card ${"featured" in p && p.featured ? "gp-pricing-card--featured" : ""}`}
+                >
+                  <p className="gp-landing-eyebrow">{p.name}</p>
+                  <p className="gp-pricing-card__price">{p.price}</p>
+                  <p className="gp-pricing-card__desc">{p.desc}</p>
+                  <ul className="gp-pricing-card__features">
+                    {tier.features.map((f) => (
+                      <li key={f}>
+                        <Check className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link href={p.href} className="gp-btn gp-btn--primary gp-pricing-card__cta">
+                    {p.cta}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              );
+            })}
           </div>
-        </div>
-      </section>
-
-      <section className="gp-landing-cta">
-        <div className="gp-landing-container gp-landing-cta__inner">
-          <h2 className="gp-landing-cta__title">Entre na lista do beta fechado</h2>
-          <p className="gp-landing-cta__sub">
-            Acesso antecipado ao terminal live · vagas limitadas
-          </p>
-          <Link href="/terminal" className="gp-btn gp-btn--primary">
-            Solicitar acesso
-            <ArrowRight className="h-4 w-4" />
-          </Link>
         </div>
       </section>
     </>

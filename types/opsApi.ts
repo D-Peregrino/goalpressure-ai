@@ -149,9 +149,13 @@ export interface OpsMarketCalibrationSnapshot {
     fixtureId: string;
     matchLabel?: string;
     market: string;
+    marketOdd?: number;
+    fairOdd?: number;
     edgePercent: number;
     classification: string;
     expectedValue: number;
+    steamMove?: boolean;
+    oddsDrift?: number;
   }[];
 }
 

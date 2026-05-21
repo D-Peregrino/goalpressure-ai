@@ -8,8 +8,8 @@ const FILTERS: { id: MatchCenterFilter; label: string }[] = [
   { id: "live", label: "Ao vivo" },
   { id: "upcoming", label: "Próximos" },
   { id: "high_pressure", label: "Alta pressão" },
-  { id: "ev_plus", label: "EV+" },
-  { id: "execute", label: "EXECUTE" },
+  { id: "ev_plus", label: "Boas chances" },
+  { id: "execute", label: "Oportunidades" },
   { id: "favorites", label: "Favoritos" },
 ];
 
@@ -21,6 +21,7 @@ export default function MatchFilters({
   viewMode,
   onViewMode,
   liveCount,
+  upcomingCount,
 }: {
   filter: MatchCenterFilter;
   onFilter: (f: MatchCenterFilter) => void;
@@ -29,9 +30,10 @@ export default function MatchFilters({
   viewMode: "grid" | "list";
   onViewMode: (m: "grid" | "list") => void;
   liveCount: number;
+  upcomingCount: number;
 }) {
   return (
-    <div className="match-center-filters space-y-4">
+    <div className="match-center-filters match-center-filters--premium space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         {FILTERS.map((f) => (
           <button
@@ -47,6 +49,11 @@ export default function MatchFilters({
             {f.label}
             {f.id === "live" && liveCount > 0 && (
               <span className="ml-1.5 font-mono-data text-xs text-[#FF2B2B]">{liveCount}</span>
+            )}
+            {f.id === "upcoming" && upcomingCount > 0 && (
+              <span className="ml-1.5 font-mono-data text-xs text-[var(--muted)]">
+                {upcomingCount}
+              </span>
             )}
           </button>
         ))}

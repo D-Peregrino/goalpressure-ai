@@ -11,25 +11,22 @@ import { terminalFadeUp, terminalStagger } from "@/components/ui/terminal/motion
 function KpiStrip({
   tracked,
   live,
+  upcoming,
   signals,
-  avgEdge,
-  confidence,
   execute,
 }: {
   tracked: number;
   live: number;
+  upcoming: number;
   signals: number;
-  avgEdge: number;
-  confidence: number;
   execute: number;
 }) {
   const items = [
     { label: "Rastreadas", value: String(tracked) },
     { label: "Ao vivo", value: String(live), accent: true },
+    { label: "Próximas", value: String(upcoming) },
     { label: "Sinais", value: String(signals) },
-    { label: "Edge médio", value: `${avgEdge.toFixed(1)}%` },
-    { label: "Confiança", value: String(Math.round(confidence)) },
-    { label: "EXECUTE", value: String(execute), accent: true },
+    { label: "Oportunidades", value: String(execute), accent: true },
   ];
 
   return (
@@ -114,6 +111,7 @@ export default function LiveMatchCenter() {
           viewMode={viewMode}
           onViewMode={setViewMode}
           liveCount={kpis.live}
+          upcomingCount={kpis.upcoming}
         />
       </motion.div>
 

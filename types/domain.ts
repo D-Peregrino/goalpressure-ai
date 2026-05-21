@@ -18,12 +18,20 @@ export interface Team {
 
 // ─── Markets & confidence ────────────────────────────────────────────────────
 
-/** Markets supported by the signal engine */
-export type MarketType = "OVER_0_5" | "OVER_1_5";
+/** Markets supported by signal + market calibration engines */
+export type MarketType =
+  | "OVER_0_5"
+  | "OVER_1_5"
+  | "OVER_2_5"
+  | "BTTS"
+  | "FULL_TIME_RESULT";
 
 export const MARKET_LABELS: Record<MarketType, string> = {
   OVER_0_5: "Over 0.5 Goal",
   OVER_1_5: "Over 1.5 Goals",
+  OVER_2_5: "Over 2.5 Goals",
+  BTTS: "Both Teams To Score",
+  FULL_TIME_RESULT: "Full Time Result",
 } as const;
 
 /** Confidence assigned to a validated engine signal */
@@ -105,6 +113,48 @@ export interface Odds {
   primary: number;
   over05: number;
   over15: number;
+  over25?: number;
+  bttsYes?: number;
+  fullTimeResult?: number;
+  bookmakerId?: number;
+  bookmakerName?: string;
+}
+
+/** Premium SportMonks feed detection (Growth plan). */
+export interface MatchFeedMeta {
+  hasStatistics: boolean;
+  hasInplayOdds: boolean;
+  hasEvents: boolean;
+  hasLineups: boolean;
+  hasXg: boolean;
+  eventCount: number;
+  premiumStatsActive: boolean;
+  pressureTrend?: PressureTrend;
+  steamMove?: boolean;
+  oddsDrift?: number;
+}
+
+export interface TimelineEventSummary {
+  minute: number;
+  type: string;
+  side?: "home" | "away";
+}
+
+/** Parsed Growth premium payload per fixture (optional). */
+export interface MatchPremiumContext {
+  timelineEvents: TimelineEventSummary[];
+  timelineEventsCount: number;
+  momentumScore: number;
+  pressureIndex: number | null;
+  dominanceLabel: string;
+  dangerousSequence: boolean;
+  bookmakersCount: number;
+  standingsAvailable: boolean;
+  xgAvailable: boolean;
+  oddsAvailable: boolean;
+  eventsAvailable: boolean;
+  lineupsAvailable: boolean;
+  statisticsAvailable: boolean;
 }
 
 // ─── Pressure ────────────────────────────────────────────────────────────────
@@ -137,10 +187,20 @@ export interface Match {
   score?: MatchScore;
   /** Sportmonks (or other provider) fixture id */
   externalId?: string;
+  /** Horário de início (ISO) — pré-jogo */
+  startingAt?: string | null;
+  /** Unix seconds — pré-jogo */
+  startingAtTimestamp?: number | null;
   /** Last upstream sync — epoch ms */
   updatedAt?: number;
   /** Per-team stats when SportMonks provides participant breakdown */
   teamStats?: MatchTeamStats;
+  /** SportMonks premium includes detection */
+  feedMeta?: MatchFeedMeta;
+  /** Growth premium fields for engines + UI */
+  premium?: MatchPremiumContext;
+  /** bet365 quotes normalizadas (Market Calibration / steam / drift) */
+  oddsQuotes?: import("@/lib/mappers/normalizeSportmonksOdds").NormalizedOddQuote[];
 }
 
 // ─── Signal ──────────────────────────────────────────────────────────────────

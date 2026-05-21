@@ -57,7 +57,13 @@ function round2(value: number): number {
 }
 
 function isSupportedMarket(market: string): market is MarketType {
-  return market === "OVER_0_5" || market === "OVER_1_5";
+  return (
+    market === "OVER_0_5" ||
+    market === "OVER_1_5" ||
+    market === "OVER_2_5" ||
+    market === "BTTS" ||
+    market === "FULL_TIME_RESULT"
+  );
 }
 
 /**
@@ -79,6 +85,12 @@ export function computeProprietaryProbability(
     base += 0.04;
   } else if (market === "OVER_1_5") {
     base += (p.offensiveIntensity ?? p.pressureScore) / 1000;
+  } else if (market === "OVER_2_5") {
+    base += (p.offensiveIntensity ?? p.pressureScore) / 800 - 0.02;
+  } else if (market === "BTTS") {
+    base += (p.momentum / 100) * 0.06 + (p.pressureScore / 100) * 0.04;
+  } else if (market === "FULL_TIME_RESULT") {
+    base += (p.pressureScore / 100) * 0.05;
   }
 
   if (input.signal?.signalConfidence != null) {

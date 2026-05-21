@@ -11,6 +11,66 @@ export function fixtureIdFromMatch(match: Match): string {
 
 export type DisplayMatchStatus = "LIVE" | "HT" | "FT" | "PRE" | "POST" | "—";
 
+/** Partida ainda não iniciada (pré-jogo). */
+export function isPreMatchStatus(
+  status?: MatchStatus,
+  display?: DisplayMatchStatus
+): boolean {
+  if (status === "NOT_STARTED") return true;
+  if (display === "PRE") return true;
+  return false;
+}
+
+/** Ao vivo ou intervalo. */
+export function isLiveStatus(
+  status?: MatchStatus,
+  display?: DisplayMatchStatus
+): boolean {
+  if (display === "LIVE" || display === "HT") return true;
+  if (status === "LIVE" || status === "HALFTIME") return true;
+  return false;
+}
+
+/** Visível no filtro «Todos» (inclui pré-jogo e encerradas recentes no cache). */
+export function isTerminalVisibleMatch(
+  status?: MatchStatus,
+  display?: DisplayMatchStatus
+): boolean {
+  const d = display ?? toDisplayStatus(status);
+  if (isLiveStatus(status, d) || isPreMatchStatus(status, d)) return true;
+  if (d === "FT" || d === "POST") return true;
+  if (d === "—" && status === "UNKNOWN") return true;
+  return false;
+}
+
+export function formatKickoffLabel(
+  startingAt?: string | null,
+  startingAtTimestamp?: number | null
+): string | null {
+  if (startingAtTimestamp != null && startingAtTimestamp > 0) {
+    try {
+      return new Intl.DateTimeFormat("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "America/Sao_Paulo",
+      }).format(new Date(startingAtTimestamp * 1000));
+    } catch {
+      /* fall through */
+    }
+  }
+  if (startingAt && typeof startingAt === "string") {
+    const d = new Date(startingAt);
+    if (!Number.isNaN(d.getTime())) {
+      return new Intl.DateTimeFormat("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "America/Sao_Paulo",
+      }).format(d);
+    }
+  }
+  return null;
+}
+
 export function toDisplayStatus(status?: MatchStatus): DisplayMatchStatus {
   switch (status) {
     case "LIVE":

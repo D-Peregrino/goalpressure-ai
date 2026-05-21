@@ -15,10 +15,12 @@ import {
   TestTube2,
 } from "lucide-react";
 import { BRAND } from "@/lib/design/brand";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import { TIERS } from "@/lib/subscription/tiers";
 
 const STORAGE_KEY = "gp-sidebar-collapsed";
 
-const NAV = [
+const BASE_NAV = [
   { href: "/terminal", label: "Operations", icon: LayoutDashboard },
   { href: "/feed", label: "Live Feed", icon: Radio },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
@@ -33,7 +35,11 @@ export default function TerminalSidebar({
 }: {
   isActive: (href: string) => boolean;
 }) {
+  const { tier, can } = useSubscription();
   const [collapsed, setCollapsed] = useState(false);
+  const nav = can("ops")
+    ? [...BASE_NAV, { href: "/ops", label: "Ops", icon: LayoutDashboard }]
+    : [...BASE_NAV];
 
   useEffect(() => {
     try {
@@ -85,7 +91,7 @@ export default function TerminalSidebar({
       </div>
 
       <nav className="gp-sidebar__nav">
-        {NAV.map(({ href, label, icon: Icon }) => {
+        {nav.map(({ href, label, icon: Icon }) => {
           const active = isActive(href);
           return (
             <Link
@@ -103,8 +109,16 @@ export default function TerminalSidebar({
 
       <div className="gp-sidebar__footer">
         {!collapsed && (
-          <p className="gp-sidebar__meta">Quant Terminal · v1</p>
+          <>
+            <span className={`gp-tier-badge gp-tier-badge--${tier}`}>
+              {TIERS[tier].name}
+            </span>
+            <p className="gp-sidebar__meta">Quant Terminal · V2</p>
+          </>
         )}
+        <Link href="/login" className="gp-sidebar__home-link text-xs">
+          {collapsed ? "◎" : "Conta / upgrade"}
+        </Link>
         <Link href="/" className="gp-sidebar__home-link">
           {collapsed ? "↵" : `← ${BRAND.domain}`}
         </Link>
@@ -123,7 +137,7 @@ export function TerminalSidebarMobile({
 }) {
   return (
     <nav className="gp-sidebar gp-sidebar--mobile">
-      {NAV.map(({ href, label, icon: Icon }) => (
+      {BASE_NAV.map(({ href, label, icon: Icon }) => (
         <Link
           key={href}
           href={href}

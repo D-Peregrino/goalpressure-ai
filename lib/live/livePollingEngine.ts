@@ -557,7 +557,8 @@ export class LivePollingEngine {
       attempt += 1;
       const result = await fetchLiveMatchesDirect({
         modelId,
-        useCache: attempt > 1,
+        forceFresh: true,
+        useCache: false,
         dispatchTelegram: false,
       });
 
@@ -580,6 +581,7 @@ export class LivePollingEngine {
 
     return fetchLiveMatchesDirect({
       modelId,
+      forceFresh: true,
       useCache: false,
       dispatchTelegram: false,
     });

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BRAND } from "@/lib/design/brand";
+import { TERMINAL_COPY } from "@/lib/ux/sportsLanguage";
 import StatusBadge from "@/components/ui/terminal/StatusBadge";
 import { terminalFadeUp } from "@/components/ui/terminal/motion";
 
@@ -15,14 +15,17 @@ export default function TerminalHeader({
   source: string;
 }) {
   return (
-    <motion.header variants={terminalFadeUp} className="gp-terminal-header">
+    <motion.header
+      variants={terminalFadeUp}
+      className="gp-terminal-header gp-terminal-header--sport gp-terminal-header--premium"
+    >
       <div className="gp-terminal-header__copy">
         <p className="gp-terminal-header__eyebrow">
           <span className="gp-terminal-header__live-dot" aria-hidden />
-          Central operacional · {BRAND.domain}
+          {TERMINAL_COPY.title}
         </p>
-        <h1 className="gp-terminal-header__title">Live Operations Terminal</h1>
-        <p className="gp-terminal-header__subtitle">{BRAND.subtitle}</p>
+        <h1 className="gp-terminal-header__title">Terminal esportivo inteligente</h1>
+        <p className="gp-terminal-header__subtitle">{TERMINAL_COPY.subtitle}</p>
       </div>
       <div className="gp-terminal-header__status">
         <StatusBadge
@@ -44,7 +47,7 @@ export default function TerminalHeader({
                 : "DEGRADED"
           }
         />
-        <span className="gp-status-chip">Fonte · {source}</span>
+        <span className="gp-status-chip">Dados · {source === "sportmonks" ? "ao vivo" : source}</span>
       </div>
     </motion.header>
   );

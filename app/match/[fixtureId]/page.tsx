@@ -1,5 +1,5 @@
 import AppShell from "@/components/layout/AppShell";
-import MatchTerminalView from "@/components/match/MatchTerminalView";
+import MatchCenterPremium from "@/components/match-center/MatchCenterPremium";
 
 export default async function MatchPage({
   params,
@@ -9,7 +9,7 @@ export default async function MatchPage({
   const { fixtureId } = await params;
   return (
     <AppShell>
-      <MatchTerminalView fixtureId={decodeURIComponent(fixtureId)} />
+      <MatchCenterPremium fixtureId={decodeURIComponent(fixtureId)} />
     </AppShell>
   );
 }

@@ -31,12 +31,15 @@ export interface DirectLiveFetchResult {
 export async function fetchLiveMatchesDirect(options?: {
   modelId?: string;
   useCache?: boolean;
+  /** Runtime polling: bypass TTL cache so all in-play fixtures are processed each cycle */
+  forceFresh?: boolean;
   /** When false, Telegram is handled by runtime signalDispatcher (polling path) */
   dispatchTelegram?: boolean;
 }): Promise<DirectLiveFetchResult> {
   const dispatchTelegram = options?.dispatchTelegram !== false;
   const startedAt = Date.now();
-  const useCache = options?.useCache !== false;
+  const useCache =
+    options?.forceFresh === true ? false : options?.useCache !== false;
 
   if (useCache) {
     const cached = getLiveMatchesCacheEntry();
@@ -88,6 +91,8 @@ export async function fetchLiveMatchesDirect(options?: {
       matches: mapped.length,
       signals: engineResult.signals.length,
       sportmonksMs: responseTimeMs,
+      premiumActive: mapped.filter((m) => m.premium?.statisticsAvailable).length,
+      withOdds: mapped.filter((m) => m.premium?.oddsAvailable).length,
     });
 
     return {

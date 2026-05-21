@@ -55,7 +55,12 @@ function buildTemporalInput(
     scoreline: match.score,
     homeRedCards: 0,
     awayRedCards: 0,
-    xgDelta: match.stats.xG != null ? Math.max(0, match.stats.xG * 0.1) : 0,
+    xgDelta:
+      match.stats.xG != null
+        ? Math.max(0, match.stats.xG * 0.1)
+        : match.premium?.pressureIndex != null
+          ? match.premium.pressureIndex * 0.01
+          : 0,
     favoriteStatus: inferFavoriteStatus(match),
   };
 }

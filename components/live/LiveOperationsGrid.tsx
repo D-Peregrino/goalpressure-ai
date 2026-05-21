@@ -1,25 +1,46 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import type { EnrichedLiveMatch } from "@/hooks/useLiveMatchCenter";
-import InstitutionalLiveCard from "@/components/live/InstitutionalLiveCard";
+import { motion } from "framer-motion";
+import type { EnrichedLiveMatch, MatchCenterFilter } from "@/hooks/useLiveMatchCenter";
+import VirtualizedMatchGrid from "@/components/terminal/VirtualizedMatchGrid";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 
 const MAX_HISTORY = 24;
 
+const FILTER_HINT: Partial<Record<MatchCenterFilter, string>> = {
+  live: "Não há jogos ao vivo agora.",
+  upcoming: "Não há partidas pré-jogo no feed.",
+  high_pressure: "Nenhum jogo ao vivo com pressão alta no momento.",
+  execute: "Nenhuma oportunidade ativa neste instante.",
+  ev_plus: "Nenhuma boa chance destacada agora.",
+  favorites: "Você ainda não favoritou nenhum jogo.",
+};
+
 export default function LiveOperationsGrid({
   matches,
+  allMatches,
+  filter,
   favorites,
   onToggleFavorite,
   viewMode,
   isLoading,
+  liveCount,
+  upcomingCount,
+  auditMode = false,
 }: {
   matches: EnrichedLiveMatch[];
+  allMatches: EnrichedLiveMatch[];
+  filter: MatchCenterFilter;
   favorites: Set<string>;
   onToggleFavorite: (fixtureId: string) => void;
   viewMode: "grid" | "list";
   isLoading?: boolean;
+  liveCount: number;
+  upcomingCount: number;
+  auditMode?: boolean;
 }) {
+  const { limits } = useSubscription();
   const historyRef = useRef<Map<string, number[]>>(new Map());
 
   useEffect(() => {
@@ -29,41 +50,61 @@ export default function LiveOperationsGrid({
     }
   }, [matches]);
 
-  if (isLoading && matches.length === 0) {
+  const capped = matches.slice(0, limits.liveMatches);
+
+  if (isLoading && allMatches.length === 0) {
     return (
       <div className="gp-empty-state">
         <div className="gp-empty-state__pulse" aria-hidden />
-        <p>Sincronizando radar operacional…</p>
+        <p>Sincronizando central ao vivo…</p>
       </div>
     );
   }
 
-  if (matches.length === 0) {
+  if (capped.length === 0) {
+    const hasPre = upcomingCount > 0;
+    const hasAny = allMatches.length > 0;
+
     return (
       <div className="gp-empty-state">
-        <p>Nenhuma partida neste filtro.</p>
-        <p className="gp-empty-state__sub">Aguarde o feed live ou ajuste os filtros.</p>
+        <p>{FILTER_HINT[filter] ?? "Nenhum jogo neste filtro."}</p>
+        {filter === "live" && hasPre && (
+          <p className="gp-empty-state__sub">
+            Há {upcomingCount} partida{upcomingCount !== 1 ? "s" : ""} pré-jogo no feed — use o
+            filtro <strong>Próximos</strong> ou <strong>Todos</strong>.
+          </p>
+        )}
+        {filter !== "all" && hasAny && !hasPre && liveCount === 0 && (
+          <p className="gp-empty-state__sub">
+            {allMatches.length} jogo{allMatches.length !== 1 ? "s" : ""} no feed — tente{" "}
+            <strong>Todos</strong>.
+          </p>
+        )}
+        {!hasAny && (
+          <p className="gp-empty-state__sub">
+            Aguarde o próximo ciclo do feed ou verifique /api/debug/live-tracking.
+          </p>
+        )}
       </div>
     );
   }
 
-  const gridClass =
-    viewMode === "list" ? "gp-ops-grid gp-ops-grid--list" : "gp-ops-grid";
-
   return (
-    <AnimatePresence mode="popLayout">
-      <motion.div layout className={`w-full min-w-0 ${gridClass}`}>
-        {matches.map((m) => (
-          <InstitutionalLiveCard
-            key={m.fixtureId}
-            match={m}
-            layout={viewMode}
-            isFavorite={favorites.has(m.fixtureId)}
-            onToggleFavorite={() => onToggleFavorite(m.fixtureId)}
-            pressureHistory={historyRef.current.get(m.fixtureId)}
-          />
-        ))}
-      </motion.div>
-    </AnimatePresence>
+    <motion.div layout className="gp-ops-grid-wrap">
+      {matches.length > limits.liveMatches && (
+        <p className="gp-tier-notice">
+          Plano Free: exibindo {limits.liveMatches} de {matches.length} jogos.{" "}
+          <a href="/signup">Upgrade Pro</a>
+        </p>
+      )}
+      <VirtualizedMatchGrid
+        matches={capped}
+        favorites={favorites}
+        onToggleFavorite={onToggleFavorite}
+        viewMode={viewMode}
+        historyRef={historyRef}
+        auditMode={auditMode}
+      />
+    </motion.div>
   );
 }

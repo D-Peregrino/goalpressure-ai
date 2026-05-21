@@ -165,6 +165,9 @@ function buildEmptyByMarket(): Record<MarketType, SignalMetricBucket> {
   return {
     OVER_0_5: emptyBucket(),
     OVER_1_5: emptyBucket(),
+    OVER_2_5: emptyBucket(),
+    BTTS: emptyBucket(),
+    FULL_TIME_RESULT: emptyBucket(),
   };
 }
 

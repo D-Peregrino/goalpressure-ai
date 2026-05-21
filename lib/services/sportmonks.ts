@@ -12,38 +12,43 @@ import {
   emitSportmonksAuditLog,
   logSportmonksAudit,
 } from "@/lib/services/sportmonksAudit";
+import {
+  GROWTH_IDEAL_INCLUDES,
+  GROWTH_INCLUDE_TIERS_DESCENDING,
+  getIncludeCacheKey,
+  isPremiumModeEnabled,
+  LEGACY_IDEAL_INCLUDES,
+} from "@/lib/services/sportmonksIncludes";
+import {
+  buildOddsFiltersParam,
+  isOddsPremiumFeedEnabled,
+} from "@/lib/odds/sportmonksOddsConfig";
+
+export { GROWTH_IDEAL_INCLUDES, isPremiumModeEnabled } from "@/lib/services/sportmonksIncludes";
 
 const DEFAULT_BASE_URL = "https://api.sportmonks.com/v3/football";
 export const INPLAY_PATH = "/livescores/inplay";
 const DEFAULT_TIMEOUT_MS = 15_000;
 
 /** Full include set we aim for (richest payload). */
-export const IDEAL_INCLUDES = [
-  "participants",
-  "scores",
-  "league",
-  "state",
-  "periods",
-  "statistics",
-  "inplayOdds",
-] as const;
+export const IDEAL_INCLUDES = isPremiumModeEnabled()
+  ? [...GROWTH_IDEAL_INCLUDES]
+  : [...LEGACY_IDEAL_INCLUDES];
 
 /** Legacy invalid on inplay endpoint — kept for diagnostics only. */
-const DEPRECATED_INCLUDES = ["odds"] as const;
+const DEPRECATED_INCLUDES = ["odds", "markets", "bookmakers", "standings", "pressure", "xg"] as const;
 
-/**
- * Tiers tried from richest → minimal when a tier returns HTTP 422.
- * Step 1: no includes · Step 2–4: core · Step 5–6: statistics / inplayOdds if plan allows.
- */
-const INCLUDE_TIERS_DESCENDING: readonly string[][] = [
-  ["participants", "scores", "league", "state", "periods", "statistics", "inplayOdds"],
-  ["participants", "scores", "league", "state", "periods", "statistics"],
-  ["participants", "scores", "league", "state", "periods"],
-  ["participants", "scores", "league", "state"],
-  ["participants", "scores"],
-  ["participants"],
-  [],
-];
+const INCLUDE_TIERS_DESCENDING: readonly string[][] = isPremiumModeEnabled()
+  ? GROWTH_INCLUDE_TIERS_DESCENDING
+  : [
+      ["participants", "scores", "league", "state", "periods", "statistics", "inplayOdds"],
+      ["participants", "scores", "league", "state", "periods", "statistics"],
+      ["participants", "scores", "league", "state", "periods"],
+      ["participants", "scores", "league", "state"],
+      ["participants", "scores"],
+      ["participants"],
+      [],
+    ];
 
 export const MINIMAL_PAYLOAD_MODE = "MINIMAL_PAYLOAD_MODE" as const;
 
@@ -90,6 +95,19 @@ interface FetchAttemptResult {
 
 /** Cached include profile for this Node process (reduces probe calls). */
 let resolvedIncludeProfile: SportmonksIncludeProfile | null = null;
+let resolvedIncludeCacheKey: string | null = null;
+
+function ensureIncludeCacheFresh(): void {
+  const key = getIncludeCacheKey();
+  if (resolvedIncludeCacheKey !== key) {
+    resolvedIncludeProfile = null;
+    resolvedIncludeCacheKey = key;
+    logInfo("sportmonks", "Include cache invalidated for premium profile", {
+      cacheKey: key,
+      premiumMode: isPremiumModeEnabled(),
+    });
+  }
+}
 
 function getApiToken(): string {
   const token = process.env.SPORTMONKS_API_TOKEN?.trim();
@@ -121,6 +139,9 @@ function buildInplayUrl(token: string, includes: string[]): string {
   url.searchParams.set("api_token", token);
   if (includes.length > 0) {
     url.searchParams.set("include", includes.join(";"));
+  }
+  if (isOddsPremiumFeedEnabled()) {
+    url.searchParams.set("filters", buildOddsFiltersParam());
   }
   return url.toString();
 }
@@ -188,9 +209,10 @@ function buildIncludeProfile(
   activeIncludes: string[],
   approvedTierIndex: number
 ): SportmonksIncludeProfile {
-  const removedIncludes = IDEAL_INCLUDES.filter(
-    (inc) => !activeIncludes.includes(inc)
-  );
+  const ideal = isPremiumModeEnabled()
+    ? [...GROWTH_IDEAL_INCLUDES]
+    : [...LEGACY_IDEAL_INCLUDES];
+  const removedIncludes = ideal.filter((inc) => !activeIncludes.includes(inc));
 
   const minimalPayloadMode =
     !activeIncludes.includes("statistics") ||
@@ -498,6 +520,7 @@ async function fetchWithProfile(
  * Fetches in-play fixtures from Sportmonks with resilient include handling.
  */
 export async function fetchInplayFixtures(): Promise<SportmonksInplayResult> {
+  ensureIncludeCacheFresh();
   const token = getApiToken();
   const timeoutMs = getTimeoutMs();
 
@@ -505,6 +528,8 @@ export async function fetchInplayFixtures(): Promise<SportmonksInplayResult> {
     endpoint: INPLAY_PATH,
     timeoutMs,
     cachedProfile: resolvedIncludeProfile !== null,
+    premiumMode: isPremiumModeEnabled(),
+    idealIncludes: IDEAL_INCLUDES.join(";") || "(none)",
   });
 
   try {
@@ -623,6 +648,11 @@ export async function fetchInplayFixtures(): Promise<SportmonksInplayResult> {
 /** Clears cached include profile (for tests or forced rediscovery). */
 export function resetSportmonksIncludeProfile(): void {
   resolvedIncludeProfile = null;
+  resolvedIncludeCacheKey = null;
+}
+
+export function isSportmonksPremiumMode(): boolean {
+  return isPremiumModeEnabled();
 }
 
 /** Active include profile for this process (null until first fetch). */
