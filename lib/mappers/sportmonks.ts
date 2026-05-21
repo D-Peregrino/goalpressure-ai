@@ -185,6 +185,9 @@ const STATE_NAME_TO_STATUS: Record<string, MatchStatus> = {
   "NOT STARTED": "NOT_STARTED",
   LIVE: "LIVE",
   INPLAY: "LIVE",
+  INPLAY_ET: "LIVE",
+  INPLAY_1ST_HALF: "LIVE",
+  INPLAY_2ND_HALF: "LIVE",
   "IN PLAY": "LIVE",
   HT: "HALFTIME",
   HALFTIME: "HALFTIME",
@@ -296,11 +299,6 @@ function parseTeamFromFixtureName(
 }
 
 function mapStatus(fixture: SportmonksFixture): MatchStatus {
-  const stateId = fixture.state_id ?? fixture.state?.id;
-  if (stateId !== undefined && STATE_ID_TO_STATUS[stateId]) {
-    return STATE_ID_TO_STATUS[stateId];
-  }
-
   const raw =
     fixture.state?.state ??
     fixture.state?.short_name ??
@@ -309,6 +307,11 @@ function mapStatus(fixture: SportmonksFixture): MatchStatus {
   const normalized = raw.toUpperCase().replace(/-/g, "_").trim();
   if (STATE_NAME_TO_STATUS[normalized]) {
     return STATE_NAME_TO_STATUS[normalized];
+  }
+
+  const stateId = fixture.state_id ?? fixture.state?.id;
+  if (stateId !== undefined && STATE_ID_TO_STATUS[stateId]) {
+    return STATE_ID_TO_STATUS[stateId];
   }
 
   return "UNKNOWN";
@@ -331,8 +334,13 @@ function mapScore(fixture: SportmonksFixture): MatchScore | undefined {
   const homeId = home?.id;
   const awayId = away?.id;
 
-  const currentEntries = scores.filter(isCurrentScoreEntry);
-  const entries = currentEntries.length > 0 ? currentEntries : scores;
+  /** Somente description CURRENT — 2ND_HALF/ET/1ST_HALF sobrescreviam o placar ao vivo */
+  const entries = scores.filter(
+    (e) => (e.description ?? "").toUpperCase() === "CURRENT"
+  );
+  if (entries.length < 2) {
+    return undefined;
+  }
 
   let homeGoals: number | undefined;
   let awayGoals: number | undefined;
