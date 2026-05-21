@@ -16,7 +16,7 @@ const DEFAULT_LIMIT = 120;
 const DEFAULT_WINDOW_MS = 60_000;
 
 /** Paths excluded from rate limiting (monitoring). */
-const EXCLUDED_PATHS = new Set(["/api/health"]);
+const EXCLUDED_PATHS = new Set(["/api/health", "/api/telegram/test"]);
 
 export interface RateLimitOptions {
   limit?: number;
