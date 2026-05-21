@@ -12,6 +12,7 @@ import type {
   OpsPlayerImpactSnapshot,
   OpsMicroeventSnapshot,
   OpsSequenceMemorySnapshot,
+  OpsMetaConsensusSnapshot,
   OpsSignalDecisionSnapshot,
   OpsLogEntry,
   OpsQueueMetrics,
@@ -41,6 +42,7 @@ export interface UseOpsResult {
   playerImpact: OpsPlayerImpactSnapshot | null;
   microevent: OpsMicroeventSnapshot | null;
   sequenceMemory: OpsSequenceMemorySnapshot | null;
+  metaConsensus: OpsMetaConsensusSnapshot | null;
   status: OpsFeedStatus;
   error: string | null;
   lastUpdated: number | null;
@@ -73,6 +75,8 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
   );
   const [sequenceMemory, setSequenceMemory] =
     useState<OpsSequenceMemorySnapshot | null>(null);
+  const [metaConsensus, setMetaConsensus] =
+    useState<OpsMetaConsensusSnapshot | null>(null);
   const [status, setStatus] = useState<OpsFeedStatus>("loading");
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
@@ -122,6 +126,7 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
       setPlayerImpact(data.playerImpact);
       setMicroevent(data.microevent);
       setSequenceMemory(data.sequenceMemory);
+      setMetaConsensus(data.metaConsensus);
       setResponseTime(data.meta.responseTimeMs);
       setLastUpdated(Date.now());
       setError(null);
@@ -163,6 +168,7 @@ export function useOps(options: UseOpsOptions = {}): UseOpsResult {
     playerImpact,
     microevent,
     sequenceMemory,
+    metaConsensus,
     status,
     error,
     lastUpdated,

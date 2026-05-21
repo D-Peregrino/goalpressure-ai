@@ -280,6 +280,40 @@ export interface OpsPlayerImpactSnapshot {
   }[];
 }
 
+export interface OpsMetaConsensusSnapshot {
+  updatedAt: string | null;
+  matchCount: number;
+  averageConsensusScore: number;
+  averageInstitutionalConfidence: number;
+  executionGrades: {
+    grade: string;
+    count: number;
+    fixtures: string[];
+  }[];
+  consensusHeatmap: {
+    fixtureId: string;
+    matchLabel?: string;
+    consensusScore: number;
+    institutionalConfidence: number;
+    executionGrade: string;
+    executionDecision: string;
+  }[];
+  falsePositiveAlerts: {
+    fixtureId: string;
+    matchLabel?: string;
+    falsePositiveRisk: number;
+    executionDecision: string;
+  }[];
+  dominantEnginesSummary: { engine: string; weight: number }[];
+  topExecutions: {
+    fixtureId: string;
+    matchLabel?: string;
+    executionDecision: string;
+    executionGrade: string;
+    consensusScore: number;
+  }[];
+}
+
 export interface OpsApiSuccessResponse {
   ok: true;
   telegram: OpsTelegramStatus;
@@ -295,6 +329,7 @@ export interface OpsApiSuccessResponse {
   playerImpact: OpsPlayerImpactSnapshot;
   microevent: OpsMicroeventSnapshot;
   sequenceMemory: OpsSequenceMemorySnapshot;
+  metaConsensus: OpsMetaConsensusSnapshot;
   meta: {
     fetchedAt: string;
     responseTimeMs: number;

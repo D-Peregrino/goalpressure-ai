@@ -178,6 +178,7 @@ export default function OpsDashboard() {
     playerImpact,
     microevent,
     sequenceMemory,
+    metaConsensus,
     status,
     error,
     lastUpdated,
@@ -878,6 +879,141 @@ export default function OpsDashboard() {
             <p className="mb-6 font-mono text-[9px] text-muted">
               API{" "}
               <code className="text-foreground">GET /api/sequence/live</code>
+            </p>
+          </section>
+
+          <section>
+            <h2 className="section-header mb-4">Meta Consensus Engine</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 mb-4">
+              <KpiCard
+                label="Consensus"
+                value={
+                  metaConsensus && metaConsensus.matchCount > 0
+                    ? String(metaConsensus.averageConsensusScore)
+                    : "—"
+                }
+                sub="avg score"
+                accent={Boolean(
+                  metaConsensus && metaConsensus.averageConsensusScore >= 65
+                )}
+              />
+              <KpiCard
+                label="Inst. Confidence"
+                value={
+                  metaConsensus
+                    ? String(metaConsensus.averageInstitutionalConfidence)
+                    : "—"
+                }
+                sub="institutional"
+              />
+              <KpiCard
+                label="Top Grade"
+                value={
+                  metaConsensus?.consensusHeatmap[0]?.executionGrade ?? "—"
+                }
+                sub={
+                  metaConsensus?.consensusHeatmap[0]?.executionDecision ?? "—"
+                }
+                accent={
+                  metaConsensus?.consensusHeatmap[0]?.executionGrade === "S+" ||
+                  metaConsensus?.consensusHeatmap[0]?.executionGrade === "S"
+                }
+              />
+              <KpiCard
+                label="Executions"
+                value={String(metaConsensus?.topExecutions.length ?? 0)}
+                sub="EXECUTE + AGGRESSIVE"
+                accent={(metaConsensus?.topExecutions.length ?? 0) > 0}
+              />
+              <KpiCard
+                label="False Positive"
+                value={String(metaConsensus?.falsePositiveAlerts.length ?? 0)}
+                sub="risk alerts"
+                accent={(metaConsensus?.falsePositiveAlerts.length ?? 0) > 0}
+              />
+              <KpiCard
+                label="Dominant Engine"
+                value={
+                  metaConsensus?.dominantEnginesSummary[0]?.engine ?? "—"
+                }
+                sub={
+                  metaConsensus?.dominantEnginesSummary[0]
+                    ? `×${metaConsensus.dominantEnginesSummary[0].weight}`
+                    : "leader"
+                }
+              />
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 mb-4">
+              <div className="module-panel overflow-hidden border-pressure/20 bg-[#06090d]">
+                <div className="flex items-center gap-2 border-b border-card/80 bg-surface/80 px-3 py-2">
+                  <span className="font-mono text-[9px] font-bold uppercase tracking-[0.25em] text-muted">
+                    Consensus Heatmap
+                  </span>
+                </div>
+                <div className="max-h-[200px] overflow-y-auto p-3 font-mono text-[10px]">
+                  {(metaConsensus?.consensusHeatmap ?? []).length === 0 ? (
+                    <p className="text-muted">[meta-consensus] awaiting cycle…</p>
+                  ) : (
+                    metaConsensus?.consensusHeatmap.map((e) => (
+                      <div
+                        key={e.fixtureId}
+                        className={`mb-1 border-l-2 pl-2 ${
+                          e.executionGrade === "S+" || e.executionGrade === "S"
+                            ? "border-pressure text-pressure"
+                            : e.executionGrade === "A"
+                              ? "border-emerald-500/60 text-emerald-400"
+                              : "border-card text-foreground/80"
+                        }`}
+                      >
+                        {e.matchLabel ?? e.fixtureId} · {e.consensusScore} ·{" "}
+                        {e.executionGrade} · {e.executionDecision} · conf{" "}
+                        {e.institutionalConfidence}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+              <div className="module-panel overflow-hidden border-pressure/20 bg-[#06090d]">
+                <div className="flex items-center gap-2 border-b border-card/80 bg-surface/80 px-3 py-2">
+                  <span className="font-mono text-[9px] font-bold uppercase tracking-[0.25em] text-muted">
+                    Grades · FP Risk · Executions
+                  </span>
+                </div>
+                <div className="max-h-[200px] overflow-y-auto p-3 font-mono text-[10px]">
+                  <div className="mb-2 flex flex-wrap gap-1">
+                    {(metaConsensus?.executionGrades ?? []).map((g) => (
+                      <span
+                        key={g.grade}
+                        className="rounded border border-card px-1.5 py-0.5 text-muted"
+                      >
+                        {g.grade}:{g.count}
+                      </span>
+                    ))}
+                  </div>
+                  {(metaConsensus?.falsePositiveAlerts ?? []).map((e) => (
+                    <div
+                      key={`fp-${e.fixtureId}`}
+                      className="mb-1 border-l-2 border-amber-500 pl-2 text-amber-400"
+                    >
+                      FP {e.matchLabel ?? e.fixtureId} · risk {e.falsePositiveRisk}{" "}
+                      · {e.executionDecision}
+                    </div>
+                  ))}
+                  {(metaConsensus?.topExecutions ?? []).map((e) => (
+                    <div
+                      key={`ex-${e.fixtureId}`}
+                      className="mb-1 border-l-2 border-pressure pl-2"
+                    >
+                      EXEC {e.matchLabel ?? e.fixtureId} · {e.executionGrade} ·{" "}
+                      {e.executionDecision} · {e.consensusScore}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <p className="mb-6 font-mono text-[9px] text-muted">
+              API <code className="text-foreground">GET /api/meta/live</code> ·
+              Telegram gated: EXECUTE / AGGRESSIVE_EXECUTE only
             </p>
           </section>
 

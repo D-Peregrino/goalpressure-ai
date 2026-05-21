@@ -31,6 +31,10 @@ import {
   processSequenceMemoryLiveCycle,
   processSequenceMemoryPreCycle,
 } from "@/lib/sequence/sequenceCycle";
+import {
+  processMetaConsensusLiveCycle,
+  processMetaConsensusPreCycle,
+} from "@/lib/meta/metaCycle";
 import { processRuntimeSignalCycle } from "@/lib/runtime/signalDispatcher";
 import { recordRuntimeOpsLog } from "@/lib/ops/opsStore";
 import { logInfo, logOps, logWarn } from "@/lib/utils/logger";
@@ -278,6 +282,20 @@ export class LivePollingEngine {
         });
       }
 
+      try {
+        processMetaConsensusPreCycle({
+          matches,
+          metrics: runtimeMetrics.snapshot.metrics,
+        });
+      } catch (metaPreErr) {
+        logWarn(LOG_SCOPE, "Meta consensus pre-cycle skipped", {
+          message:
+            metaPreErr instanceof Error
+              ? metaPreErr.message
+              : "meta_pre_failed",
+        });
+      }
+
       const signalCycle = await processRuntimeSignalCycle({
         matches,
         metrics: runtimeMetrics.snapshot.metrics,
@@ -314,6 +332,21 @@ export class LivePollingEngine {
         const msg =
           marketErr instanceof Error ? marketErr.message : "market_calibration_failed";
         logWarn(LOG_SCOPE, "Market calibration skipped", { message: msg });
+      }
+
+      try {
+        const metaLive = await processMetaConsensusLiveCycle({
+          matches,
+          metrics: runtimeMetrics.snapshot.metrics,
+        });
+        stats.metaConsensusPersisted = metaLive.persisted;
+      } catch (metaErr) {
+        logWarn(LOG_SCOPE, "Meta consensus live cycle skipped", {
+          message:
+            metaErr instanceof Error
+              ? metaErr.message
+              : "meta_live_failed",
+        });
       }
 
       try {

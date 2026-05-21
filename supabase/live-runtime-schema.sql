@@ -339,3 +339,38 @@ create index if not exists sequence_memory_metrics_recurrence_idx
 
 create index if not exists sequence_memory_metrics_state_idx
   on public.sequence_memory_metrics (sequence_state, created_at desc);
+
+-- ─── Meta consensus metrics ───────────────────────────────────────────────────
+
+create table if not exists public.meta_consensus_metrics (
+  id uuid primary key default gen_random_uuid(),
+  fixture_id text not null,
+  minute int not null default 0,
+  consensus_score numeric(5, 2) not null default 0,
+  institutional_confidence numeric(5, 2) not null default 0,
+  execution_grade text not null default 'D',
+  trigger_approval boolean not null default false,
+  market_agreement numeric(5, 2) not null default 0,
+  contextual_alignment numeric(5, 2) not null default 0,
+  edge_persistence numeric(5, 2) not null default 0,
+  volatility_risk numeric(5, 2) not null default 0,
+  false_positive_risk numeric(5, 2) not null default 0,
+  execution_decision text not null default 'IGNORE',
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists meta_consensus_metrics_fixture_id_idx
+  on public.meta_consensus_metrics (fixture_id);
+
+create index if not exists meta_consensus_metrics_created_at_idx
+  on public.meta_consensus_metrics (created_at desc);
+
+create index if not exists meta_consensus_metrics_score_idx
+  on public.meta_consensus_metrics (consensus_score desc, created_at desc);
+
+create index if not exists meta_consensus_metrics_decision_idx
+  on public.meta_consensus_metrics (execution_decision, created_at desc);
+
+create index if not exists meta_consensus_metrics_grade_idx
+  on public.meta_consensus_metrics (execution_grade, created_at desc);

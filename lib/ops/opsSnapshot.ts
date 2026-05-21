@@ -12,6 +12,7 @@ import { getTemporalOpsSnapshot } from "@/lib/temporal/temporalSnapshot";
 import { getPlayerOpsSnapshot } from "@/lib/player/playerSnapshot";
 import { getMicroeventOpsSnapshot } from "@/lib/microevent/microeventSnapshot";
 import { getSequenceOpsSnapshot } from "@/lib/sequence/sequenceSnapshot";
+import { getMetaOpsSnapshot } from "@/lib/meta/metaSnapshot";
 import { getRuntimeSignalOpsSnapshot } from "@/lib/runtime/signalDispatcher";
 import { getOpsStoreSnapshot } from "@/lib/ops/opsStore";
 import type {
@@ -23,6 +24,7 @@ import type {
   OpsPlayerImpactSnapshot,
   OpsMicroeventSnapshot,
   OpsSequenceMemorySnapshot,
+  OpsMetaConsensusSnapshot,
   OpsSignalDecisionSnapshot,
   OpsTelegramStatus,
 } from "@/types/opsApi";
@@ -191,6 +193,35 @@ function buildMarketCalibrationSnapshot(): OpsMarketCalibrationSnapshot {
   };
 }
 
+function buildMetaConsensusSnapshot(): OpsMetaConsensusSnapshot {
+  const snap = getMetaOpsSnapshot();
+  if (!snap) {
+    return {
+      updatedAt: null,
+      matchCount: 0,
+      averageConsensusScore: 0,
+      averageInstitutionalConfidence: 0,
+      executionGrades: [],
+      consensusHeatmap: [],
+      falsePositiveAlerts: [],
+      dominantEnginesSummary: [],
+      topExecutions: [],
+    };
+  }
+
+  return {
+    updatedAt: snap.updatedAt,
+    matchCount: snap.matchCount,
+    averageConsensusScore: snap.averageConsensusScore,
+    averageInstitutionalConfidence: snap.averageInstitutionalConfidence,
+    executionGrades: snap.executionGrades,
+    consensusHeatmap: snap.consensusHeatmap,
+    falsePositiveAlerts: snap.falsePositiveAlerts,
+    dominantEnginesSummary: snap.dominantEnginesSummary,
+    topExecutions: snap.topExecutions,
+  };
+}
+
 function buildSequenceMemorySnapshot(): OpsSequenceMemorySnapshot {
   const snap = getSequenceOpsSnapshot();
   if (!snap) {
@@ -320,6 +351,7 @@ export async function buildOpsApiPayload(
   const playerImpact = buildPlayerImpactSnapshot();
   const microevent = buildMicroeventSnapshot();
   const sequenceMemory = buildSequenceMemorySnapshot();
+  const metaConsensus = buildMetaConsensusSnapshot();
 
   const counters = {
     ...store.counters,
@@ -345,6 +377,7 @@ export async function buildOpsApiPayload(
     playerImpact,
     microevent,
     sequenceMemory,
+    metaConsensus,
     meta: {
       fetchedAt: new Date().toISOString(),
       responseTimeMs,

@@ -21,6 +21,8 @@ import type { MatchEngineInsight } from "@/types/engine";
 import { persistSignalDispatchBatch } from "@/lib/live/signalDispatchPersistence";
 import type { LiveMetricRecord } from "@/lib/runtime/liveRuntime";
 import { recordRuntimeOpsLog } from "@/lib/ops/opsStore";
+import { getMetaConsensusForFixture } from "@/lib/meta/metaSnapshot";
+import { isMetaTelegramApproved } from "@/lib/meta/metaConsensusEngine";
 import { logOps } from "@/lib/utils/logger";
 const LOG_SCOPE = "runtime-signal-dispatcher";
 
@@ -168,14 +170,23 @@ export async function processRuntimeSignalCycle(
     const evaluation = evaluateSignalOpportunity(match, decisionMetrics);
     const fixtureId = record.fixtureId;
 
+    const metaConsensus = getMetaConsensusForFixture(fixtureId);
+    const metaApproved =
+      !metaConsensus || isMetaTelegramApproved(metaConsensus);
+
     const telegramWillSend =
-      evaluation.shouldTrigger && input.dispatchTelegram !== false;
+      evaluation.shouldTrigger &&
+      input.dispatchTelegram !== false &&
+      metaApproved;
 
     if (evaluation.shouldTrigger) {
       triggered += 1;
       evSum += evaluation.ev;
 
-      if (evaluation.reason.includes("cooldown_active")) {
+      if (
+        evaluation.reason.includes("cooldown_active") ||
+        !metaApproved
+      ) {
         blocked += 1;
       } else {
         activeSignals.push({
@@ -211,6 +222,15 @@ export async function processRuntimeSignalCycle(
         ? (match.score.home ?? 0) + (match.score.away ?? 0)
         : 0;
 
+    const reasons = [...evaluation.reason];
+    if (evaluation.shouldTrigger && !metaApproved) {
+      reasons.push(
+        metaConsensus
+          ? `meta_${metaConsensus.executionDecision}`
+          : "meta_not_ready"
+      );
+    }
+
     persistInputs.push({
       fixtureId,
       market: evaluation.market,
@@ -221,7 +241,10 @@ export async function processRuntimeSignalCycle(
       ev: evaluation.ev,
       fairOdd: evaluation.fairOdd,
       marketOdd: evaluation.currentOdd,
-      triggered: evaluation.shouldTrigger && !evaluation.reason.includes("cooldown_active"),
+      triggered:
+        evaluation.shouldTrigger &&
+        !evaluation.reason.includes("cooldown_active") &&
+        metaApproved,
       telegramSent: false,
       metadata: {
         match_id: match.id,
@@ -229,8 +252,11 @@ export async function processRuntimeSignalCycle(
         minute: record.minute,
         goals_at_trigger: goalsAtTrigger,
         urgency: evaluation.urgency,
-        reasons: evaluation.reason,
+        reasons,
         source: "signal_decision_engine",
+        meta_grade: metaConsensus?.executionGrade,
+        meta_decision: metaConsensus?.executionDecision,
+        meta_consensus_score: metaConsensus?.consensusScore,
       },
     });
   }

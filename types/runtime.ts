@@ -11,6 +11,7 @@ export interface LivePollingCycleStats {
   playerMetricsPersisted?: number;
   microeventMetricsPersisted?: number;
   sequenceMemoryPersisted?: number;
+  metaConsensusPersisted?: number;
   durationMs: number;
   success: boolean;
   error?: string;
