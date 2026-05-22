@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState, memo } from "react";
 import type { EnrichedLiveMatch } from "@/hooks/useLiveMatchCenter";
 import MatchCardPro from "@/components/terminal/MatchCardPro";
 
-const GRID_ROW_ESTIMATE = 480;
-const LIST_ROW_ESTIMATE = 200;
+const GRID_ROW_ESTIMATE = 400;
+const LIST_ROW_ESTIMATE = 220;
 const OVERSCAN = 2;
 const VIRTUALIZE_THRESHOLD = 10;
 
@@ -16,6 +16,7 @@ function VirtualizedMatchGridInner({
   viewMode,
   historyRef,
   auditMode = false,
+  highlightFixtureId,
 }: {
   matches: EnrichedLiveMatch[];
   favorites: Set<string>;
@@ -23,6 +24,7 @@ function VirtualizedMatchGridInner({
   viewMode: "grid" | "list";
   historyRef: React.MutableRefObject<Map<string, number[]>>;
   auditMode?: boolean;
+  highlightFixtureId?: string | null;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [range, setRange] = useState({ start: 0, end: matches.length });
@@ -81,7 +83,7 @@ function VirtualizedMatchGridInner({
         {visible.map((m) => (
           <div
             key={m.fixtureId}
-            className="gp-virtual-item"
+            className="gp-virtual-item gp-virtual-item--card"
             style={{ contentVisibility: "auto", containIntrinsicSize: `${rowHeight}px` }}
           >
             <MatchCardPro
@@ -91,6 +93,7 @@ function VirtualizedMatchGridInner({
               onToggleFavorite={() => onToggleFavorite(m.fixtureId)}
               pressureHistory={historyRef.current.get(m.fixtureId)}
               auditMode={auditMode}
+              momentPick={highlightFixtureId === m.fixtureId}
             />
           </div>
         ))}

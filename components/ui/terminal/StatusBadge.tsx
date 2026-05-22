@@ -1,15 +1,18 @@
 "use client";
 
-const STYLES: Record<string, string> = {
-  ONLINE: "t-badge t-badge--ok",
-  LIVE: "t-badge t-badge--ok",
-  ACTIVE: "t-badge t-badge--ok",
-  READY: "t-badge t-badge--ok",
-  SANDBOX: "t-badge t-badge--warn",
-  DEGRADED: "t-badge t-badge--warn",
-  OFFLINE: "t-badge t-badge--off",
-  ERROR: "t-badge t-badge--off",
-  IDLE: "t-badge",
+import { STATUS_LABEL } from "@/lib/ux/productCopy";
+
+const VARIANT: Record<string, string> = {
+  ONLINE: "gp-sport-badge--live",
+  LIVE: "gp-sport-badge--live",
+  ACTIVE: "gp-sport-badge--live",
+  READY: "gp-sport-badge--live",
+  SANDBOX: "gp-sport-badge--sync",
+  SYNC: "gp-sport-badge--sync",
+  DEGRADED: "gp-sport-badge--warn",
+  OFFLINE: "gp-sport-badge--off",
+  ERROR: "gp-sport-badge--off",
+  IDLE: "gp-sport-badge--off",
 };
 
 export default function StatusBadge({
@@ -19,10 +22,13 @@ export default function StatusBadge({
   status: string;
   pulse?: boolean;
 }) {
-  const cls = STYLES[status] ?? "t-badge";
+  const variant = VARIANT[status] ?? "gp-sport-badge--off";
+  const label = STATUS_LABEL[status] ?? status;
   return (
-    <span className={`${cls} ${pulse ? "t-live-pulse" : ""}`}>
-      {status}
+    <span
+      className={`gp-sport-badge ${variant} ${pulse ? "t-live-pulse" : ""}`}
+    >
+      {label}
     </span>
   );
 }

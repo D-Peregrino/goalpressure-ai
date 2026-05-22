@@ -6,7 +6,11 @@ import { ArrowLeft } from "lucide-react";
 import { useMatchCenter } from "@/hooks/useMatchCenter";
 import MatchCenterHeader from "@/components/match-center/MatchCenterHeader";
 import MatchStoryBlock from "@/components/match-center/MatchStoryBlock";
-import EmotionalTimeline from "@/components/match-center/EmotionalTimeline";
+import MatchStoryLiveHeader from "@/components/match-story/MatchStoryLiveHeader";
+import GameTemperature from "@/components/match-story/GameTemperature";
+import MatchHeatStory from "@/components/match-story/MatchHeatStory";
+import StoryTimeline from "@/components/match-story/StoryTimeline";
+import { tacticalProfileClass } from "@/lib/match/matchStoryVisual";
 import VisualOffensiveRadar from "@/components/match-center/VisualOffensiveRadar";
 import EngineStatusLive, {
   type EngineStatusRow,
@@ -198,8 +202,36 @@ function MatchCenterPremiumInner({ fixtureId }: { fixtureId: string }) {
   );
 
   const timeline = (
-    <EmotionalTimeline events={mc.timeline} currentMinute={mc.match.minute} />
+    <StoryTimeline
+      chapters={mc.storyChapters}
+      events={mc.timeline}
+      currentMinute={mc.match.minute}
+    />
   );
+
+  const storyLiveHeader =
+    mc.storyVisualInput ? (
+      <MatchStoryLiveHeader input={mc.storyVisualInput} />
+    ) : null;
+
+  const gameTemperature =
+    mc.storyVisualInput ? (
+      <GameTemperature input={mc.storyVisualInput} />
+    ) : null;
+
+  const heatStory =
+    mc.storyVisualInput ? (
+      <MatchHeatStory
+        profile={mc.storyVisualInput.tacticalProfile}
+        homeTeam={mc.match.homeTeam}
+        awayTeam={mc.match.awayTeam}
+        homePressure={mc.storyVisualInput.homePressure}
+        awayPressure={mc.storyVisualInput.awayPressure}
+        momentum={mc.momentum}
+        tacticalIntensity={mc.storyVisualInput.tacticalIntensity}
+        offensiveControl={mc.storyVisualInput.offensiveControl}
+      />
+    ) : null;
 
   const radar = (
     <VisualOffensiveRadar
@@ -227,11 +259,18 @@ function MatchCenterPremiumInner({ fixtureId }: { fixtureId: string }) {
     </>
   );
 
+  const tacticalClass = mc.tactical
+    ? tacticalProfileClass(mc.tactical.tacticalProfile)
+    : "";
+
   return (
-    <div className="gp-mc gp-mc--story">
+    <div className={`gp-mc gp-mc--story gp-mc--story-viz ${tacticalClass}`}>
       <div className="gp-mc__ambient" aria-hidden />
 
       {header}
+      {storyLiveHeader}
+      {gameTemperature}
+      {heatStory}
       {storyBlock}
       <div className="hidden lg:block">{tips}</div>
 

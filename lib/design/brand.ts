@@ -15,22 +15,22 @@ export const COLORS = {
 
 export const BRAND = {
   name: "GoalPressure AI",
-  tagline: "Terminal esportivo inteligente",
+  tagline: "A central que sabe o que importa no jogo",
   subtitle:
-    "Acompanhe jogos ao vivo com intensidade, oportunidades e leitura clara — sem precisar ser expert em números.",
+    "Pressão ao vivo, oportunidades e narrativa clara — para decidir em segundos, não em planilhas.",
   domain: "goalpressure.com.br",
 } as const;
 
 export const ENGINES = [
-  { id: "pressure", name: "Pressure Engine", desc: "Índice de pressão ofensiva em tempo real." },
-  { id: "temporal", name: "Temporal Dynamics", desc: "Fase do jogo, urgência e janelas temporais." },
-  { id: "player", name: "Player Impact", desc: "Impacto de jogadores e resistência defensiva." },
-  { id: "microevent", name: "Microevent Detection", desc: "Ondas de ataque e bursts de caos." },
-  { id: "sequence", name: "Sequence Memory", desc: "Memória de sequências e momentum falso." },
-  { id: "market", name: "Market Calibration", desc: "Edge, fair odd e distorção de mercado." },
-  { id: "signal", name: "Signal Decision", desc: "Gatilho quantitativo com EV mínimo." },
-  { id: "backtest", name: "Backtesting", desc: "Validação histórica institucional." },
-  { id: "meta", name: "Meta Consensus", desc: "Consenso entre motores e execution grade." },
+  { id: "pressure", name: "Intensidade ofensiva", desc: "Força de ataque e pressão em tempo real." },
+  { id: "temporal", name: "Ritmo do jogo", desc: "Fase, urgência e janelas do confronto." },
+  { id: "player", name: "Impacto em campo", desc: "Jogadores e resistência defensiva." },
+  { id: "microevent", name: "Ondas de ataque", desc: "Rajadas e ritmo imprevisível." },
+  { id: "sequence", name: "Sequências", desc: "Memória de jogadas e impulso falso." },
+  { id: "market", name: "Leitura de mercado", desc: "Vantagem, odd justa e distorção." },
+  { id: "signal", name: "Decisão de entrada", desc: "Quando vale agir no mercado." },
+  { id: "backtest", name: "Histórico", desc: "Validação em dados passados." },
+  { id: "meta", name: "Consenso", desc: "Combinação dos motores de leitura." },
 ] as const;
 
 export const DETECTIONS = [
@@ -43,26 +43,26 @@ export const DETECTIONS = [
 ] as const;
 
 export const PIPELINE = [
-  "SportMonks",
-  "Runtime",
-  "Engines Quantitativas",
-  "Meta Consensus",
-  "Telegram / Dashboard",
+  "Dados ao vivo",
+  "Leitura em tempo real",
+  "Motores esportivos",
+  "Consenso",
+  "Alertas e central",
 ] as const;
 
 export const AUDIENCE = [
-  "Traders esportivos",
-  "Analistas quantitativos",
+  "Apostadores ao vivo",
+  "Analistas esportivos",
   "Grupos premium",
-  "Operações de live betting",
-  "Criadores de conteúdo esportivo",
+  "Operações de live",
+  "Criadores de conteúdo",
 ] as const;
 
 export const PRICING = [
   {
     name: "Free",
     price: "R$ 0",
-    desc: "Radar live, pressure score e até 6 jogos simultâneos.",
+    desc: "Até 6 jogos, pressão básica e prévia do que o Pro desbloqueia.",
     tier: "free" as const,
     cta: "Começar grátis",
     href: "/terminal",
@@ -70,18 +70,33 @@ export const PRICING = [
   {
     name: "Pro",
     price: "R$ 297/mês",
-    desc: "Edge, steam, heatmaps, chaos radar e trial 7 dias.",
+    desc: "Central completa, hero, alertas, timeline e leitura tática — trial 7 dias.",
     tier: "pro" as const,
     cta: "Trial Pro",
-    href: "/signup",
+    href: "/signup?plan=pro",
     featured: true,
   },
   {
-    name: "Institutional",
-    price: "Custom",
-    desc: "Ops, API, SLA e calibração dedicada — trial 14 dias.",
+    name: "Elite",
+    price: "R$ 697/mês",
+    desc: "Modo operador, auditoria e prioridade máxima — trial 14 dias.",
     tier: "institutional" as const,
-    cta: "Falar com vendas",
-    href: "/login",
+    cta: "Trial Elite",
+    href: "/signup?plan=institutional",
+  },
+] as const;
+
+export const COMMERCIAL_VALUE = [
+  {
+    title: "Leitura operacional",
+    desc: "Uma linha por jogo: o que o sistema vê agora, sem jargão técnico.",
+  },
+  {
+    title: "Central viva",
+    desc: "Hero, alertas e ranking de calor conduzem sua atenção ao vivo.",
+  },
+  {
+    title: "Vantagem contextual",
+    desc: "Pressão + mercado num só lugar — quando vale agir fica explícito.",
   },
 ] as const;

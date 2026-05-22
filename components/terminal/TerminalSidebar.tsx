@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
 import {
   BarChart3,
   ChevronLeft,
@@ -10,25 +8,30 @@ import {
   FlaskConical,
   LayoutDashboard,
   Radio,
+  Settings2,
   SlidersHorizontal,
   Target,
   TestTube2,
 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { BRAND } from "@/lib/design/brand";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { TIERS } from "@/lib/subscription/tiers";
+import { BRAND_PRODUCT, navItemsForTier } from "@/lib/ux/productCopy";
+import type { LucideIcon } from "lucide-react";
 
 const STORAGE_KEY = "gp-sidebar-collapsed";
 
-const BASE_NAV = [
-  { href: "/terminal", label: "Operations", icon: LayoutDashboard },
-  { href: "/feed", label: "Live Feed", icon: Radio },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/validation", label: "Validation", icon: TestTube2 },
-  { href: "/backtest", label: "Backtest", icon: Target },
-  { href: "/research", label: "Research", icon: FlaskConical },
-  { href: "/models", label: "Models", icon: SlidersHorizontal },
-] as const;
+const NAV_ICONS: Record<string, LucideIcon> = {
+  "/terminal": LayoutDashboard,
+  "/feed": Radio,
+  "/analytics": BarChart3,
+  "/validation": TestTube2,
+  "/backtest": Target,
+  "/research": FlaskConical,
+  "/models": SlidersHorizontal,
+  "/ops": Settings2,
+};
 
 export default function TerminalSidebar({
   isActive,
@@ -37,9 +40,7 @@ export default function TerminalSidebar({
 }) {
   const { tier, can } = useSubscription();
   const [collapsed, setCollapsed] = useState(false);
-  const nav = can("ops")
-    ? [...BASE_NAV, { href: "/ops", label: "Ops", icon: LayoutDashboard }]
-    : [...BASE_NAV];
+  const nav = navItemsForTier(tier, can("ops"));
 
   useEffect(() => {
     try {
@@ -64,7 +65,7 @@ export default function TerminalSidebar({
   return (
     <aside
       className={`gp-sidebar ${collapsed ? "gp-sidebar--collapsed" : ""}`}
-      aria-label="Navegação institucional"
+      aria-label="Navegação principal"
     >
       <div className="gp-sidebar__brand">
         <Link href="/" className="gp-sidebar__logo" title={BRAND.name}>
@@ -91,8 +92,10 @@ export default function TerminalSidebar({
       </div>
 
       <nav className="gp-sidebar__nav">
-        {nav.map(({ href, label, icon: Icon }) => {
+        {nav.map(({ href, label, short }) => {
+          const Icon = NAV_ICONS[href] ?? LayoutDashboard;
           const active = isActive(href);
+          const displayLabel = collapsed ? short : label;
           return (
             <Link
               key={href}
@@ -101,7 +104,7 @@ export default function TerminalSidebar({
               title={collapsed ? label : undefined}
             >
               <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.75} />
-              {!collapsed && <span>{label}</span>}
+              {!collapsed && <span>{displayLabel}</span>}
             </Link>
           );
         })}
@@ -113,11 +116,11 @@ export default function TerminalSidebar({
             <span className={`gp-tier-badge gp-tier-badge--${tier}`}>
               {TIERS[tier].name}
             </span>
-            <p className="gp-sidebar__meta">Quant Terminal · V2</p>
+            <p className="gp-sidebar__meta">{BRAND_PRODUCT.footer}</p>
           </>
         )}
-        <Link href="/login" className="gp-sidebar__home-link text-xs">
-          {collapsed ? "◎" : "Conta / upgrade"}
+        <Link href="/upgrade" className="gp-sidebar__home-link text-xs">
+          {collapsed ? "◎" : "Planos e upgrade"}
         </Link>
         <Link href="/" className="gp-sidebar__home-link">
           {collapsed ? "↵" : `← ${BRAND.domain}`}
@@ -127,7 +130,6 @@ export default function TerminalSidebar({
   );
 }
 
-/** Mobile drawer nav — same items, always expanded labels */
 export function TerminalSidebarMobile({
   isActive,
   onNavigate,
@@ -135,19 +137,25 @@ export function TerminalSidebarMobile({
   isActive: (href: string) => boolean;
   onNavigate?: () => void;
 }) {
+  const { tier, can } = useSubscription();
+  const nav = navItemsForTier(tier, can("ops"));
+
   return (
     <nav className="gp-sidebar gp-sidebar--mobile">
-      {BASE_NAV.map(({ href, label, icon: Icon }) => (
-        <Link
-          key={href}
-          href={href}
-          onClick={onNavigate}
-          className={`gp-sidebar__link ${isActive(href) ? "gp-sidebar__link--active" : ""}`}
-        >
-          <Icon className="h-[18px] w-[18px] shrink-0" />
-          <span>{label}</span>
-        </Link>
-      ))}
+      {nav.map(({ href, label, short }) => {
+        const Icon = NAV_ICONS[href] ?? LayoutDashboard;
+        return (
+          <Link
+            key={href}
+            href={href}
+            onClick={onNavigate}
+            className={`gp-sidebar__link ${isActive(href) ? "gp-sidebar__link--active" : ""}`}
+          >
+            <Icon className="h-[18px] w-[18px] shrink-0" />
+            <span>{label}</span>
+          </Link>
+        );
+      })}
     </nav>
   );
 }

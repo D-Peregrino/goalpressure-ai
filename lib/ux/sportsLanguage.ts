@@ -110,11 +110,19 @@ export function insightDoJogo(input: {
 
 export const TERMINAL_COPY = {
   title: "Central ao vivo",
-  subtitle: "Jogos em tempo real com intensidade, oportunidades e leitura simples das odds.",
+  subtitle: "Leitura em tempo real que prioriza, alerta e conduz a decisão — não só números.",
   feedTitle: "Movimentos ao vivo",
   feedSub: "O que está acontecendo agora nos jogos",
+  alertTitle: "Alertas ao vivo",
+  alertSub: "Mudanças reais de contexto, em linguagem de jogo",
+  alertEmpty:
+    "Sem alertas fortes agora. Quando o mercado ou a intensidade mudarem, você vê a narrativa aqui.",
+  heatTitle: "Jogos mais quentes",
+  heatSub: "Pressão, mercado atrasado e oportunidade",
+  timelineTitle: "Linha do tempo",
+  timelineSub: "Pressão, odds, ritmo e leitura tática",
   radarTitle: "Radar do momento",
-  edgeTitle: "Melhores oportunidades",
+  edgeTitle: "Vantagens em destaque",
   kpi: {
     tracked: "Rastreadas",
     live: "Ao vivo",

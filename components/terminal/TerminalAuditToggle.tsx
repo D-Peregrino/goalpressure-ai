@@ -19,7 +19,7 @@ export default function TerminalAuditToggle({
       />
       <span className="gp-audit-toggle__track" aria-hidden />
       <ClipboardList className="gp-audit-toggle__icon h-4 w-4" aria-hidden />
-      <span className="gp-audit-toggle__label">Modo Auditoria</span>
+      <span className="gp-type-caption gp-audit-toggle__label">Auditoria</span>
     </label>
   );
 }

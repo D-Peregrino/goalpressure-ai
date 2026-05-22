@@ -21,15 +21,15 @@ export default function HeroSection() {
           <h1 className="gp-landing-hero__title">{BRAND.tagline}</h1>
           <p className="gp-landing-hero__subtitle">{BRAND.subtitle}</p>
           <div className="gp-landing-hero__cta">
-            <Link href="/signup" className="gp-btn gp-btn--primary">
+            <Link href="/signup?plan=pro" className="gp-btn gp-btn--primary">
               Trial Pro — 7 dias
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link href="/terminal" className="gp-btn gp-btn--secondary">
-              Abrir terminal live
+              Ver central ao vivo
             </Link>
-            <Link href="#waitlist" className="gp-btn gp-btn--ghost">
-              Waitlist institucional
+            <Link href="/pricing" className="gp-btn gp-btn--ghost">
+              Comparar planos
             </Link>
           </div>
         </motion.div>

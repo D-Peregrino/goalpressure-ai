@@ -14,17 +14,23 @@ export default function AppShell({
   children,
   title,
   subtitle,
+  intro,
+  darkPremium = true,
 }: {
   children: React.ReactNode;
   title?: string;
   subtitle?: string;
+  intro?: string;
+  darkPremium?: boolean;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const isActive = useTerminalNavActive(pathname);
 
   return (
-    <div className="gp-app-shell">
+    <div
+      className={`gp-app-shell ${darkPremium ? "gp-app-shell--central" : ""}`}
+    >
       <div className="gp-app-shell__ambient" aria-hidden />
 
       <TerminalSidebar isActive={isActive} />
@@ -78,10 +84,17 @@ export default function AppShell({
         </AnimatePresence>
 
         <main className="gp-app-shell__content-wrap">
-          {(title || subtitle) && (
-            <div className="gp-page-heading">
-              {subtitle && <p className="gp-landing-eyebrow">{subtitle}</p>}
-              {title && <h1 className="gp-terminal-header__title">{title}</h1>}
+          {(title || subtitle || intro) && (
+            <div className="gp-sport-page-heading">
+              {subtitle && (
+                <p className="gp-sport-page-heading__eyebrow">{subtitle}</p>
+              )}
+              {title && (
+                <h1 className="gp-sport-page-heading__title">{title}</h1>
+              )}
+              {intro && (
+                <p className="gp-sport-page-heading__intro">{intro}</p>
+              )}
             </div>
           )}
           <div className="gp-app-shell__content">{children}</div>

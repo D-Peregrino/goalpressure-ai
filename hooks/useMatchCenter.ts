@@ -11,6 +11,16 @@ import {
   validationScoreFromOps,
 } from "@/lib/signals/executionWindow";
 import { useOps } from "@/hooks/useOps";
+import {
+  buildTacticalForFixture,
+  splitPressureFromMatch,
+} from "@/lib/tactical/buildTacticalForFixture";
+import {
+  isLiveStatus,
+  isPreMatchStatus,
+} from "@/lib/ui/matchFormatting";
+import type { MatchStoryVisualInput } from "@/lib/match/matchStoryVisual";
+import { buildStoryChapters } from "@/lib/match/matchStoryVisual";
 
 const PRESSURE_HISTORY_MAX = 36;
 
@@ -218,6 +228,87 @@ export function useMatchCenter(fixtureId: string) {
     });
   }, [intel.match, sortedEdges]);
 
+  const tactical = useMemo(() => {
+    if (!intel.match || !core) return null;
+    const split = splitPressureFromMatch(intel.match, intel.pressure);
+    const isPreMatch = isPreMatchStatus(core.status, core.displayStatus);
+    const isLive = isLiveStatus(core.status, core.displayStatus);
+    const steamMove = topEdge?.steamMove ?? false;
+    const oddsDrift = topEdge?.oddsDrift ?? null;
+    const steamDirection = (() => {
+      if (oddsDrift == null || Math.abs(oddsDrift) < 0.02) return "FLAT" as const;
+      return oddsDrift < 0 ? ("DOWN" as const) : ("UP" as const);
+    })();
+
+    return buildTacticalForFixture({
+      match: intel.match,
+      fixtureId: intel.fixtureId,
+      isLive,
+      isPreMatch,
+      minute: core.minute,
+      homeScore: core.homeScore,
+      awayScore: core.awayScore,
+      scoreKnown: core.scoreKnown,
+      homePressure: split.home,
+      awayPressure: split.away,
+      pressureScore: split.total,
+      momentum,
+      chaosIndex,
+      pressureTrend: intel.match.pressure.trend ?? intel.match.feedMeta?.pressureTrend ?? null,
+      steamMove,
+      oddsDrift,
+      steamDirection,
+      edgePercent: topEdge?.edgePercent ?? null,
+      sequenceState: intel.sequence?.sequenceState ?? null,
+      dominanceLabel: intel.match.premium?.dominanceLabel ?? "BALANCED",
+    });
+  }, [intel.match, intel.fixtureId, intel.pressure, intel.sequence, core, momentum, chaosIndex, topEdge]);
+
+  const storyVisualInput = useMemo((): MatchStoryVisualInput | null => {
+    if (!intel.match || !tactical) return null;
+    const split = splitPressureFromMatch(intel.match, intel.pressure);
+    return {
+      tacticalProfile: tactical.tacticalProfile,
+      tacticalNarrative: tactical.tacticalNarrative,
+      tacticalIntensity: tactical.tacticalIntensity,
+      emotionalTemperature: tactical.emotionalTemperature,
+      transitionRisk: tactical.transitionRisk,
+      volatilityProfile: tactical.volatilityProfile,
+      offensiveControl: tactical.offensiveControl,
+      confidence: tactical.confidence,
+      homeTeam: intel.match.homeTeam,
+      awayTeam: intel.match.awayTeam,
+      homePressure: split.home,
+      awayPressure: split.away,
+      momentum,
+      isPreMatch: core
+        ? isPreMatchStatus(core.status, core.displayStatus)
+        : false,
+    };
+  }, [intel.match, intel.pressure, tactical, momentum, core]);
+
+  const storyChapters = useMemo(() => {
+    if (!intel.match || !tactical || !core) return [];
+    const hist = pressureHistory;
+    const pressureRising =
+      hist.length >= 2 ? hist[hist.length - 1]! > hist[hist.length - 2]! + 2 : false;
+    const hasGoals =
+      core.scoreKnown &&
+      (core.homeScore ?? 0) + (core.awayScore ?? 0) > 0;
+    return buildStoryChapters(intel.match.minute, {
+      hasGoals,
+      steamMove: topEdge?.steamMove ?? false,
+      pressureRising,
+      profile: tactical.tacticalProfile,
+      homeLeading:
+        core.scoreKnown &&
+        (core.homeScore ?? 0) > (core.awayScore ?? 0),
+      awayLeading:
+        core.scoreKnown &&
+        (core.awayScore ?? 0) > (core.homeScore ?? 0),
+    });
+  }, [intel.match, tactical, core, pressureHistory, topEdge]);
+
   const pressureRef = useRef(0);
   useEffect(() => {
     const p = intel.pressure?.pressureScore ?? intel.match?.pressure.score;
@@ -242,5 +333,8 @@ export function useMatchCenter(fixtureId: string) {
     territorial,
     attackWave,
     xg: intel.match?.stats.xG ?? 0,
+    tactical,
+    storyVisualInput,
+    storyChapters,
   };
 }

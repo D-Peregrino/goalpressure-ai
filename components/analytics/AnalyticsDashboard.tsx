@@ -23,6 +23,9 @@ import {
   YAxis,
 } from "recharts";
 import EngineTelemetryStrip from "@/components/engine/EngineTelemetryStrip";
+import SportKpiCard from "@/components/ui/sport/SportKpiCard";
+import { SportPanel, SportSectionTitle } from "@/components/ui/sport/SportPanel";
+import { ANALYTICS_KPI, STATUS_LABEL } from "@/lib/ux/productCopy";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useEngineInsights } from "@/hooks/useEngineInsights";
 import type { SignalAnalyticsSummary } from "@/lib/analytics/signalAnalytics";
@@ -60,59 +63,6 @@ function formatUpdatedAt(iso: string | undefined): string {
   });
 }
 
-interface KpiCardProps {
-  label: string;
-  value: string;
-  sub?: string;
-  accent?: boolean;
-  icon?: ReactNode;
-}
-
-function KpiCard({ label, value, sub, accent, icon }: KpiCardProps) {
-  return (
-    <div
-      className={`corner-brackets module-panel scanline-overlay relative overflow-hidden p-4 ${
-        accent ? "glow-red border-pressure/30" : ""
-      }`}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <p className="telemetry-label">{label}</p>
-        {icon && <span className="text-pressure/70">{icon}</span>}
-      </div>
-      <p
-        className={`mt-2 font-mono text-xl font-bold tabular-nums tracking-tight sm:text-2xl ${
-          accent ? "text-pressure" : "text-foreground"
-        }`}
-      >
-        {value}
-      </p>
-      {sub && (
-        <p className="mt-1 font-mono text-[9px] uppercase tracking-widest text-muted">
-          {sub}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function ChartPanel({
-  title,
-  children,
-  className = "",
-}: {
-  title: string;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div
-      className={`corner-brackets-inner module-panel scanline-overlay glow-red relative p-4 sm:p-5 ${className}`}
-    >
-      <h3 className="section-header mb-4">{title}</h3>
-      {children}
-    </div>
-  );
-}
 
 function AnalyticsOperationalBar({
   generatedAt,
@@ -129,39 +79,41 @@ function AnalyticsOperationalBar({
   responseTime: number | null;
   error: string | null;
 }) {
+  const feedLabel = STATUS_LABEL[status] ?? status;
+
   return (
-    <div className="mb-6 grid grid-cols-2 gap-2 border border-card bg-surface/60 p-3 sm:grid-cols-4 lg:grid-cols-5">
-      <div className="telemetry-cell px-3 py-2">
-        <p className="telemetry-label">Analytics Updated</p>
-        <p className="telemetry-value text-[11px]">{formatUpdatedAt(generatedAt)}</p>
-      </div>
-      <div className="telemetry-cell px-3 py-2">
-        <p className="telemetry-label">Signals Processed</p>
-        <p className="telemetry-value text-pressure">{signalsProcessed}</p>
-      </div>
-      <div className="telemetry-cell px-3 py-2">
-        <p className="telemetry-label">Source Status</p>
-        <p
-          className={`telemetry-value ${
-            sourceStatus === "READY" ? "text-pressure" : "text-muted"
-          }`}
-        >
-          {sourceStatus ?? "—"}
+    <div className="gp-sport-stat-bar">
+      <div className="gp-sport-stat-bar__cell">
+        <p className="gp-sport-stat-bar__label">{ANALYTICS_KPI.updated}</p>
+        <p className="gp-sport-stat-bar__value text-[11px]">
+          {formatUpdatedAt(generatedAt)}
         </p>
       </div>
-      <div className="telemetry-cell px-3 py-2">
-        <p className="telemetry-label">Feed</p>
-        <p className="telemetry-value uppercase">{status}</p>
+      <div className="gp-sport-stat-bar__cell">
+        <p className="gp-sport-stat-bar__label">{ANALYTICS_KPI.processed}</p>
+        <p className="gp-sport-stat-bar__value gp-sport-stat-bar__value--accent tabular-nums">
+          {signalsProcessed}
+        </p>
       </div>
-      <div className="telemetry-cell col-span-2 px-3 py-2 sm:col-span-1">
-        <p className="telemetry-label">API Latency</p>
-        <p className="telemetry-value tabular-nums">
-          {responseTime != null ? `${responseTime}ms` : "—"}
+      <div className="gp-sport-stat-bar__cell">
+        <p className="gp-sport-stat-bar__label">{ANALYTICS_KPI.source}</p>
+        <p className="gp-sport-stat-bar__value">
+          {sourceStatus === "READY" ? "Pronto" : (sourceStatus ?? "—")}
+        </p>
+      </div>
+      <div className="gp-sport-stat-bar__cell">
+        <p className="gp-sport-stat-bar__label">{ANALYTICS_KPI.feed}</p>
+        <p className="gp-sport-stat-bar__value">{feedLabel}</p>
+      </div>
+      <div className="gp-sport-stat-bar__cell">
+        <p className="gp-sport-stat-bar__label">{ANALYTICS_KPI.latency}</p>
+        <p className="gp-sport-stat-bar__value tabular-nums">
+          {responseTime != null ? `${responseTime} ms` : "—"}
         </p>
       </div>
       {error && (
-        <div className="col-span-full border border-pressure/40 bg-pressure/5 px-3 py-2">
-          <p className="font-mono text-[10px] text-pressure">{error}</p>
+        <div className="col-span-full rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+          {error}
         </div>
       )}
     </div>
@@ -174,50 +126,50 @@ function KpiGrid({ summary }: { summary: SignalAnalyticsSummary | null }) {
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
-      <KpiCard
-        label="Total Signals"
+      <SportKpiCard
+        label={ANALYTICS_KPI.totalSignals}
         value={String(t?.totalSignals ?? 0)}
-        sub={`${t?.resolvedSignals ?? 0} resolved · ${t?.pendingSignals ?? 0} pending`}
+        sub={`${t?.resolvedSignals ?? 0} encerrados · ${t?.pendingSignals ?? 0} em aberto`}
         icon={<Zap className="h-3.5 w-3.5" />}
         accent
       />
-      <KpiCard
-        label="Hit Rate"
+      <SportKpiCard
+        label={ANALYTICS_KPI.hitRate}
         value={t ? formatPercent(t.hitRate) : "—"}
-        sub={t ? `Miss ${formatPercent(t.missRate)}` : undefined}
+        sub={t ? `Erros ${formatPercent(t.missRate)}` : undefined}
         icon={<Target className="h-3.5 w-3.5" />}
       />
-      <KpiCard
-        label="ROI Total"
+      <SportKpiCard
+        label={ANALYTICS_KPI.roiTotal}
         value={t ? formatRoi(t.roiTotal) : "—"}
         accent={(t?.roiTotal ?? 0) > 0}
         icon={<TrendingUp className="h-3.5 w-3.5" />}
       />
-      <KpiCard
-        label="ROI Médio"
+      <SportKpiCard
+        label={ANALYTICS_KPI.roiAvg}
         value={t ? formatRoi(t.roiAverage) : "—"}
         icon={<BarChart3 className="h-3.5 w-3.5" />}
       />
-      <KpiCard
-        label="Avg Odds"
+      <SportKpiCard
+        label={ANALYTICS_KPI.avgOdds}
         value={t ? t.averageOdd.toFixed(2) : "—"}
       />
-      <KpiCard
-        label="Avg Pressure"
+      <SportKpiCard
+        label={ANALYTICS_KPI.avgPressure}
         value={t ? String(Math.round(t.averagePressure)) : "—"}
         icon={<Gauge className="h-3.5 w-3.5" />}
       />
-      <KpiCard
-        label="Max Drawdown"
+      <SportKpiCard
+        label={ANALYTICS_KPI.maxDrawdown}
         value={streaks ? formatRoi(-streaks.maxDrawdown) : "—"}
         icon={<TrendingDown className="h-3.5 w-3.5" />}
       />
-      <KpiCard
-        label="Best Hit Streak"
+      <SportKpiCard
+        label={ANALYTICS_KPI.bestStreak}
         value={String(streaks?.bestHitStreak ?? 0)}
         sub={
           streaks
-            ? `Worst miss streak ${streaks.worstMissStreak}`
+            ? `Pior sequência de erros: ${streaks.worstMissStreak}`
             : undefined
         }
         accent
@@ -245,8 +197,8 @@ function CumulativeRoiChart({ summary }: { summary: SignalAnalyticsSummary }) {
 
   if (data.length === 0) {
     return (
-      <p className="py-12 text-center font-mono text-[10px] uppercase tracking-widest text-muted">
-        No resolved signals yet
+      <p className="gp-sport-empty">
+        {ANALYTICS_KPI.noResolved}
       </p>
     );
   }
@@ -486,77 +438,52 @@ function ResolvedSignalsTable({
 }) {
   if (rows.length === 0) {
     return (
-      <p className="py-10 text-center font-mono text-[10px] uppercase tracking-widest text-muted">
-        No resolved signals in archive
-      </p>
+      <p className="gp-sport-empty">Nenhum alerta encerrado no arquivo</p>
     );
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[640px] border-collapse font-mono text-[11px]">
+    <div className="gp-sport-table-wrap">
+      <table className="gp-sport-table min-w-[640px]">
         <thead>
-          <tr className="border-b border-card text-left text-muted">
-            <th className="px-3 py-2 font-semibold uppercase tracking-wider">
-              Match
-            </th>
-            <th className="px-3 py-2 font-semibold uppercase tracking-wider">
-              Market
-            </th>
-            <th className="px-3 py-2 text-right font-semibold uppercase tracking-wider">
-              Odd
-            </th>
-            <th className="px-3 py-2 text-right font-semibold uppercase tracking-wider">
-              Pressure
-            </th>
-            <th className="px-3 py-2 text-right font-semibold uppercase tracking-wider">
-              ROI
-            </th>
-            <th className="px-3 py-2 text-center font-semibold uppercase tracking-wider">
-              Result
-            </th>
-            <th className="px-3 py-2 text-right font-semibold uppercase tracking-wider">
-              Resolution
-            </th>
+          <tr>
+            <th>Partida</th>
+            <th>Mercado</th>
+            <th className="text-right">Odd</th>
+            <th className="text-right">Intensidade</th>
+            <th className="text-right">Retorno</th>
+            <th className="text-center">Resultado</th>
+            <th className="text-right">Tempo</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr
-              key={row.signalId}
-              className="border-b border-card/60 transition-colors hover:bg-card/30"
-            >
-              <td className="max-w-[180px] truncate px-3 py-2.5 text-foreground">
-                {row.matchLabel}
-              </td>
-              <td className="px-3 py-2.5 text-muted">
-                {row.marketLabel ?? getMarketLabel(row.market)}
-              </td>
-              <td className="px-3 py-2.5 text-right tabular-nums">
-                {row.odd.toFixed(2)}
-              </td>
-              <td className="px-3 py-2.5 text-right tabular-nums text-pressure">
+            <tr key={row.signalId}>
+              <td className="max-w-[180px] truncate">{row.matchLabel}</td>
+              <td>{row.marketLabel ?? getMarketLabel(row.market)}</td>
+              <td className="text-right tabular-nums">{row.odd.toFixed(2)}</td>
+              <td className="text-right tabular-nums text-[#ff8a8a]">
                 {Math.round(row.pressure)}
               </td>
               <td
-                className={`px-3 py-2.5 text-right tabular-nums font-bold ${
-                  row.roi >= 0 ? "text-pressure" : "text-muted"
+                className={`text-right tabular-nums font-semibold ${
+                  row.roi >= 0 ? "text-[#ff8a8a]" : ""
                 }`}
               >
                 {formatRoi(row.roi)}
               </td>
-              <td className="px-3 py-2.5 text-center">
+              <td className="text-center">
                 <span
-                  className={`inline-block border px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest ${
+                  className={`gp-sport-outcome ${
                     row.outcome === "HIT"
-                      ? "border-pressure/50 bg-pressure/10 text-pressure"
-                      : "border-card bg-surface text-muted"
+                      ? "gp-sport-outcome--hit"
+                      : "gp-sport-outcome--miss"
                   }`}
                 >
-                  {row.outcome}
+                  {row.outcome === "HIT" ? "Acerto" : "Erro"}
                 </span>
               </td>
-              <td className="px-3 py-2.5 text-right tabular-nums text-muted">
+              <td className="text-right tabular-nums">
                 {formatDuration(row.timeToResolution)}
               </td>
             </tr>
@@ -585,7 +512,7 @@ export default function AnalyticsDashboard() {
     loading: engineLoading,
   } = useEngineInsights();
 
-  const feedLabel =
+  const feedKey =
     status === "loading" && isInitialLoad
       ? "SYNC"
       : status === "error"
@@ -594,34 +521,11 @@ export default function AnalyticsDashboard() {
 
   return (
     <>
-      <header className="mb-5 border-b border-card/80 pb-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.35em] text-muted">
-              Quantitative Performance Layer
-            </p>
-            <h1 className="mt-1 font-mono text-xl font-bold uppercase tracking-[0.08em] text-foreground sm:text-2xl lg:text-[1.65rem]">
-              Signal Analytics Terminal
-            </h1>
-            <p className="mt-2 max-w-xl font-mono text-[10px] leading-relaxed text-muted">
-              Historical efficiency metrics · ROI curve · market & confidence
-              segmentation · pressure distribution
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-pressure animate-live-blink" />
-            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-pressure">
-              Analytics Stream
-            </span>
-          </div>
-        </div>
-      </header>
-
       <AnalyticsOperationalBar
         generatedAt={summary?.generatedAt}
         signalsProcessed={signalsProcessed}
         sourceStatus={sourceStatus}
-        status={feedLabel}
+        status={feedKey}
         responseTime={responseTime}
         error={error}
       />
@@ -633,56 +537,54 @@ export default function AnalyticsDashboard() {
       />
 
       {isInitialLoad && status === "loading" ? (
-        <div className="module-panel flex min-h-[200px] items-center justify-center p-8">
-          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted animate-pulse-glow">
-            Loading quantitative archive…
-          </p>
-        </div>
+        <SportPanel className="flex min-h-[200px] items-center justify-center">
+          <p className="gp-sport-empty animate-pulse">{ANALYTICS_KPI.loading}</p>
+        </SportPanel>
       ) : (
         <div className="space-y-6">
           <section>
-            <h2 className="section-header mb-4">Core Metrics</h2>
+            <SportSectionTitle>{ANALYTICS_KPI.coreMetrics}</SportSectionTitle>
             <KpiGrid summary={summary} />
           </section>
 
           {summary ? (
             <>
               <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                <ChartPanel title="Cumulative ROI Curve">
+                <SportPanel title={ANALYTICS_KPI.cumulativeRoi}>
                   <CumulativeRoiChart summary={summary} />
-                </ChartPanel>
-                <ChartPanel title="ROI by Market">
+                </SportPanel>
+                <SportPanel title={ANALYTICS_KPI.roiByMarket}>
                   <MarketRoiChart summary={summary} />
-                </ChartPanel>
-                <ChartPanel title="ROI by Confidence">
+                </SportPanel>
+                <SportPanel title={ANALYTICS_KPI.roiByConfidence}>
                   <ConfidenceRoiChart summary={summary} />
-                </ChartPanel>
-                <ChartPanel title="Pressure Range Distribution">
+                </SportPanel>
+                <SportPanel title={ANALYTICS_KPI.pressureDist}>
                   <PressureDistributionChart summary={summary} />
-                </ChartPanel>
+                </SportPanel>
               </section>
 
-              <section className="corner-brackets-inner module-panel glow-red p-4 sm:p-5">
+              <SportPanel>
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="section-header mb-0">Recent Resolved Signals</h2>
+                  <SportSectionTitle className="mb-0">
+                    {ANALYTICS_KPI.recentResolved}
+                  </SportSectionTitle>
                   {lastUpdated && (
-                    <p className="font-mono text-[9px] uppercase tracking-widest text-muted">
-                      Synced {formatUpdatedAt(new Date(lastUpdated).toISOString())}
+                    <p className="text-xs text-[rgba(148,163,184,0.85)]">
+                      Atualizado {formatUpdatedAt(new Date(lastUpdated).toISOString())}
                     </p>
                   )}
                 </div>
                 <ResolvedSignalsTable rows={recentResolved} />
-              </section>
+              </SportPanel>
             </>
           ) : (
-            <div className="module-panel border-dashed border-card/80 p-10 text-center">
-              <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted">
-                No analytics summary yet
-              </p>
-              <p className="mt-2 font-mono text-[10px] text-muted/80">
-                Run live-matches persistence until signals resolve, then refresh.
-              </p>
-            </div>
+            <SportPanel>
+              <div className="gp-sport-empty">
+                <p>{ANALYTICS_KPI.empty}</p>
+                <p className="gp-sport-empty__hint">{ANALYTICS_KPI.emptyHint}</p>
+              </div>
+            </SportPanel>
           )}
         </div>
       )}

@@ -13,13 +13,13 @@ export default function LandingNav() {
         <Link href="#features" className="gp-landing-nav__link hidden md:inline">
           Features
         </Link>
-        <Link href="#pricing" className="gp-landing-nav__link hidden md:inline">
-          Pricing
+        <Link href="/pricing" className="gp-landing-nav__link hidden md:inline">
+          Planos
         </Link>
         <Link href="/login" className="gp-landing-nav__link hidden sm:inline">
-          Login
+          Entrar
         </Link>
-        <Link href="/signup" className="gp-btn gp-btn--primary gp-btn--sm">
+        <Link href="/signup?plan=pro" className="gp-btn gp-btn--primary gp-btn--sm">
           Trial Pro
           <ArrowRight className="h-4 w-4" />
         </Link>

@@ -12,12 +12,14 @@ export default function TerminalKpiStrip({
   upcoming,
   signals,
   execute,
+  className = "",
 }: {
   tracked: number;
   live: number;
   upcoming: number;
   signals: number;
   execute: number;
+  className?: string;
 }) {
   const k = TERMINAL_COPY.kpi;
   const items = [
@@ -34,7 +36,10 @@ export default function TerminalKpiStrip({
   ];
 
   return (
-    <motion.div variants={terminalFadeUp} className="gp-kpi-strip gp-kpi-strip--sport gp-kpi-strip--premium">
+    <motion.div
+      variants={terminalFadeUp}
+      className={`gp-kpi-strip gp-kpi-strip--sport gp-kpi-strip--premium ${className}`.trim()}
+    >
       {items.map((item) => (
         <div
           key={item.label}

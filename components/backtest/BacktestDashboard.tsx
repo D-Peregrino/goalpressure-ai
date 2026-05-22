@@ -1,39 +1,11 @@
 "use client";
 
 import EngineTelemetryStrip from "@/components/engine/EngineTelemetryStrip";
+import SportKpiCard from "@/components/ui/sport/SportKpiCard";
+import { SportPanel, SportSectionTitle } from "@/components/ui/sport/SportPanel";
 import { useBacktest } from "@/hooks/useBacktest";
 import { useEngineInsights } from "@/hooks/useEngineInsights";
 import { Activity } from "lucide-react";
-
-function KpiCard({
-  label,
-  value,
-  sub,
-  accent,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  accent?: boolean;
-}) {
-  return (
-    <div
-      className={`corner-brackets module-panel p-4 ${
-        accent ? "glow-red border-pressure/30" : ""
-      }`}
-    >
-      <p className="telemetry-label">{label}</p>
-      <p
-        className={`font-mono text-2xl font-bold tabular-nums ${
-          accent ? "text-pressure" : "text-foreground"
-        }`}
-      >
-        {value}
-      </p>
-      {sub && <p className="mt-1 font-mono text-[9px] text-muted">{sub}</p>}
-    </div>
-  );
-}
 
 function SegmentTable({
   title,
@@ -43,13 +15,13 @@ function SegmentTable({
   rows: { label: string; total: number; wins: number; hitRate: number; roi: number }[];
 }) {
   return (
-    <div className="module-panel overflow-hidden">
-      <div className="border-b border-card/80 bg-surface/80 px-3 py-2">
-        <span className="font-mono text-[9px] font-bold uppercase tracking-[0.25em] text-muted">
+    <SportPanel className="overflow-hidden p-0">
+      <div className="border-b border-white/[0.06] px-3 py-2">
+        <span className="text-xs font-semibold text-[rgba(148,163,184,0.95)]">
           {title}
         </span>
       </div>
-      <div className="max-h-[200px] overflow-y-auto p-3 font-mono text-[10px]">
+      <div className="max-h-[200px] overflow-y-auto p-3 text-xs">
         {rows.length === 0 ? (
           <p className="text-muted">No trades in segment</p>
         ) : (
@@ -64,7 +36,7 @@ function SegmentTable({
           ))
         )}
       </div>
-    </div>
+    </SportPanel>
   );
 }
 
@@ -88,76 +60,62 @@ export default function BacktestDashboard() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="font-mono text-[9px] uppercase tracking-[0.35em] text-muted">
-            Institutional Validation
-          </p>
-          <h1 className="mt-1 font-mono text-xl font-bold tracking-[0.12em] text-pressure">
-            Backtest Terminal
-          </h1>
-        </div>
+      <div className="flex flex-wrap items-end justify-end gap-4">
         <button
           type="button"
           onClick={() => void runBacktest()}
           disabled={running}
-          className="border border-pressure/40 bg-card px-4 py-2 font-mono text-[10px] uppercase tracking-wider text-pressure hover:bg-pressure/10 disabled:opacity-50"
+          className="rounded-full border border-[#ff6b6b]/40 bg-[#ff6b6b]/10 px-4 py-2 text-sm font-medium text-[#ff8a8a] transition hover:bg-[#ff6b6b]/20 disabled:opacity-50"
         >
-          {running ? "Running…" : "Run Backtest"}
+          {running ? "Rodando histórico…" : "Rodar histórico"}
         </button>
-      </header>
+      </div>
 
       <EngineTelemetryStrip engine={engine} />
 
       {status === "error" && (
-        <p className="font-mono text-[10px] text-red-400">{error}</p>
+        <p className="text-sm text-red-300">{error}</p>
       )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard label="ROI" value={roi} accent={Boolean(lastRun && lastRun.roi > 0)} />
-        <KpiCard label="Hit Rate" value={hitPct} />
-        <KpiCard
-          label="Max Drawdown"
+        <SportKpiCard label="Retorno" value={roi} accent={Boolean(lastRun && lastRun.roi > 0)} />
+        <SportKpiCard label="Taxa de acerto" value={hitPct} />
+        <SportKpiCard
+          label="Queda máxima"
           value={lastRun ? `${lastRun.maxDrawdown.toFixed(2)}u` : "—"}
         />
-        <KpiCard
-          label="Avg EV"
+        <SportKpiCard
+          label="Valor esperado médio"
           value={lastRun ? `${(lastRun.averageEv * 100).toFixed(1)}%` : snapshot ? `${(snapshot.averageEv * 100).toFixed(1)}%` : "—"}
         />
-        <KpiCard label="Profit Units" value={lastRun ? lastRun.profitUnits.toFixed(2) : "—"} />
-        <KpiCard
-          label="Win Streak"
+        <SportKpiCard label="Lucro" value={lastRun ? lastRun.profitUnits.toFixed(2) : "—"} />
+        <SportKpiCard
+          label="Sequência de acertos"
           value={String(snapshot?.winStreak ?? lastRun?.streaks.currentWinStreak ?? 0)}
         />
-        <KpiCard
-          label="Lose Streak"
+        <SportKpiCard
+          label="Sequência de erros"
           value={String(snapshot?.loseStreak ?? lastRun?.streaks.currentLoseStreak ?? 0)}
         />
-        <KpiCard
-          label="Sharpe-like"
+        <SportKpiCard
+          label="Consistência"
           value={lastRun ? lastRun.sharpeLikeRatio.toFixed(2) : "—"}
         />
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
-        <SegmentTable title="By Market" rows={byMarket} />
-        <SegmentTable title="By Execution Grade" rows={byExecutionGrade} />
-        <SegmentTable title="By Pressure Range" rows={byPressureRange} />
-        <SegmentTable title="By Temporal Phase" rows={byTemporalPhase} />
+        <SegmentTable title="Por mercado" rows={byMarket} />
+        <SegmentTable title="Por grau de execução" rows={byExecutionGrade} />
+        <SegmentTable title="Por intensidade" rows={byPressureRange} />
+        <SegmentTable title="Por fase do jogo" rows={byTemporalPhase} />
       </div>
 
-      <p className="font-mono text-[9px] text-muted">
-        API <code className="text-foreground">GET /api/backtest/results</code> ·{" "}
-        <code className="text-foreground">POST /api/backtest/run</code>
-        {snapshot?.updatedAt && (
-          <>
-            {" "}
-            · last snapshot{" "}
-            <Activity className="inline h-3 w-3" />{" "}
-            {new Date(snapshot.updatedAt).toLocaleString()}
-          </>
-        )}
-      </p>
+      {snapshot?.updatedAt && (
+        <p className="flex items-center gap-1.5 text-xs text-[rgba(148,163,184,0.85)]">
+          <Activity className="h-3 w-3" />
+          Última atualização {new Date(snapshot.updatedAt).toLocaleString()}
+        </p>
+      )}
     </div>
   );
 }

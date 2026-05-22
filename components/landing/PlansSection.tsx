@@ -25,7 +25,7 @@ export default function PlansSection() {
       <section id="pricing" className="gp-landing-section">
         <div className="gp-landing-container">
           <p className="gp-landing-eyebrow text-center">Pricing</p>
-          <h2 className="gp-landing-section__title text-center">Free · Pro · Institutional</h2>
+          <h2 className="gp-landing-section__title text-center">Free · Pro · Elite</h2>
           <div className="gp-pricing-grid">
             {PRICING.map((p) => {
               const tier = TIER_DEFS[p.tier];

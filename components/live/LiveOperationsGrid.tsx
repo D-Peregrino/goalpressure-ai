@@ -4,7 +4,9 @@ import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import type { EnrichedLiveMatch, MatchCenterFilter } from "@/hooks/useLiveMatchCenter";
 import VirtualizedMatchGrid from "@/components/terminal/VirtualizedMatchGrid";
+import MatchGridSkeleton from "@/components/terminal/MatchGridSkeleton";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { UPGRADE_PATH } from "@/lib/subscription/commercialCopy";
 
 const MAX_HISTORY = 24;
 
@@ -28,6 +30,7 @@ export default function LiveOperationsGrid({
   liveCount,
   upcomingCount,
   auditMode = false,
+  highlightFixtureId,
 }: {
   matches: EnrichedLiveMatch[];
   allMatches: EnrichedLiveMatch[];
@@ -39,8 +42,9 @@ export default function LiveOperationsGrid({
   liveCount: number;
   upcomingCount: number;
   auditMode?: boolean;
+  highlightFixtureId?: string | null;
 }) {
-  const { limits } = useSubscription();
+  const { limits, can } = useSubscription();
   const historyRef = useRef<Map<string, number[]>>(new Map());
 
   useEffect(() => {
@@ -53,12 +57,7 @@ export default function LiveOperationsGrid({
   const capped = matches.slice(0, limits.liveMatches);
 
   if (isLoading && allMatches.length === 0) {
-    return (
-      <div className="gp-empty-state">
-        <div className="gp-empty-state__pulse" aria-hidden />
-        <p>Sincronizando central ao vivo…</p>
-      </div>
-    );
+    return <MatchGridSkeleton count={limits.liveMatches} />;
   }
 
   if (capped.length === 0) {
@@ -91,10 +90,10 @@ export default function LiveOperationsGrid({
 
   return (
     <motion.div layout className="gp-ops-grid-wrap">
-      {matches.length > limits.liveMatches && (
+      {!can("unlimited_matches") && matches.length > limits.liveMatches && (
         <p className="gp-tier-notice">
           Plano Free: exibindo {limits.liveMatches} de {matches.length} jogos.{" "}
-          <a href="/signup">Upgrade Pro</a>
+          <a href={UPGRADE_PATH}>Desbloquear Pro</a>
         </p>
       )}
       <VirtualizedMatchGrid
@@ -104,6 +103,7 @@ export default function LiveOperationsGrid({
         viewMode={viewMode}
         historyRef={historyRef}
         auditMode={auditMode}
+        highlightFixtureId={highlightFixtureId}
       />
     </motion.div>
   );

@@ -44,7 +44,7 @@ export default function LoginForm() {
         >
           <option value="free">Free</option>
           <option value="pro">Pro — trial 7 dias</option>
-          <option value="institutional">Institutional — trial 14 dias</option>
+          <option value="institutional">Elite — trial 14 dias</option>
         </select>
       </label>
       <button type="submit" className="gp-btn gp-btn--primary w-full" disabled={loading}>

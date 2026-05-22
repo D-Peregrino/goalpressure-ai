@@ -1,5 +1,5 @@
 /**
- * Tiers comerciais GoalPressure AI — SaaS (sem lógica de billing ainda).
+ * Tiers comerciais GoalPressure — FREE · PRO · ELITE (id: institutional)
  */
 
 export type SubscriptionTier = "free" | "pro" | "institutional";
@@ -14,6 +14,8 @@ export interface TierDefinition {
   limits: {
     liveMatches: number;
     marketsPerMatch: number;
+    alertPreview: number;
+    timelinePreview: number;
     enginesDepth: "basic" | "full" | "institutional";
     opsAccess: boolean;
     apiAccess: boolean;
@@ -25,17 +27,19 @@ export const TIERS: Record<SubscriptionTier, TierDefinition> = {
     id: "free",
     name: "Free",
     priceLabel: "R$ 0",
-    description: "Radar live básico e pressão em tempo real.",
+    description: "Amostra da central ao vivo — ideal para conhecer a leitura.",
     trialDays: 0,
     features: [
-      "Terminal live (até 6 jogos)",
-      "Pressure score",
-      "Odds primárias",
-      "Filtros básicos",
+      "Até 6 jogos na central",
+      "Placar e pressão básica",
+      "Favoritos e filtros",
+      "Prévia de alertas e timeline",
     ],
     limits: {
       liveMatches: 6,
       marketsPerMatch: 2,
+      alertPreview: 2,
+      timelinePreview: 3,
       enginesDepth: "basic",
       opsAccess: false,
       apiAccess: false,
@@ -45,19 +49,20 @@ export const TIERS: Record<SubscriptionTier, TierDefinition> = {
     id: "pro",
     name: "Pro",
     priceLabel: "R$ 297/mês",
-    description: "Desk quantitativo completo para operação ao vivo.",
+    description: "Central completa, alertas, hero e leitura tática para operação ao vivo.",
     trialDays: 7,
     features: [
-      "Terminal ilimitado",
-      "Market calibration + EV",
-      "Steam & drift",
-      "Chaos radar",
-      "Heatmaps & timeline",
-      "Alertas Telegram",
+      "Central ilimitada",
+      "Hero e alertas avançados",
+      "Timeline e leitura tática",
+      "Edge, steam e heatmaps",
+      "Trial 7 dias",
     ],
     limits: {
       liveMatches: 999,
       marketsPerMatch: 8,
+      alertPreview: 999,
+      timelinePreview: 999,
       enginesDepth: "full",
       opsAccess: false,
       apiAccess: false,
@@ -65,20 +70,22 @@ export const TIERS: Record<SubscriptionTier, TierDefinition> = {
   },
   institutional: {
     id: "institutional",
-    name: "Institutional",
-    priceLabel: "Custom",
-    description: "SLA, API dedicada e consenso multi-desk.",
+    name: "Elite",
+    priceLabel: "R$ 697/mês",
+    description: "Modo operador, auditoria e prioridade máxima na central.",
     trialDays: 14,
     features: [
       "Tudo do Pro",
-      "Ops dashboard",
-      "API & webhooks",
-      "Calibração dedicada",
-      "Suporte prioritário",
+      "Modo auditoria",
+      "Prioridade operacional",
+      "Leitura avançada e suporte",
+      "Trial 14 dias",
     ],
     limits: {
       liveMatches: 999,
       marketsPerMatch: 16,
+      alertPreview: 999,
+      timelinePreview: 999,
       enginesDepth: "institutional",
       opsAccess: true,
       apiAccess: true,
@@ -100,7 +107,12 @@ export type FeatureKey =
   | "steam_alerts"
   | "timeline"
   | "ops"
-  | "unlimited_matches";
+  | "unlimited_matches"
+  | "hero_premium"
+  | "advanced_alerts"
+  | "tactical_insights"
+  | "audit_mode"
+  | "operator_mode";
 
 const FEATURE_MIN_TIER: Record<FeatureKey, SubscriptionTier> = {
   heatmap: "pro",
@@ -111,6 +123,11 @@ const FEATURE_MIN_TIER: Record<FeatureKey, SubscriptionTier> = {
   timeline: "pro",
   ops: "institutional",
   unlimited_matches: "pro",
+  hero_premium: "pro",
+  advanced_alerts: "pro",
+  tactical_insights: "pro",
+  audit_mode: "institutional",
+  operator_mode: "institutional",
 };
 
 const TIER_RANK: Record<SubscriptionTier, number> = {
@@ -131,4 +148,8 @@ export function canAccessFeature(
   feature: FeatureKey
 ): boolean {
   return tierMeetsMinimum(tier, FEATURE_MIN_TIER[feature]);
+}
+
+export function nextTierForFeature(feature: FeatureKey): SubscriptionTier {
+  return FEATURE_MIN_TIER[feature];
 }

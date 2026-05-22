@@ -1,40 +1,12 @@
 "use client";
 
 import EngineTelemetryStrip from "@/components/engine/EngineTelemetryStrip";
+import SportKpiCard from "@/components/ui/sport/SportKpiCard";
+import { SportPanel, SportSectionTitle } from "@/components/ui/sport/SportPanel";
 import { useValidation } from "@/hooks/useValidation";
 import { useEngineInsights } from "@/hooks/useEngineInsights";
 import type { ValidationSegmentRow } from "@/types/validation";
 import { Activity, FlaskConical, ShieldAlert, TrendingUp } from "lucide-react";
-
-function KpiCard({
-  label,
-  value,
-  sub,
-  accent,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  accent?: boolean;
-}) {
-  return (
-    <div
-      className={`corner-brackets module-panel p-4 ${
-        accent ? "glow-red border-pressure/30" : ""
-      }`}
-    >
-      <p className="telemetry-label">{label}</p>
-      <p
-        className={`font-mono text-2xl font-bold tabular-nums ${
-          accent ? "text-pressure" : "text-foreground"
-        }`}
-      >
-        {value}
-      </p>
-      {sub && <p className="mt-1 font-mono text-[9px] text-muted">{sub}</p>}
-    </div>
-  );
-}
 
 function SegmentTable({
   title,
@@ -44,13 +16,13 @@ function SegmentTable({
   rows: ValidationSegmentRow[];
 }) {
   return (
-    <div className="module-panel overflow-hidden">
-      <div className="border-b border-card/80 bg-surface/80 px-3 py-2">
-        <span className="font-mono text-[9px] font-bold uppercase tracking-[0.25em] text-muted">
+    <SportPanel className="overflow-hidden p-0">
+      <div className="border-b border-white/[0.06] px-3 py-2">
+        <span className="text-xs font-semibold text-[rgba(148,163,184,0.95)]">
           {title}
         </span>
       </div>
-      <div className="max-h-[220px] overflow-y-auto p-3 font-mono text-[10px]">
+      <div className="max-h-[220px] overflow-y-auto p-3 text-xs">
         {rows.length === 0 ? (
           <p className="text-muted">Sem amostra</p>
         ) : (
@@ -69,7 +41,7 @@ function SegmentTable({
           ))
         )}
       </div>
-    </div>
+    </SportPanel>
   );
 }
 
@@ -81,22 +53,22 @@ function FalsePositiveList({
   items: { fixtureId: string; market: string; detail: string }[];
 }) {
   return (
-    <div className="module-panel p-3">
-      <p className="mb-2 font-mono text-[9px] uppercase tracking-[0.2em] text-muted">
+    <SportPanel>
+      <p className="mb-2 text-xs font-semibold text-[rgba(148,163,184,0.95)]">
         {title}
       </p>
       {items.length === 0 ? (
-        <p className="font-mono text-[10px] text-muted">—</p>
+        <p className="text-xs text-[rgba(148,163,184,0.8)]">—</p>
       ) : (
-        <ul className="max-h-[140px] space-y-1 overflow-y-auto font-mono text-[10px]">
+        <ul className="max-h-[140px] space-y-1 overflow-y-auto text-xs">
           {items.slice(0, 8).map((c) => (
-            <li key={`${c.fixtureId}-${c.market}-${c.detail}`} className="text-foreground/85">
-              <span className="text-pressure">{c.fixtureId}</span> · {c.market} — {c.detail}
+            <li key={`${c.fixtureId}-${c.market}-${c.detail}`}>
+              <span className="text-[#ff8a8a]">{c.fixtureId}</span> · {c.market} — {c.detail}
             </li>
           ))}
         </ul>
       )}
-    </div>
+    </SportPanel>
   );
 }
 
@@ -117,93 +89,80 @@ export default function ValidationDashboard() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="font-mono text-[9px] uppercase tracking-[0.35em] text-muted">
-            Institutional Quant Lab
-          </p>
-          <h1 className="mt-1 font-mono text-xl font-bold tracking-[0.12em] text-pressure">
-            Live Validation Lab
-          </h1>
-          <p className="mt-2 max-w-2xl font-mono text-[10px] text-muted">
-            Validação quantitativa contínua — performance segmentada, false positives,
-            eficiência de mercado, consenso de engines e Telegram. Sem novos motores de
-            sinal.
-          </p>
-        </div>
+      <div className="flex justify-end">
         <button
           type="button"
           onClick={() => void refresh()}
-          className="border border-card bg-card px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-foreground hover:border-pressure/50"
+          className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-[#f1f5f9] transition hover:border-[#ff6b6b]/40"
         >
-          Refresh
+          Atualizar
         </button>
-      </header>
+      </div>
 
       <EngineTelemetryStrip engine={engine} />
 
       {status === "error" && (
-        <p className="font-mono text-[10px] text-pressure">{error}</p>
+        <p className="text-sm text-red-300">{error}</p>
       )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <KpiCard
-          label="Trades"
+        <SportKpiCard
+          label="Entradas"
           value={String(lab?.tradeCount ?? 0)}
           sub={lab?.source ?? "—"}
         />
-        <KpiCard
-          label="Hit Rate"
+        <SportKpiCard
+          label="Taxa de acerto"
           value={lab ? `${(lab.hitRate * 100).toFixed(1)}%` : "—"}
           accent={Boolean(lab && lab.hitRate >= 0.5)}
         />
-        <KpiCard
-          label="ROI"
+        <SportKpiCard
+          label="Retorno"
           value={lab ? `${lab.roi >= 0 ? "+" : ""}${lab.roi.toFixed(2)}` : "—"}
           accent={Boolean(lab && lab.roi > 0)}
         />
-        <KpiCard
-          label="Profit"
+        <SportKpiCard
+          label="Lucro"
           value={lab ? `${lab.profitUnits.toFixed(2)}u` : "—"}
         />
-        <KpiCard
-          label="Live Score"
+        <SportKpiCard
+          label="Nota ao vivo"
           value={
             snapshot && snapshot.matchCount > 0
               ? String(snapshot.averageValidationScore)
               : "—"
           }
-          sub={`${live.length} fixtures`}
+          sub={`${live.length} jogos`}
         />
-        <KpiCard
-          label="FP Flagged"
+        <SportKpiCard
+          label="Alertas duvidosos"
           value={String(lab?.falsePositives.totalFlagged ?? 0)}
           accent={(lab?.falsePositives.totalFlagged ?? 0) > 10}
         />
       </div>
 
       <section>
-        <h2 className="section-header mb-4 flex items-center gap-2">
-          <TrendingUp className="h-4 w-4 text-pressure" />
-          Performance por segmento
-        </h2>
+        <SportSectionTitle className="flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-[#ff6b6b]" />
+          Desempenho por segmento
+        </SportSectionTitle>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <SegmentTable title="Execution Grade" rows={perf?.byExecutionGrade ?? []} />
-          <SegmentTable title="League" rows={perf?.byLeague ?? []} />
-          <SegmentTable title="Market" rows={perf?.byMarket ?? []} />
-          <SegmentTable title="Trigger Window" rows={perf?.byTriggerWindow ?? []} />
-          <SegmentTable title="Chaos Level" rows={perf?.byChaosLevel ?? []} />
-          <SegmentTable title="Temporal Phase" rows={perf?.byTemporalPhase ?? []} />
-          <SegmentTable title="Pressure Range" rows={perf?.byPressureRange ?? []} />
-          <SegmentTable title="Confidence Range" rows={perf?.byConfidenceRange ?? []} />
+          <SegmentTable title="Grau de execução" rows={perf?.byExecutionGrade ?? []} />
+          <SegmentTable title="Liga" rows={perf?.byLeague ?? []} />
+          <SegmentTable title="Mercado" rows={perf?.byMarket ?? []} />
+          <SegmentTable title="Janela de gatilho" rows={perf?.byTriggerWindow ?? []} />
+          <SegmentTable title="Ritmo do jogo" rows={perf?.byChaosLevel ?? []} />
+          <SegmentTable title="Fase temporal" rows={perf?.byTemporalPhase ?? []} />
+          <SegmentTable title="Faixa de intensidade" rows={perf?.byPressureRange ?? []} />
+          <SegmentTable title="Faixa de confiança" rows={perf?.byConfidenceRange ?? []} />
         </div>
       </section>
 
       <section>
-        <h2 className="section-header mb-4 flex items-center gap-2">
-          <ShieldAlert className="h-4 w-4 text-pressure" />
-          False Positive Analysis
-        </h2>
+        <SportSectionTitle className="flex items-center gap-2">
+          <ShieldAlert className="h-4 w-4 text-[#ff6b6b]" />
+          Leituras que não se confirmaram
+        </SportSectionTitle>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <FalsePositiveList
             title="Sinais que falharam"
@@ -254,21 +213,21 @@ export default function ValidationDashboard() {
           Market Efficiency
         </h2>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <KpiCard
-            label="Closing Line Eff."
+          <SportKpiCard
+            label="Eficiência de fechamento"
             value={String(lab?.marketEfficiency.closingLineEfficiency ?? 0)}
-            sub={`n=${lab?.marketEfficiency.samples ?? 0}`}
+            sub={`amostra ${lab?.marketEfficiency.samples ?? 0}`}
           />
-          <KpiCard
-            label="Edge Persistence"
+          <SportKpiCard
+            label="Persistência de vantagem"
             value={String(lab?.marketEfficiency.edgePersistence ?? 0)}
           />
-          <KpiCard
-            label="Steam Reaction"
+          <SportKpiCard
+            label="Reação do mercado"
             value={`${lab?.marketEfficiency.steamReactionScore ?? 0}%`}
           />
-          <KpiCard
-            label="Odds Lag"
+          <SportKpiCard
+            label="Atraso das odds"
             value={`${lab?.marketEfficiency.oddsLagScore ?? 0}%`}
           />
         </div>
@@ -318,29 +277,29 @@ export default function ValidationDashboard() {
       <section>
         <h2 className="section-header mb-4">Live Telegram Performance</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          <KpiCard
-            label="Dispatches"
+          <SportKpiCard
+            label="Entradas enviadas"
             value={String(lab?.telegramPerformance.dispatchesSent ?? 0)}
           />
-          <KpiCard
-            label="Blocked"
+          <SportKpiCard
+            label="Bloqueadas"
             value={String(lab?.telegramPerformance.dispatchesBlocked ?? 0)}
           />
-          <KpiCard
-            label="Conversion"
+          <SportKpiCard
+            label="Conversão"
             value={`${((lab?.telegramPerformance.conversionRate ?? 0) * 100).toFixed(0)}%`}
           />
-          <KpiCard
-            label="ROI / Dispatch"
+          <SportKpiCard
+            label="Retorno por envio"
             value={(lab?.telegramPerformance.roiPerDispatch ?? 0).toFixed(2)}
           />
-          <KpiCard
-            label="Spam Ratio"
+          <SportKpiCard
+            label="Proporção de spam"
             value={`${((lab?.telegramPerformance.spamRatio ?? 0) * 100).toFixed(0)}%`}
             accent={(lab?.telegramPerformance.spamRatio ?? 0) > 0.2}
           />
-          <KpiCard
-            label="Cooldown Eff."
+          <SportKpiCard
+            label="Eficiência do intervalo"
             value={`${((lab?.telegramPerformance.cooldownEfficiency ?? 0) * 100).toFixed(0)}%`}
           />
         </div>

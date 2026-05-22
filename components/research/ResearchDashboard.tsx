@@ -21,6 +21,8 @@ import {
   YAxis,
 } from "recharts";
 import EngineTelemetryStrip from "@/components/engine/EngineTelemetryStrip";
+import SportKpiCard from "@/components/ui/sport/SportKpiCard";
+import { SportPanel, SportSectionTitle } from "@/components/ui/sport/SportPanel";
 import { useEngineInsights } from "@/hooks/useEngineInsights";
 import { useResearch } from "@/hooks/useResearch";
 import type { ModelComparisonEntry } from "@/lib/analytics/modelComparison";
@@ -47,60 +49,6 @@ function formatUpdatedAt(iso: string | undefined): string {
     dateStyle: "short",
     timeStyle: "medium",
   });
-}
-
-interface KpiCardProps {
-  label: string;
-  value: string;
-  sub?: string;
-  accent?: boolean;
-  icon?: ReactNode;
-}
-
-function KpiCard({ label, value, sub, accent, icon }: KpiCardProps) {
-  return (
-    <div
-      className={`corner-brackets module-panel scanline-overlay relative overflow-hidden p-4 ${
-        accent ? "glow-red border-pressure/30" : ""
-      }`}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <p className="telemetry-label">{label}</p>
-        {icon && <span className="text-pressure/70">{icon}</span>}
-      </div>
-      <p
-        className={`mt-2 font-mono text-lg font-bold tabular-nums tracking-tight sm:text-xl ${
-          accent ? "text-pressure" : "text-foreground"
-        }`}
-      >
-        {value}
-      </p>
-      {sub && (
-        <p className="mt-1 font-mono text-[9px] uppercase tracking-widest text-muted">
-          {sub}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function ChartPanel({
-  title,
-  children,
-  className = "",
-}: {
-  title: string;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div
-      className={`corner-brackets-inner module-panel scanline-overlay glow-red relative p-4 sm:p-5 ${className}`}
-    >
-      <h3 className="section-header mb-4">{title}</h3>
-      {children}
-    </div>
-  );
 }
 
 function ModelBarChart({
@@ -377,60 +325,40 @@ export default function ResearchDashboard() {
 
   return (
     <>
-      <header className="mb-5 border-b border-card/80 pb-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.35em] text-muted">
-              Experimental Quant Lab
-            </p>
-            <h1 className="mt-1 font-mono text-xl font-bold uppercase tracking-[0.08em] text-foreground sm:text-2xl lg:text-[1.65rem]">
-              Model Research Terminal
-            </h1>
-            <p className="mt-2 max-w-2xl font-mono text-[10px] leading-relaxed text-muted">
-              Multi-model A/B comparison · historical backtest metrics · live
-              experimental signals · production runtime unchanged
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <FlaskConical className="h-4 w-4 text-pressure" />
-            <span className="h-2 w-2 rounded-full bg-pressure animate-live-blink" />
-            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-pressure">
-              Research Stream
-            </span>
-          </div>
-        </div>
-      </header>
-
-      <div className="mb-6 grid grid-cols-2 gap-2 border border-card bg-surface/60 p-3 sm:grid-cols-4 lg:grid-cols-5">
-        <div className="telemetry-cell px-3 py-2">
-          <p className="telemetry-label">Comparison Updated</p>
-          <p className="telemetry-value text-[11px]">
+      <div className="gp-sport-stat-bar">
+        <div className="gp-sport-stat-bar__cell">
+          <p className="gp-sport-stat-bar__label">Comparativo atualizado</p>
+          <p className="gp-sport-stat-bar__value text-[11px]">
             {formatUpdatedAt(modelComparison?.generatedAt)}
           </p>
         </div>
-        <div className="telemetry-cell px-3 py-2">
-          <p className="telemetry-label">Experimental Snapshot</p>
-          <p className="telemetry-value text-[11px]">
+        <div className="gp-sport-stat-bar__cell">
+          <p className="gp-sport-stat-bar__label">Snapshot experimental</p>
+          <p className="gp-sport-stat-bar__value text-[11px]">
             {formatUpdatedAt(experimental?.timestamp)}
           </p>
         </div>
-        <div className="telemetry-cell px-3 py-2">
-          <p className="telemetry-label">Source Status</p>
-          <p className="telemetry-value text-pressure">{sourceStatus ?? "—"}</p>
+        <div className="gp-sport-stat-bar__cell">
+          <p className="gp-sport-stat-bar__label">Fonte</p>
+          <p className="gp-sport-stat-bar__value gp-sport-stat-bar__value--accent">
+            {sourceStatus === "READY" ? "Pronto" : (sourceStatus ?? "—")}
+          </p>
         </div>
-        <div className="telemetry-cell px-3 py-2">
-          <p className="telemetry-label">Feed</p>
-          <p className="telemetry-value uppercase">{feedLabel}</p>
+        <div className="gp-sport-stat-bar__cell">
+          <p className="gp-sport-stat-bar__label">Feed</p>
+          <p className="gp-sport-stat-bar__value">
+            {feedLabel === "LIVE" ? "Ao vivo" : feedLabel === "SYNC" ? "Sincronizando" : "Erro"}
+          </p>
         </div>
-        <div className="telemetry-cell col-span-2 px-3 py-2 sm:col-span-1">
-          <p className="telemetry-label">API Latency</p>
-          <p className="telemetry-value tabular-nums">
-            {responseTime != null ? `${responseTime}ms` : "—"}
+        <div className="gp-sport-stat-bar__cell">
+          <p className="gp-sport-stat-bar__label">Resposta</p>
+          <p className="gp-sport-stat-bar__value tabular-nums">
+            {responseTime != null ? `${responseTime} ms` : "—"}
           </p>
         </div>
         {error && (
-          <div className="col-span-full border border-pressure/40 bg-pressure/5 px-3 py-2">
-            <p className="font-mono text-[10px] text-pressure">{error}</p>
+          <div className="col-span-full rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+            {error}
           </div>
         )}
       </div>
@@ -450,17 +378,17 @@ export default function ResearchDashboard() {
       ) : (
         <div className="space-y-6">
           <section>
-            <h2 className="section-header mb-4">Model Leaders</h2>
+            <SportSectionTitle>Destaques dos modelos</SportSectionTitle>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              <KpiCard
-                label="Best Overall"
+              <SportKpiCard
+                label="Melhor geral"
                 value={modelComparison?.bestOverallModel ?? "—"}
-                sub="Risk-adjusted composite"
+                sub="Combinação ajustada ao risco"
                 accent
                 icon={<Target className="h-3.5 w-3.5" />}
               />
-              <KpiCard
-                label="Highest ROI"
+              <SportKpiCard
+                label="Maior retorno"
                 value={modelComparison?.highestRoiModel ?? "—"}
                 sub={
                   modelComparison?.models.find(
@@ -475,29 +403,29 @@ export default function ResearchDashboard() {
                 }
                 icon={<TrendingUp className="h-3.5 w-3.5" />}
               />
-              <KpiCard
-                label="Safest Model"
+              <SportKpiCard
+                label="Mais estável"
                 value={modelComparison?.safestModel ?? "—"}
-                sub="Lowest max drawdown"
+                sub="Menor queda máxima"
                 icon={<Shield className="h-3.5 w-3.5" />}
               />
-              <KpiCard
-                label="Highest Consistency"
+              <SportKpiCard
+                label="Mais consistente"
                 value={highestConsistency?.modelId ?? "—"}
                 sub={
                   highestConsistency
-                    ? `Score ${highestConsistency.metrics.consistencyScore}`
+                    ? `Nota ${highestConsistency.metrics.consistencyScore}`
                     : undefined
                 }
                 icon={<BarChart3 className="h-3.5 w-3.5" />}
               />
-              <KpiCard
-                label="Most Active"
+              <SportKpiCard
+                label="Mais ativo"
                 value={mostActive?.modelId ?? "—"}
                 sub={
                   mostActive
-                    ? `${mostActive.signalsGenerated} live signals`
-                    : "No live experimental data"
+                    ? `${mostActive.signalsGenerated} alertas ao vivo`
+                    : "Sem dados experimentais"
                 }
                 icon={<Zap className="h-3.5 w-3.5" />}
               />
@@ -506,7 +434,7 @@ export default function ResearchDashboard() {
 
           {chartRows.length > 0 && (
             <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-              <ChartPanel title="ROI by Model">
+              <SportPanel title="Retorno por modelo">
                 <ModelBarChart
                   data={chartRows.map((r) => ({
                     modelId: r.modelId,
@@ -515,8 +443,8 @@ export default function ResearchDashboard() {
                   dataKey="ROI"
                   valueFormatter={formatRoi}
                 />
-              </ChartPanel>
-              <ChartPanel title="Drawdown by Model">
+              </SportPanel>
+              <SportPanel title="Queda máxima por modelo">
                 <ModelBarChart
                   data={chartRows.map((r) => ({
                     modelId: r.modelId,
@@ -525,8 +453,8 @@ export default function ResearchDashboard() {
                   dataKey="Drawdown"
                   valueFormatter={(v) => formatRoi(-v)}
                 />
-              </ChartPanel>
-              <ChartPanel title="Hit Rate by Model">
+              </SportPanel>
+              <SportPanel title="Taxa de acerto por modelo">
                 <ModelBarChart
                   data={chartRows.map((r) => ({
                     modelId: r.modelId,
@@ -535,8 +463,8 @@ export default function ResearchDashboard() {
                   dataKey="Hit Rate %"
                   valueFormatter={(v) => `${v.toFixed(1)}%`}
                 />
-              </ChartPanel>
-              <ChartPanel title="Signals Generated (Live Experimental)">
+              </SportPanel>
+              <SportPanel title="Alertas gerados (experimental)">
                 <ModelBarChart
                   data={chartRows.map((r) => ({
                     modelId: r.modelId,
@@ -544,8 +472,8 @@ export default function ResearchDashboard() {
                   }))}
                   dataKey="Signals"
                 />
-              </ChartPanel>
-              <ChartPanel title="Consistency Score by Model" className="xl:col-span-2">
+              </SportPanel>
+              <SportPanel title="Consistência por modelo" className="xl:col-span-2">
                 <ModelBarChart
                   data={chartRows.map((r) => ({
                     modelId: r.modelId,
@@ -554,22 +482,23 @@ export default function ResearchDashboard() {
                   dataKey="Consistency"
                   valueFormatter={(v) => `${Math.round(v)}`}
                 />
-              </ChartPanel>
+              </SportPanel>
             </section>
           )}
 
-          <section className="corner-brackets-inner module-panel glow-red p-4 sm:p-5">
-            <h2 className="section-header mb-4">Comparative Model Matrix</h2>
+          <SportPanel>
+            <SportSectionTitle>Matriz comparativa de modelos</SportSectionTitle>
             <ComparisonTable models={modelComparison?.models ?? []} />
-          </section>
+          </SportPanel>
 
-          <section className="corner-brackets-inner module-panel scanline-overlay p-4 sm:p-5">
+          <SportPanel>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="section-header mb-0">Experimental Live Signals</h2>
+              <SportSectionTitle className="mb-0">
+                Alertas experimentais ao vivo
+              </SportSectionTitle>
               {lastUpdated && (
-                <p className="font-mono text-[9px] uppercase tracking-widest text-muted">
-                  Synced{" "}
-                  {formatUpdatedAt(new Date(lastUpdated).toISOString())}
+                <p className="text-xs text-[rgba(148,163,184,0.85)]">
+                  Atualizado {formatUpdatedAt(new Date(lastUpdated).toISOString())}
                 </p>
               )}
             </div>
@@ -577,18 +506,18 @@ export default function ResearchDashboard() {
               snapshots={experimental?.models ?? []}
               timestamp={experimental?.timestamp}
             />
-          </section>
+          </SportPanel>
 
           {recommendations && recommendations.profitablePatterns.length > 0 && (
-            <section className="module-panel border-dashed border-card/60 p-4">
-              <h2 className="section-header mb-3">Adaptive Insights (Read-only)</h2>
-              <p className="font-mono text-[10px] leading-relaxed text-muted">
-                {recommendations.profitablePatterns.length} profitable patterns
-                · {recommendations.riskyPatterns.length} risky patterns ·{" "}
-                {recommendations.thresholdSuggestions.length} threshold
-                suggestions — not applied to production engine.
+            <SportPanel>
+              <SportSectionTitle>Insights adaptativos (somente leitura)</SportSectionTitle>
+              <p className="text-sm leading-relaxed text-[rgba(148,163,184,0.95)]">
+                {recommendations.profitablePatterns.length} padrões lucrativos ·{" "}
+                {recommendations.riskyPatterns.length} padrões arriscados ·{" "}
+                {recommendations.thresholdSuggestions.length} sugestões de limite
+                — não aplicadas ao motor em produção.
               </p>
-            </section>
+            </SportPanel>
           )}
         </div>
       )}

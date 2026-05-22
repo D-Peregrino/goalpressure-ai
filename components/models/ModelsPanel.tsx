@@ -5,6 +5,8 @@ import activeManifest from "@/config/models/active-model.json";
 import { SIGNAL_DECISION_THRESHOLDS } from "@/lib/engine/signalDecisionEngine";
 import { TELEGRAM_COOLDOWN_MS } from "@/lib/telegram/constants";
 import { useBacktest } from "@/hooks/useBacktest";
+import SportKpiCard from "@/components/ui/sport/SportKpiCard";
+import { SportPanel, SportSectionTitle } from "@/components/ui/sport/SportPanel";
 import type { QuantitativeModel } from "@/types/model";
 
 export default function ModelsPanel() {
@@ -17,86 +19,81 @@ export default function ModelsPanel() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="font-mono text-[9px] uppercase tracking-[0.35em] text-muted">
-          Configuration (read-only)
-        </p>
-        <h1 className="mt-1 font-mono text-xl font-bold tracking-[0.12em] text-pressure">
-          Model Config Panel
-        </h1>
-      </header>
-
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <div className="module-panel p-4">
-          <p className="telemetry-label">Active Model</p>
-          <p className="font-mono text-lg font-bold text-pressure">{activeId}</p>
-        </div>
-        <div className="module-panel p-4">
-          <p className="telemetry-label">Signal minPressure</p>
-          <p className="font-mono text-lg">{SIGNAL_DECISION_THRESHOLDS.minPressureScore}</p>
-        </div>
-        <div className="module-panel p-4">
-          <p className="telemetry-label">Signal minEV</p>
-          <p className="font-mono text-lg">{SIGNAL_DECISION_THRESHOLDS.minEv}</p>
-        </div>
-        <div className="module-panel p-4">
-          <p className="telemetry-label">Cooldown</p>
-          <p className="font-mono text-lg">{TELEGRAM_COOLDOWN_MS / 60_000}m</p>
-        </div>
+        <SportKpiCard label="Modelo ativo" value={activeId} accent />
+        <SportKpiCard
+          label="Intensidade mínima"
+          value={String(SIGNAL_DECISION_THRESHOLDS.minPressureScore)}
+        />
+        <SportKpiCard
+          label="Valor esperado mín."
+          value={String(SIGNAL_DECISION_THRESHOLDS.minEv)}
+        />
+        <SportKpiCard
+          label="Intervalo entre alertas"
+          value={`${TELEGRAM_COOLDOWN_MS / 60_000} min`}
+        />
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
-        <div className="module-panel p-4">
-          <h2 className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
-            OVER 0.5 Thresholds
-          </h2>
-          <ul className="space-y-1 font-mono text-[10px] text-foreground/90">
-            <li>minMinute: {over05.minMinute}</li>
-            <li>maxMinute: {over05.maxMinute}</li>
-            <li>minPressure: {over05.minPressure}</li>
-            <li>minDangerousAttacks: {over05.minDangerousAttacks}</li>
-            <li>minOdd: {over05.minOdd}</li>
+        <SportPanel>
+          <SportSectionTitle>Mais de 0,5 gols — limites</SportSectionTitle>
+          <ul className="space-y-1 text-sm text-[rgba(226,232,240,0.9)]">
+            <li>Minuto mínimo: {over05.minMinute}</li>
+            <li>Minuto máximo: {over05.maxMinute}</li>
+            <li>Intensidade mínima: {over05.minPressure}</li>
+            <li>Ataques perigosos mín.: {over05.minDangerousAttacks}</li>
+            <li>Odd mínima: {over05.minOdd}</li>
           </ul>
-        </div>
-        <div className="module-panel p-4">
-          <h2 className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
-            OVER 1.5 Thresholds
-          </h2>
-          <ul className="space-y-1 font-mono text-[10px] text-foreground/90">
-            <li>minMinute: {over15.minMinute}</li>
-            <li>maxMinute: {over15.maxMinute}</li>
-            <li>minPressure: {over15.minPressure}</li>
-            <li>minShots: {over15.minShots}</li>
-            <li>minDangerousAttacks: {over15.minDangerousAttacks}</li>
-            <li>minOdd: {over15.minOdd}</li>
+        </SportPanel>
+        <SportPanel>
+          <SportSectionTitle>Mais de 1,5 gols — limites</SportSectionTitle>
+          <ul className="space-y-1 text-sm text-[rgba(226,232,240,0.9)]">
+            <li>Minuto mínimo: {over15.minMinute}</li>
+            <li>Minuto máximo: {over15.maxMinute}</li>
+            <li>Intensidade mínima: {over15.minPressure}</li>
+            <li>Chutes mínimos: {over15.minShots}</li>
+            <li>Ataques perigosos mín.: {over15.minDangerousAttacks}</li>
+            <li>Odd mínima: {over15.minOdd}</li>
           </ul>
-        </div>
+        </SportPanel>
       </div>
 
-      <div className="module-panel p-4">
-        <h2 className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
-          Historical Performance (backtest)
-        </h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 font-mono text-[10px]">
+      <SportPanel>
+        <SportSectionTitle>Performance histórica (backtest)</SportSectionTitle>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 text-sm">
           <div>
-            <span className="text-muted">ROI</span>
-            <p className="text-pressure">{(snapshot?.roi ?? 0).toFixed(2)}</p>
+            <p className="text-xs text-[rgba(148,163,184,0.9)]">Retorno</p>
+            <p className="font-semibold tabular-nums text-[#f1f5f9]">
+              {snapshot?.roi != null
+                ? `${snapshot.roi >= 0 ? "+" : ""}${snapshot.roi.toFixed(2)}u`
+                : "—"}
+            </p>
           </div>
           <div>
-            <span className="text-muted">Hit rate</span>
-            <p>{((snapshot?.hitRate ?? 0) * 100).toFixed(1)}%</p>
+            <p className="text-xs text-[rgba(148,163,184,0.9)]">Taxa de acerto</p>
+            <p className="font-semibold tabular-nums text-[#f1f5f9]">
+              {snapshot?.hitRate != null
+                ? `${(snapshot.hitRate * 100).toFixed(1)}%`
+                : "—"}
+            </p>
           </div>
           <div>
-            <span className="text-muted">Avg EV</span>
-            <p>{((snapshot?.averageEv ?? 0) * 100).toFixed(1)}%</p>
+            <p className="text-xs text-[rgba(148,163,184,0.9)]">Registros</p>
+            <p className="font-semibold tabular-nums text-[#f1f5f9]">
+              {snapshot?.storedResults?.length ?? "—"}
+            </p>
           </div>
           <div>
-            <span className="text-muted">Drawdown</span>
-            <p>{(snapshot?.maxDrawdown ?? 0).toFixed(2)}u</p>
+            <p className="text-xs text-[rgba(148,163,184,0.9)]">Lucro</p>
+            <p className="font-semibold tabular-nums text-[#f1f5f9]">
+              {snapshot?.profitUnits != null
+                ? snapshot.profitUnits.toFixed(2)
+                : "—"}
+            </p>
           </div>
         </div>
-        <p className="mt-3 font-mono text-[9px] text-muted">{model.description}</p>
-      </div>
+      </SportPanel>
     </div>
   );
 }

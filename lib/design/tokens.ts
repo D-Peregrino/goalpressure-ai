@@ -2,7 +2,7 @@
  * GoalPressure AI — design tokens (institutional terminal + legacy UI).
  */
 
-/** Institutional v2 — Bloomberg / Sofascore / trading terminal */
+/** Institutional v2 — central esportiva premium */
 export const TOKENS = {
   color: {
     ice: "#F8FAFC",
@@ -161,7 +161,7 @@ export const riskStyles: Record<
 
 export const typography = {
   display: "font-sans tracking-tight",
-  label: "font-mono text-[10px] uppercase tracking-[0.28em]",
-  metric: "font-mono tabular-nums font-bold",
-  body: "font-mono text-sm",
+  label: "text-xs font-semibold text-muted",
+  metric: "font-sans tabular-nums font-bold",
+  body: "font-sans text-sm",
 } as const;

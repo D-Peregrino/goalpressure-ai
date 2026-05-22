@@ -23,25 +23,24 @@ export default function PressureComparisonBar({
   const awayColor = getTeamColor(awayTeam);
 
   return (
-    <div className="space-y-1.5">
-      <div className="flex justify-between font-mono-data text-[11px] text-[var(--muted)]">
-        <span style={{ color: homeColor }}>{Math.round(homePressure)}</span>
-        <span className="uppercase tracking-wide">Pressão ofensiva</span>
-        <span style={{ color: awayColor }}>{Math.round(awayPressure)}</span>
-      </div>
-      <div className="flex h-2 overflow-hidden rounded-full bg-[var(--gp-gray-light)]">
+    <div className="gp-flow-pressure">
+      <div className="gp-flow-pressure__track">
         <div
-          className="transition-all duration-500"
-          style={{ width: `${homePct}%`, background: homeColor, opacity: dominantSide === "away" ? 0.55 : 0.85 }}
+          className="gp-flow-pressure__seg gp-flow-pressure__seg--home"
+          style={{
+            width: `${homePct}%`,
+            background: homeColor,
+            opacity: dominantSide === "away" ? 0.45 : 0.75,
+          }}
         />
         <div
-          className="transition-all duration-500"
-          style={{ width: `${awayPct}%`, background: awayColor, opacity: dominantSide === "home" ? 0.55 : 0.85 }}
+          className="gp-flow-pressure__seg gp-flow-pressure__seg--away"
+          style={{
+            width: `${awayPct}%`,
+            background: awayColor,
+            opacity: dominantSide === "home" ? 0.45 : 0.75,
+          }}
         />
-      </div>
-      <div className="flex justify-between text-[10px] text-[var(--muted)]">
-        <span>{homePct.toFixed(0)}%</span>
-        <span>{awayPct.toFixed(0)}%</span>
       </div>
     </div>
   );
