@@ -23,6 +23,7 @@ import {
   rotuloVantagem,
 } from "@/lib/ux/sportsLanguage";
 import { getCardFocusTier } from "@/lib/ux/operationalIntelligence";
+import TrustIndicator from "@/components/ui/TrustIndicator";
 
 function MatchCardProInner({
   match,
@@ -48,6 +49,7 @@ function MatchCardProInner({
   const isPreMatch = match.isPreMatch;
   const isHot = focusTier === "hot" || focusTier === "ignite";
   const isWarm = focusTier === "warm" || isHot;
+  const trustWeight = match.trustVisualWeight ?? 1;
 
   const scoreDisplay = match.scoreKnown
     ? `${match.homeScore ?? 0} – ${match.awayScore ?? 0}`
@@ -59,21 +61,25 @@ function MatchCardProInner({
 
   const steamLabel = rotuloSteam(match.steamDirection, match.steamMove);
   const insight =
-    match.tacticalNarrative && isHot
-      ? match.tacticalNarrative
-      : match.cardInsight ||
-        (isPreMatch
-          ? match.kickoffLabel
-            ? `Início ${match.kickoffLabel}`
-            : "Aguardando apito inicial"
-          : insightDoJogo({
-              operationalState: match.operationalState,
-              pressureScore: match.pressureScore,
-              edgePercent: match.edgePercent,
-              steamMove: match.steamMove,
-              steamDirection: match.steamDirection,
-              chaosIndex: match.chaosIndex,
-            }));
+    match.displayInsight ||
+    (isPreMatch
+      ? match.kickoffLabel
+        ? `Início ${match.kickoffLabel}`
+        : "Aguardando apito inicial"
+      : insightDoJogo({
+          operationalState: match.operationalState,
+          pressureScore: match.pressureScore,
+          edgePercent: match.edgePercent,
+          steamMove: match.steamMove,
+          steamDirection: match.steamDirection,
+          chaosIndex: match.chaosIndex,
+          homeTeam: match.homeTeam,
+          awayTeam: match.awayTeam,
+          minuteLabel: match.minuteLabel,
+          scoreKnown: match.scoreKnown,
+          homeScore: match.homeScore,
+          awayScore: match.awayScore,
+        }));
 
   const showEdge =
     can("edge_full") &&
@@ -83,13 +89,16 @@ function MatchCardProInner({
 
   const heatIntensity = isPreMatch
     ? 0
-    : Math.min(1, match.pressureScore / 100) * (isHot ? 1 : isWarm ? 0.45 : 0.12);
+    : Math.min(1, match.pressureScore / 100) *
+      trustWeight *
+      (isHot ? 1 : isWarm ? 0.45 : 0.12);
 
   const badgeSize = isHot ? "xl" : isWarm ? "lg" : "md";
 
   return (
     <motion.article
       layout
+      layoutId={`card-${match.fixtureId}`}
       variants={cardFlow}
       initial="hidden"
       animate="show"
@@ -100,6 +109,7 @@ function MatchCardProInner({
         "gp-sport-card--focus",
         "gp-flow-card",
         `gp-sport-card--focus-${focusTier}`,
+        `gp-sport-card--trust-${match.trustLevel}`,
         tacticalProfileClass(match.tacticalProfile),
         isLive ? "gp-sport-card--live" : "",
         isPreMatch ? "gp-sport-card--prematch" : "",
@@ -109,7 +119,7 @@ function MatchCardProInner({
     >
       {isWarm && (
         <div className="gp-sport-card__fx" aria-hidden>
-          {isHot && (
+          {isHot && trustWeight >= 0.65 && (
             <MatchCardStoryAura
               profile={match.tacticalProfile}
               offensiveControl={match.offensiveControl}
@@ -200,6 +210,12 @@ function MatchCardProInner({
           </p>
 
           <div className="gp-sport-card__state-row">
+            <TrustIndicator
+              level={match.trustLevel}
+              label={match.trustLabel}
+              sources={match.trustSources}
+              compact
+            />
             <span
               className={`gp-focus-state gp-focus-state--${match.operationalState.toLowerCase()}`}
             >
@@ -306,8 +322,8 @@ function MatchCardProInner({
                   )}
                 </>
               )}
-              {match.lowConfidence && (
-                <p className="gp-sport-card__drawer-warn">Leitura com poucos dados</p>
+              {match.trustLevel === "limited" && (
+                <p className="gp-sport-card__drawer-warn">{match.trustLabel}</p>
               )}
               <div className="gp-sport-card__detalhes-grid">
                 <span>

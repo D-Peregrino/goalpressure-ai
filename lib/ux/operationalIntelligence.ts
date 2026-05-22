@@ -4,6 +4,12 @@
 
 import type { EnrichedLiveMatch } from "@/hooks/useLiveMatchCenter";
 import {
+  capFocusTierForTrust,
+  computeMatchTrust,
+  softenNarrative,
+  trustHeroEligible,
+} from "@/lib/ux/dataTrust";
+import {
   buildQuantTimeline,
   type QuantTimelineEvent,
 } from "@/lib/match/buildQuantTimeline";
@@ -27,10 +33,12 @@ export function getMatchFocusScore(m: EnrichedLiveMatch): number {
 export function getCardFocusTier(m: EnrichedLiveMatch): CardFocusTier {
   if (m.isPreMatch) return "cold";
   const s = scoreMatch(m);
-  if (s >= 88) return "ignite";
-  if (s >= 62) return "hot";
-  if (s >= 38) return "warm";
-  return "cold";
+  let tier: CardFocusTier = "cold";
+  if (s >= 88) tier = "ignite";
+  else if (s >= 62) tier = "hot";
+  else if (s >= 38) tier = "warm";
+  const trust = computeMatchTrust(m);
+  return capFocusTierForTrust(tier, trust);
 }
 
 export function focusTierToMoment(tier: CardFocusTier): MomentLevel {
@@ -96,6 +104,7 @@ function scoreMatch(m: EnrichedLiveMatch): number {
   s += m.urgency * 0.25;
   if (m.evPlus) s += 18;
   if (m.lowConfidence) s *= 0.72;
+  s *= m.trustVisualWeight ?? computeMatchTrust(m).visualWeight;
   return Math.round(s);
 }
 
@@ -109,7 +118,9 @@ export function pickHeroOpportunity(
   let bestScore = -1;
 
   for (const m of live) {
-    const sc = scoreMatch(m);
+    const trust = computeMatchTrust(m);
+    if (!trustHeroEligible(m, trust)) continue;
+    const sc = scoreMatch(m) * trust.visualWeight;
     if (sc > bestScore) {
       bestScore = sc;
       best = m;
@@ -117,6 +128,8 @@ export function pickHeroOpportunity(
   }
 
   if (!best || bestScore < 28) return null;
+
+  const heroTrust = computeMatchTrust(best);
 
   const momentLevel = momentFromScore(bestScore);
   const estado = ESTADO_JOGO[best.operationalState];
@@ -134,10 +147,13 @@ export function pickHeroOpportunity(
     headline = `Jogo esquentando · ${headline}`;
   }
 
-  const narrative =
-    best.tacticalNarrative ||
-    best.cardInsight ||
-    rotuloIntensidade(best.pressureScore);
+  const narrative = softenNarrative(
+    best.displayInsight ||
+      best.tacticalNarrative ||
+      best.cardInsight ||
+      rotuloIntensidade(best.pressureScore),
+    heroTrust
+  );
 
   const conductor =
     best.operationalState === "EXECUTE"
@@ -180,10 +196,14 @@ export function rankHotMatches(
       if (m.chaosIndex >= 62) tags.push("Ritmo imprevisível");
       if ((m.edgePercent ?? 0) >= 8) tags.push("Vantagem");
 
-      const narrative =
-        m.cardInsightSecondary ||
-        m.cardInsight ||
-        rotuloIntensidade(m.pressureScore);
+      const trust = computeMatchTrust(m);
+      const narrative = softenNarrative(
+        m.displayInsight ||
+          m.cardInsightSecondary ||
+          m.cardInsight ||
+          rotuloIntensidade(m.pressureScore),
+        trust
+      );
 
       return {
         match: m,
@@ -201,17 +221,24 @@ function narrativeForSignal(
   match?: EnrichedLiveMatch
 ): { headline: string; narrative: string; momentLevel: MomentLevel } {
   const min = match?.minuteLabel;
-  const insight = match?.cardInsight;
+  const insight = match?.displayInsight ?? match?.cardInsight;
   const tactical = match?.tacticalNarrative;
+  const trust = match ? computeMatchTrust(match) : null;
 
   switch (entry.type) {
     case "EXECUTE_WINDOW":
       return {
         headline: "Janela forte aberta",
-        narrative:
-          insight ||
-          tactical ||
-          `${entry.matchLabel} pede atenção imediata${min ? ` (${min})` : ""}.`,
+        narrative: trust
+          ? softenNarrative(
+              insight ||
+                tactical ||
+                `${entry.matchLabel} pede atenção imediata${min ? ` (${min})` : ""}.`,
+              trust
+            )
+          : insight ||
+            tactical ||
+            `${entry.matchLabel} pede atenção imediata${min ? ` (${min})` : ""}.`,
         momentLevel: "ignite",
       };
     case "STEAM_MOVE":

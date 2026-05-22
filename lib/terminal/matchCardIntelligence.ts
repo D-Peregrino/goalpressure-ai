@@ -570,11 +570,19 @@ export function buildMatchCardIntelligence(
   });
 
   if (lowConfidence && candidates.length === 0) {
+    const home = match.homeTeam.split(/\s+/).pop() ?? match.homeTeam;
+    const away = match.awayTeam.split(/\s+/).pop() ?? match.awayTeam;
     candidates.push({
-      text: "Dados insuficientes agora — aguarde mais sinais do jogo ou do mercado.",
+      text: `${home} x ${away}: ainda formando leitura — aguarde stats ou mercado.`,
       priority: 100,
       reason: `dataQuality ${dataQuality} · confiança ${confidence}`,
     });
+  }
+
+  if (lowConfidence) {
+    for (const c of candidates) {
+      if (c.priority >= 90) c.priority = Math.min(c.priority, 72);
+    }
   }
 
   candidates.sort((a, b) => b.priority - a.priority);

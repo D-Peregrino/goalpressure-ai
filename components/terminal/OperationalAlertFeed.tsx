@@ -14,6 +14,7 @@ function AlertRow({ alert }: { alert: OperationalAlert }) {
   return (
     <motion.article
       layout
+      layoutId={`alert-${alert.id}`}
       variants={alertSlide}
       initial="hidden"
       animate="show"

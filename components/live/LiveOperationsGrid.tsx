@@ -89,7 +89,11 @@ export default function LiveOperationsGrid({
   }
 
   return (
-    <motion.div layout className="gp-ops-grid-wrap">
+    <motion.div
+      layout
+      transition={{ layout: { duration: 0.38, ease: [0.22, 1, 0.36, 1] } }}
+      className="gp-ops-grid-wrap gp-ops-grid-wrap--stable"
+    >
       {!can("unlimited_matches") && matches.length > limits.liveMatches && (
         <p className="gp-tier-notice">
           Plano Free: exibindo {limits.liveMatches} de {matches.length} jogos.{" "}

@@ -14,6 +14,12 @@ export const layoutTransition: Transition = {
   layout: { duration: 0.42, ease: FLOW_EASE },
 };
 
+/** Atualizações do feed — suaves, sem snap */
+export const feedStableTransition: Transition = {
+  duration: 0.38,
+  ease: FLOW_EASE,
+};
+
 export const terminalFadeUp: Variants = {
   hidden: { opacity: 0, y: 10 },
   show: {

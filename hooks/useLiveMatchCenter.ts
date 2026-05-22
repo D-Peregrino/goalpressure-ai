@@ -34,6 +34,7 @@ import {
   operationalStateWithConfidence,
   type DataQualityLevel,
 } from "@/lib/terminal/matchCardIntelligence";
+import { applyTrustLayer, type TrustLevel } from "@/lib/ux/dataTrust";
 
 export type MatchCenterFilter =
   | "all"
@@ -130,6 +131,13 @@ export interface EnrichedLiveMatch {
   tacticalReasoning: string;
   tacticalLimitedReading: boolean;
   tacticalSourcesUsed: string[];
+  /** Camada de confiança (pós-processamento). */
+  trustLevel: TrustLevel;
+  trustScore: number;
+  trustLabel: string;
+  trustSources: string[];
+  trustVisualWeight: number;
+  displayInsight: string;
 }
 
 const SUPPLEMENTARY_PATHS = [
@@ -261,7 +269,7 @@ export function useLiveMatchCenter() {
   }, []);
 
   const enriched = useMemo((): EnrichedLiveMatch[] => {
-    return live.matches.map((match) => {
+    const mapped = live.matches.map((match) => {
       const fixtureId = fixtureIdFromMatch(match);
       const pressureOps = ops.livePressure?.metrics.find((m) => m.fixtureId === fixtureId);
       const meta = ops.metaConsensus?.consensusHeatmap.find((c) => c.fixtureId === fixtureId);
@@ -476,6 +484,12 @@ export function useLiveMatchCenter() {
         tacticalReasoning: "",
         tacticalLimitedReading: true,
         tacticalSourcesUsed: [],
+        trustLevel: "limited" as TrustLevel,
+        trustScore: 0,
+        trustLabel: "Leitura limitada",
+        trustSources: [],
+        trustVisualWeight: 0.35,
+        displayInsight: "",
       };
     }).map((row) => {
       const match = live.matches.find((m) => fixtureIdFromMatch(m) === row.fixtureId);
@@ -618,8 +632,16 @@ export function useLiveMatchCenter() {
         operationalState,
         urgency: window.urgency,
         steamDirection: window.steamDirection,
+        trustLevel: "limited" as TrustLevel,
+        trustScore: 0,
+        trustLabel: "Leitura limitada",
+        trustSources: [],
+        trustVisualWeight: 0.35,
+        displayInsight: intel.primaryInsight,
       };
     });
+
+    return applyTrustLayer(mapped);
   }, [live.matches, ops]);
 
   const liveSignals = useMemo(

@@ -86,26 +86,42 @@ export function insightDoJogo(input: {
   steamMove: boolean;
   steamDirection: SteamDirection;
   chaosIndex: number;
+  homeTeam?: string;
+  awayTeam?: string;
+  minuteLabel?: string;
+  scoreKnown?: boolean;
+  homeScore?: number | null;
+  awayScore?: number | null;
 }): string {
+  const home = input.homeTeam?.split(/\s+/).pop() ?? "mandante";
+  const away = input.awayTeam?.split(/\s+/).pop() ?? "visitante";
+  const scoreCtx =
+    input.scoreKnown &&
+    input.homeScore != null &&
+    input.awayScore != null
+      ? ` (${input.homeScore}–${input.awayScore})`
+      : "";
+  const minCtx = input.minuteLabel ? ` · ${input.minuteLabel}` : "";
+
   if (input.operationalState === "EXECUTE") {
-    return "Alta chance de movimentação — vale olhar com atenção.";
+    return `${home} x ${away}${scoreCtx}: momento favorável para acompanhar${minCtx}.`;
   }
   if (input.steamMove || input.steamDirection === "DOWN") {
-    return "Mercado começando a reagir ao que está acontecendo em campo.";
+    return `Mercado reagindo em ${home} x ${away}${minCtx}.`;
   }
   if (input.pressureScore >= 72) {
-    return rotuloIntensidade(input.pressureScore);
+    return `${rotuloIntensidade(input.pressureScore)} — ${home} x ${away}${minCtx}.`;
   }
   if ((input.edgePercent ?? 0) >= 8) {
-    return "Odds parecem deixar uma boa margem neste mercado.";
+    return `Margem nas odds em ${home} x ${away}${scoreCtx}.`;
   }
   if (input.operationalState === "AVOID") {
-    return "Momento confuso — melhor esperar mais clareza.";
+    return `${home} x ${away}: cenário confuso — aguardar${minCtx}.`;
   }
   if (input.chaosIndex >= 65) {
-    return rotuloPressaoJogo(input.chaosIndex);
+    return `${rotuloPressaoJogo(input.chaosIndex)} em ${home} x ${away}${minCtx}.`;
   }
-  return rotuloIntensidade(input.pressureScore);
+  return `${rotuloIntensidade(input.pressureScore)} — ${home} x ${away}${minCtx}.`;
 }
 
 export const TERMINAL_COPY = {

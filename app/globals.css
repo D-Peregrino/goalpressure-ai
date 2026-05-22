@@ -9718,3 +9718,93 @@ body {
   margin-top: 1rem;
 }
 
+/* ─── Data trust layer ───────────────────────────────────────────────────── */
+
+.gp-trust {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 550;
+  color: var(--muted);
+}
+
+.gp-trust__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.gp-trust--strong .gp-trust__dot {
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.35);
+}
+
+.gp-trust--moderate .gp-trust__dot {
+  background: #eab308;
+}
+
+.gp-trust--limited .gp-trust__dot {
+  background: #94a3b8;
+}
+
+.gp-trust--strong .gp-trust__label {
+  color: #15803d;
+}
+
+.gp-trust--limited .gp-trust__label {
+  color: #64748b;
+}
+
+.gp-trust__sources {
+  font-size: 0.62rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.gp-trust--compact .gp-trust__sources {
+  display: none;
+}
+
+.gp-sport-card--trust-limited {
+  opacity: 0.92;
+}
+
+.gp-sport-card--trust-limited.gp-flow-card {
+  box-shadow: 0 4px 20px rgba(15, 23, 41, 0.03);
+}
+
+.gp-sport-card--trust-limited.gp-sport-card--focus-hot .gp-sport-card__fx,
+.gp-sport-card--trust-limited.gp-sport-card--focus-ignite .gp-sport-card__fx {
+  opacity: 0.35;
+}
+
+.gp-sport-card--trust-limited .gp-sport-card__decision {
+  font-weight: 500;
+  color: #5c6b7a;
+}
+
+.gp-sport-card--trust-strong .gp-sport-card__decision {
+  font-weight: 600;
+}
+
+.gp-op-hero__trust-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+}
+
+.gp-ops-grid-wrap--stable {
+  will-change: contents;
+}
+
+.gp-terminal-v2--commercial .gp-flow-card {
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+

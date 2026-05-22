@@ -8,6 +8,7 @@ import type { HeroOpportunity } from "@/lib/ux/operationalIntelligence";
 import { momentClass, stateLabel } from "@/lib/ux/operationalIntelligence";
 import { heroSwap } from "@/components/ui/terminal/motion";
 import TeamBadge from "@/components/matches/TeamBadge";
+import TrustIndicator from "@/components/ui/TrustIndicator";
 
 function confidencePct(match: HeroOpportunity["match"]): number {
   const c = Math.max(
@@ -64,11 +65,19 @@ function HeroContent({ hero }: { hero: HeroOpportunity }) {
       <div className="gp-op-hero__inner">
         <div className="gp-op-hero__top">
           <p className="gp-type-label gp-op-hero__decision-label">O sistema identificou</p>
-          <span
-            className={`gp-focus-state gp-focus-state--${match.operationalState.toLowerCase()}`}
-          >
-            {stateLabel(match.operationalState)}
-          </span>
+          <div className="gp-op-hero__trust-row">
+            <TrustIndicator
+              level={match.trustLevel}
+              label={match.trustLabel}
+              sources={match.trustSources}
+              compact
+            />
+            <span
+              className={`gp-focus-state gp-focus-state--${match.operationalState.toLowerCase()}`}
+            >
+              {stateLabel(match.operationalState)}
+            </span>
+          </div>
         </div>
 
         <div className="gp-op-hero__match-row">
