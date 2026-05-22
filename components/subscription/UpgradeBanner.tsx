@@ -16,7 +16,7 @@ export default function UpgradeBanner() {
       <Sparkles className="h-4 w-4 shrink-0 text-[var(--gp-red)]" aria-hidden />
       <p className="gp-upgrade-banner__text">
         Você está no <strong>{TIERS.free.name}</strong> — central limitada a{" "}
-        {TIERS.free.limits.liveMatches} jogos. Desbloqueie hero, alertas e timeline no Pro.
+        {TIERS.free.limits.liveMatches} jogos. Ative o Plano Fundador para acesso completo.
       </p>
       <Link href={UPGRADE_PATH} className="gp-upgrade-banner__cta">
         Ver planos

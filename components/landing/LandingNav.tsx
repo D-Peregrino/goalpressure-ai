@@ -10,17 +10,14 @@ export default function LandingNav() {
         Goal<span className="gp-accent">Pressure</span> AI
       </Link>
       <nav className="gp-landing-nav__actions">
-        <Link href="#features" className="gp-landing-nav__link hidden md:inline">
-          Features
-        </Link>
-        <Link href="/pricing" className="gp-landing-nav__link hidden md:inline">
+        <Link href="/precos" className="gp-landing-nav__link hidden md:inline">
           Planos
         </Link>
-        <Link href="/login" className="gp-landing-nav__link hidden sm:inline">
+        <Link href="/entrar" className="gp-landing-nav__link hidden sm:inline">
           Entrar
         </Link>
-        <Link href="/signup?plan=pro" className="gp-btn gp-btn--primary gp-btn--sm">
-          Trial Pro
+        <Link href="/cadastro?cupom=BARBOSATIPS75" className="gp-btn gp-btn--primary gp-btn--sm">
+          Plano Fundador
           <ArrowRight className="h-4 w-4" />
         </Link>
       </nav>

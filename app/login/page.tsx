@@ -1,13 +1,5 @@
-import AuthLayout from "@/components/auth/AuthLayout";
-import LoginForm from "@/components/auth/LoginForm";
+import { redirect } from "next/navigation";
 
-export default function LoginPage() {
-  return (
-    <AuthLayout
-      title="Login institucional"
-      subtitle="Acesse o terminal quantitativo ao vivo."
-    >
-      <LoginForm />
-    </AuthLayout>
-  );
+export default function LoginRedirect() {
+  redirect("/entrar");
 }

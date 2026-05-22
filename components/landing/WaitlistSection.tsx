@@ -12,10 +12,14 @@ export default function WaitlistSection() {
     if (!email.trim()) return;
     setStatus("loading");
     try {
-      const res = await fetch("/api/waitlist", {
+      const res = await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), plan: "pro" }),
+        body: JSON.stringify({
+          email: email.trim(),
+          source: "waitlist",
+          interest: "lista_espera",
+        }),
       });
       if (!res.ok) throw new Error("fail");
       setStatus("ok");
@@ -28,7 +32,7 @@ export default function WaitlistSection() {
   return (
     <section id="waitlist" className="gp-landing-cta">
       <div className="gp-landing-container gp-landing-cta__inner">
-        <p className="gp-landing-eyebrow text-center">Early access</p>
+        <p className="gp-landing-eyebrow text-center">Acesso antecipado</p>
         <h2 className="gp-landing-cta__title">Lista de espera — beta institucional</h2>
         <p className="gp-landing-cta__sub">
           Vagas limitadas para desks que operam live com edge e calibração de mercado.

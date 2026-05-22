@@ -1,0 +1,179 @@
+"use client";
+
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { getSupabaseBrowser, isSupabaseAuthConfigured } from "@/lib/auth/supabaseClient";
+import type { AccountPayload } from "@/lib/auth/session";
+import type { DbPlan } from "@/lib/subscription/permissions";
+
+interface AuthContextValue {
+  user: AccountPayload["user"] | null;
+  plan: DbPlan;
+  subscriptionStatus: string;
+  couponCode: string | null;
+  loading: boolean;
+  signUp: (name: string, email: string, password: string) => Promise<{ error?: string }>;
+  signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error?: string }>;
+  refreshAccount: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [account, setAccount] = useState<AccountPayload | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const refreshAccount = useCallback(async () => {
+    try {
+      const headers: HeadersInit = {};
+      const supabase = getSupabaseBrowser();
+      if (supabase) {
+        const { data: sess } = await supabase.auth.getSession();
+        if (sess.session?.access_token) {
+          headers.Authorization = `Bearer ${sess.session.access_token}`;
+        }
+      }
+      const res = await fetch("/api/auth/me", { credentials: "include", headers });
+      if (res.ok) {
+        const data = (await res.json()) as AccountPayload;
+        setAccount(data);
+      } else {
+        setAccount(null);
+      }
+    } catch {
+      setAccount(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    const supabase = getSupabaseBrowser();
+    if (supabase) {
+      supabase.auth.getSession().then(() => refreshAccount());
+      const { data: sub } = supabase.auth.onAuthStateChange(() => {
+        refreshAccount();
+      });
+      setLoading(false);
+      return () => sub.subscription.unsubscribe();
+    }
+    refreshAccount().finally(() => setLoading(false));
+  }, [refreshAccount]);
+
+  const signUp = useCallback(
+    async (name: string, email: string, password: string) => {
+      const supabase = getSupabaseBrowser();
+      if (supabase) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { name } },
+        });
+        if (error) return { error: error.message };
+        await refreshAccount();
+        return {};
+      }
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ name, email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) return { error: data.error ?? "Erro ao criar conta." };
+      await refreshAccount();
+      return {};
+    },
+    [refreshAccount]
+  );
+
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      const supabase = getSupabaseBrowser();
+      if (supabase) {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) return { error: error.message };
+        await refreshAccount();
+        return {};
+      }
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) return { error: data.error ?? "E-mail ou senha inválidos." };
+      await refreshAccount();
+      return {};
+    },
+    [refreshAccount]
+  );
+
+  const signOut = useCallback(async () => {
+    const supabase = getSupabaseBrowser();
+    if (supabase) await supabase.auth.signOut();
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    setAccount(null);
+  }, []);
+
+  const resetPassword = useCallback(async (email: string) => {
+    const supabase = getSupabaseBrowser();
+    if (supabase) {
+      const base = typeof window !== "undefined" ? window.location.origin : "";
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${base}/redefinir-senha`,
+      });
+      if (error) return { error: error.message };
+      return {};
+    }
+    return { error: "Configure Supabase Auth para recuperação de senha." };
+  }, []);
+
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      user: account?.user ?? null,
+      plan: account?.plan ?? "free",
+      subscriptionStatus: account?.subscriptionStatus ?? "active",
+      couponCode: account?.couponCode ?? null,
+      loading,
+      signUp,
+      signIn,
+      signOut,
+      resetPassword,
+      refreshAccount,
+    }),
+    [account, loading, signUp, signIn, signOut, resetPassword, refreshAccount]
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth(): AuthContextValue {
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    return {
+      user: null,
+      plan: "free",
+      subscriptionStatus: "active",
+      couponCode: null,
+      loading: false,
+      signUp: async () => ({}),
+      signIn: async () => ({}),
+      signOut: async () => {},
+      resetPassword: async () => ({ error: "Auth não inicializado" }),
+      refreshAccount: async () => {},
+    };
+  }
+  return ctx;
+}
+
+export function useAuthConfigured(): boolean {
+  return isSupabaseAuthConfigured();
+}

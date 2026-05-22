@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import {
   FEATURE_LABELS,
-  FEATURE_REQUIRED_TIER,
+  FEATURE_REQUIRED_PLAN,
   TIER_DISPLAY,
   UPGRADE_PATH,
 } from "@/lib/subscription/commercialCopy";
@@ -31,9 +31,9 @@ export default function PaywallGate({
     return <>{children}</>;
   }
 
-  const required = FEATURE_REQUIRED_TIER[feature] ?? "pro";
-  const label = title ?? FEATURE_LABELS[feature] ?? "Recurso Pro";
-  const tierName = TIER_DISPLAY[required];
+  const requiredPlan = FEATURE_REQUIRED_PLAN[feature] ?? "fundador";
+  const label = title ?? FEATURE_LABELS[feature] ?? "Plano Fundador";
+  const tierName = requiredPlan === "fundador" ? "Plano Fundador" : "Plano pago";
 
   return (
     <div
@@ -50,8 +50,8 @@ export default function PaywallGate({
           <p className="gp-paywall__sub">
             Disponível no plano <strong>{tierName}</strong>
           </p>
-          <Link href={`${UPGRADE_PATH}?feature=${feature}`} className="gp-paywall__cta">
-            {required === "institutional" ? "Conhecer Elite" : "Testar Pro grátis"}
+          <Link href={`${UPGRADE_PATH}?recurso=${feature}`} className="gp-paywall__cta">
+            Ver Plano Fundador
           </Link>
         </div>
       </div>

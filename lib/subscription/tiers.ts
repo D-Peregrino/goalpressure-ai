@@ -25,7 +25,7 @@ export interface TierDefinition {
 export const TIERS: Record<SubscriptionTier, TierDefinition> = {
   free: {
     id: "free",
-    name: "Free",
+    name: "Gratuito",
     priceLabel: "R$ 0",
     description: "Amostra da central ao vivo — ideal para conhecer a leitura.",
     trialDays: 0,
@@ -47,7 +47,7 @@ export const TIERS: Record<SubscriptionTier, TierDefinition> = {
   },
   pro: {
     id: "pro",
-    name: "Pro",
+    name: "Profissional",
     priceLabel: "R$ 297/mês",
     description: "Central completa, alertas, hero e leitura tática para operação ao vivo.",
     trialDays: 7,

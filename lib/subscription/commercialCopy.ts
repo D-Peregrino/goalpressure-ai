@@ -1,12 +1,15 @@
-import type { FeatureKey, SubscriptionTier } from "@/lib/subscription/tiers";
+import type { FeatureKey } from "@/lib/subscription/tiers";
+import type { DbPlan } from "@/lib/subscription/permissions";
+
+import type { SubscriptionTier } from "@/lib/subscription/tiers";
 
 export const TIER_DISPLAY: Record<SubscriptionTier, string> = {
-  free: "Free",
-  pro: "Pro",
+  free: "Gratuito",
+  pro: "Profissional",
   institutional: "Elite",
 };
 
-export const UPGRADE_PATH = "/upgrade";
+export const UPGRADE_PATH = "/precos";
 
 export const FEATURE_LABELS: Partial<Record<FeatureKey, string>> = {
   hero_premium: "Decisão principal do momento",
@@ -21,19 +24,17 @@ export const FEATURE_LABELS: Partial<Record<FeatureKey, string>> = {
   heatmap: "Mapa de calor e momentum",
 };
 
-export const FEATURE_REQUIRED_TIER: Partial<
-  Record<FeatureKey, SubscriptionTier>
-> = {
-  hero_premium: "pro",
-  advanced_alerts: "pro",
-  tactical_insights: "pro",
-  timeline: "pro",
-  edge_full: "pro",
-  audit_mode: "institutional",
-  operator_mode: "institutional",
-  unlimited_matches: "pro",
-  steam_alerts: "pro",
-  heatmap: "pro",
+export const FEATURE_REQUIRED_PLAN: Partial<Record<FeatureKey, DbPlan>> = {
+  hero_premium: "fundador",
+  advanced_alerts: "fundador",
+  tactical_insights: "fundador",
+  timeline: "fundador",
+  edge_full: "fundador",
+  audit_mode: "fundador",
+  operator_mode: "fundador",
+  unlimited_matches: "fundador",
+  steam_alerts: "fundador",
+  heatmap: "fundador",
 };
 
 export const ONBOARDING_STEPS = [

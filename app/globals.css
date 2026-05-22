@@ -9801,6 +9801,288 @@ body {
   will-change: contents;
 }
 
+/* ─── Comercial: auth, conta, admin, precos ───────────────────────────────── */
+
+.gp-auth-form__erro,
+.gp-lead-form__erro {
+  color: #b91c1c;
+  font-size: 0.82rem;
+  margin-bottom: 0.5rem;
+}
+
+.gp-auth-form__ok,
+.gp-lead-form__ok {
+  color: #15803d;
+  font-size: 0.82rem;
+  margin-bottom: 0.5rem;
+}
+
+.gp-upgrade-card {
+  position: relative;
+  padding: 1.75rem;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 16px 48px rgba(15, 23, 41, 0.08);
+}
+
+.gp-upgrade-card__badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--gp-red);
+  text-transform: uppercase;
+}
+
+.gp-upgrade-card__title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--gp-navy);
+}
+
+.gp-upgrade-card__from {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.gp-upgrade-card__final {
+  font-size: 1.1rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.gp-upgrade-card__features {
+  list-style: none;
+  font-size: 0.85rem;
+  margin: 0 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.gp-upgrade-card__cupom input {
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--gp-gray-light);
+}
+
+.gp-upgrade-card__legal {
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-top: 0.75rem;
+}
+
+.gp-plan-badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(15, 23, 41, 0.06);
+}
+
+.gp-plan-badge--fundador {
+  background: rgba(255, 43, 43, 0.1);
+  color: var(--gp-red);
+}
+
+.gp-comm-hero__title {
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--gp-navy);
+}
+
+.gp-comm-hero__sub {
+  font-size: 1.05rem;
+  color: var(--muted);
+  margin: 1rem 0 1.5rem;
+  max-width: 36rem;
+}
+
+.gp-comm-hero__grid {
+  display: grid;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .gp-comm-hero__grid {
+    grid-template-columns: 1fr 380px;
+  }
+}
+
+.gp-admin-shell {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: 220px 1fr;
+}
+
+.gp-admin-shell__side {
+  padding: 1.5rem 1rem;
+  background: var(--gp-navy);
+  color: #fff;
+}
+
+.gp-admin-shell__side a {
+  display: block;
+  padding: 0.45rem 0;
+  font-size: 0.88rem;
+  opacity: 0.85;
+}
+
+.gp-admin-nav--on {
+  opacity: 1;
+  font-weight: 600;
+}
+
+.gp-admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.gp-admin-table {
+  width: 100%;
+  font-size: 0.82rem;
+  border-collapse: collapse;
+}
+
+.gp-admin-table th,
+.gp-admin-table td {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--gp-gray-light);
+  text-align: left;
+}
+
+.gp-admin-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gp-navy);
+  margin-bottom: 0.25rem;
+}
+
+.gp-admin-sub {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 1.25rem;
+}
+
+.gp-admin-filter {
+  width: 100%;
+  max-width: 320px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--gp-gray-light);
+  border-radius: 8px;
+  font-size: 0.88rem;
+}
+
+.gp-admin-filter--inline {
+  max-width: 140px;
+  padding: 0.25rem 0.5rem;
+}
+
+.gp-sub-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.gp-sub-badge--active {
+  background: rgba(34, 197, 94, 0.15);
+  color: #15803d;
+}
+
+.gp-sub-badge--trial {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1d4ed8;
+}
+
+.gp-sub-badge--warn {
+  background: rgba(234, 179, 8, 0.2);
+  color: #a16207;
+}
+
+.gp-sub-badge--muted {
+  background: var(--gp-gray-light);
+  color: var(--muted);
+}
+
+.gp-admin-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 200;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.gp-admin-drawer {
+  width: min(420px, 100%);
+  height: 100%;
+  background: #fff;
+  padding: 1.25rem;
+  overflow-y: auto;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+}
+
+.gp-admin-drawer__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.gp-admin-drawer__meta {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  font-size: 0.88rem;
+}
+
+.gp-admin-drawer__textarea {
+  width: 100%;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  border: 1px solid var(--gp-gray-light);
+  border-radius: 8px;
+  font-size: 0.88rem;
+}
+
+.gp-admin-drawer__list {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+}
+
+.gp-admin-drawer__list li {
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--gp-gray-light);
+  font-size: 0.85rem;
+}
+
+.gp-admin-settings section {
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.gp-admin-settings h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.gp-admin-settings ul {
+  margin: 0.5rem 0 0 1rem;
+  color: var(--muted);
+}
+
 .gp-terminal-v2--commercial .gp-flow-card {
   transition:
     transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
