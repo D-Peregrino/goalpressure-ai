@@ -10,8 +10,17 @@ const LOG_SCOPE = "supabase-client";
 
 let adminClient: SupabaseClient | null = null;
 
+/** URL do projeto — aceita SUPABASE_URL ou NEXT_PUBLIC_SUPABASE_URL (Vercel/Railway). */
+export function getSupabaseProjectUrl(): string {
+  return (
+    process.env.SUPABASE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() ||
+    ""
+  );
+}
+
 export function isSupabaseConfigured(): boolean {
-  const url = process.env.SUPABASE_URL?.trim();
+  const url = getSupabaseProjectUrl();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   return Boolean(url && key);
 }
@@ -29,7 +38,7 @@ export function getSupabaseAdmin(): SupabaseClient | null {
   if (!isSupabaseConfigured()) return null;
 
   if (!adminClient) {
-    const url = process.env.SUPABASE_URL!.trim();
+    const url = getSupabaseProjectUrl();
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY!.trim();
 
     adminClient = createClient(url, key, {
