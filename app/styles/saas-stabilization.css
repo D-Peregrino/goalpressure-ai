@@ -435,3 +435,29 @@
   opacity: 1;
   color: var(--gp-red-soft);
 }
+
+.gp-admin-drawer__actions {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--gp-gray-light);
+}
+
+.gp-admin-drawer__actions h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 0 0.35rem;
+}
+
+.gp-admin-drawer__hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0 0 0.75rem;
+  line-height: 1.4;
+}
+
+.gp-admin-table__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}

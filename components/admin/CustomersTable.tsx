@@ -19,11 +19,34 @@ export default function CustomersTable() {
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<Customer | null>(null);
 
-  useEffect(() => {
+  function loadCustomers() {
     fetchWithAuth("/api/admin/customers")
       .then((r) => r.json())
       .then((d) => setCustomers(d.customers ?? []));
+  }
+
+  useEffect(() => {
+    loadCustomers();
   }, []);
+
+  async function liberarFundadorRapido(c: Customer) {
+    const ok = window.confirm(`Liberar Plano Fundador para ${c.email}? (12 meses, manual)`);
+    if (!ok) return;
+    const res = await fetchWithAuth("/api/admin/customers/activate-founder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: c.user_id }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      window.alert(data.error ?? "Erro ao liberar plano.");
+      return;
+    }
+    loadCustomers();
+    if (selected?.user_id === c.user_id) {
+      setSelected({ ...c, plan: "fundador", subscription_status: "active" });
+    }
+  }
 
   const filtered = customers.filter((c) => {
     if (!filter) return true;
@@ -63,7 +86,16 @@ export default function CustomersTable() {
               <td>
                 <SubscriptionStatusBadge status={c.subscription_status} />
               </td>
-              <td>
+              <td className="gp-admin-table__actions">
+                {c.plan !== "fundador" && (
+                  <button
+                    type="button"
+                    className="gp-btn gp-btn--secondary gp-btn--sm"
+                    onClick={() => liberarFundadorRapido(c)}
+                  >
+                    Liberar Fundador
+                  </button>
+                )}
                 <button
                   type="button"
                   className="gp-btn gp-btn--ghost gp-btn--sm"
@@ -76,7 +108,11 @@ export default function CustomersTable() {
           ))}
         </tbody>
       </table>
-      <CustomerDrawer customer={selected} onClose={() => setSelected(null)} />
+      <CustomerDrawer
+        customer={selected}
+        onClose={() => setSelected(null)}
+        onUpdated={loadCustomers}
+      />
     </div>
   );
 }

@@ -122,3 +122,63 @@ export async function activateFundadorSubscription(input: {
 
   return data;
 }
+
+/** Liberação manual pelo admin — Plano Fundador por 12 meses, sem cobrança. */
+export async function activateFundadorManualAdmin(input: {
+  userId: string;
+  adminId?: string;
+  adminEmail?: string;
+}): Promise<{ ok: true; subscriptionId: string } | { ok: false; error: string }> {
+  const admin = getSupabaseAdmin();
+  if (!admin || !isSupabaseConfigured()) {
+    return { ok: false, error: "Supabase não configurado no servidor." };
+  }
+
+  const now = new Date();
+  const periodEnd = new Date(now);
+  periodEnd.setMonth(periodEnd.getMonth() + 12);
+
+  const { data: existing } = await admin
+    .from("subscriptions")
+    .select("id")
+    .eq("user_id", input.userId)
+    .maybeSingle();
+
+  const row = {
+    user_id: input.userId,
+    plan: "fundador" as DbPlan,
+    status: "active",
+    provider: "manual",
+    provider_customer_id: null,
+    provider_subscription_id: null,
+    coupon_code: null,
+    original_amount_cents: null,
+    discount_percent: 0,
+    final_amount_cents: 0,
+    current_period_start: now.toISOString(),
+    current_period_end: periodEnd.toISOString(),
+    updated_at: now.toISOString(),
+  };
+
+  const { data, error } = existing
+    ? await admin.from("subscriptions").update(row).eq("user_id", input.userId).select("id").single()
+    : await admin.from("subscriptions").insert(row).select("id").single();
+
+  if (error || !data) {
+    return { ok: false, error: error?.message ?? "Falha ao gravar assinatura." };
+  }
+
+  await admin.from("customer_events").insert({
+    user_id: input.userId,
+    type: "manual_founder_grant",
+    description: "Plano Fundador liberado manualmente pelo admin",
+    metadata: {
+      admin_id: input.adminId ?? null,
+      admin_email: input.adminEmail ?? null,
+      period_end: periodEnd.toISOString(),
+      provider: "manual",
+    },
+  });
+
+  return { ok: true, subscriptionId: data.id };
+}
