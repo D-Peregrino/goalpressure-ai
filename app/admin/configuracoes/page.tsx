@@ -30,8 +30,8 @@ export default function AdminConfiguracoesPage() {
           <h2>Supabase</h2>
           <ul>
             <li>NEXT_PUBLIC_SUPABASE_URL</li>
-            <li>NEXT_PUBLIC_SUPABASE_ANON_KEY</li>
-            <li>SUPABASE_SERVICE_ROLE_KEY (servidor)</li>
+            <li>NEXT_PUBLIC_SUPABASE_ANON_KEY ou PUBLISHABLE_KEY</li>
+            <li>SUPABASE_SERVICE_ROLE_KEY (servidor, recomendado)</li>
           </ul>
         </section>
         <section>

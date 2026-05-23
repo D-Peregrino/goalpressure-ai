@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchWithAuth } from "@/lib/auth/fetchWithAuth";
 
 interface Lead {
   id: string;
@@ -26,7 +27,7 @@ export default function LeadsTable() {
   const [leads, setLeads] = useState<Lead[]>([]);
 
   function load() {
-    fetch("/api/admin/leads", { credentials: "include" })
+    fetchWithAuth("/api/admin/leads")
       .then((r) => r.json())
       .then((d) => setLeads(d.leads ?? []));
   }
@@ -36,9 +37,8 @@ export default function LeadsTable() {
   }, []);
 
   async function updateStatus(id: string, status: string) {
-    await fetch("/api/admin/leads", {
+    await fetchWithAuth("/api/admin/leads", {
       method: "PATCH",
-      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, status }),
     });

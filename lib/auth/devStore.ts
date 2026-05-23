@@ -4,6 +4,7 @@
 
 import type { DbPlan } from "@/lib/subscription/permissions";
 import { isAdminEmail } from "@/lib/auth/admin";
+import { isSupabaseAuthConfigured } from "@/lib/supabase/env";
 
 export interface DevUser {
   id: string;
@@ -31,10 +32,9 @@ function users(): Map<string, DevUser> {
   return globalThis.__GP_DEV_USERS__;
 }
 
+/** Modo dev em memória apenas quando Supabase Auth não está configurado no servidor. */
 export function devAuthEnabled(): boolean {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
-  return !url || !anon;
+  return !isSupabaseAuthConfigured();
 }
 
 export function createDevUser(input: {

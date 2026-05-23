@@ -7,7 +7,10 @@ import { emailBoasVindas } from "@/lib/email/provider";
 export async function POST(request: Request) {
   if (!devAuthEnabled()) {
     return NextResponse.json(
-      { error: "Use Supabase Auth (configure NEXT_PUBLIC_SUPABASE_URL e ANON_KEY)." },
+      {
+        error:
+          "Cadastro via Supabase no navegador. Se o erro persistir, confira NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY (ou PUBLISHABLE_KEY) no deploy.",
+      },
       { status: 400 }
     );
   }

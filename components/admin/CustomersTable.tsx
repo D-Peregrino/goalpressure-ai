@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchWithAuth } from "@/lib/auth/fetchWithAuth";
 import SubscriptionStatusBadge from "@/components/admin/SubscriptionStatusBadge";
 import CustomerDrawer from "@/components/admin/CustomerDrawer";
 
@@ -19,7 +20,7 @@ export default function CustomersTable() {
   const [selected, setSelected] = useState<Customer | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/customers", { credentials: "include" })
+    fetchWithAuth("/api/admin/customers")
       .then((r) => r.json())
       .then((d) => setCustomers(d.customers ?? []));
   }, []);

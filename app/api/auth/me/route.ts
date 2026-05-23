@@ -1,13 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/client";
 import { isAdminEmail } from "@/lib/auth/admin";
 import { DEV_USER_COOKIE } from "@/lib/auth/session";
 import { findDevUserById, devAuthEnabled } from "@/lib/auth/devStore";
 import { fetchSubscriptionForUser } from "@/lib/commercial/db";
 import type { DbPlan } from "@/lib/subscription/permissions";
+import { getUserFromAccessToken } from "@/lib/supabase/server-auth";
+import { getSupabaseAdmin } from "@/lib/supabase/client";
+import { getSupabaseProjectRef } from "@/lib/supabase/env";
 
 export const dynamic = "force-dynamic";
+
+function extractBearer(request: NextRequest): string | null {
+  const authHeader = request.headers.get("authorization");
+  const fromHeader = authHeader?.replace(/^Bearer\s+/i, "").trim();
+  if (fromHeader) return fromHeader;
+
+  return null;
+}
+
+async function extractTokenFromCookies(): Promise<string | null> {
+  const cookieStore = await cookies();
+  const direct = cookieStore.get("sb-access-token")?.value;
+  if (direct) return direct;
+
+  const ref = getSupabaseProjectRef();
+  if (ref) {
+    const chunked = cookieStore.get(`sb-${ref}-auth-token`)?.value;
+    if (chunked) {
+      try {
+        const parsed = JSON.parse(chunked) as {
+          access_token?: string;
+          currentSession?: { access_token?: string };
+        };
+        return parsed.access_token ?? parsed.currentSession?.access_token ?? null;
+      } catch {
+        return chunked;
+      }
+    }
+  }
+
+  return null;
+}
 
 export async function GET(request: NextRequest) {
   if (devAuthEnabled()) {
@@ -29,26 +63,32 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const authHeader = request.headers.get("authorization");
-  const token = authHeader?.replace(/^Bearer\s+/i, "");
+  const token = extractBearer(request) ?? (await extractTokenFromCookies());
+  if (!token) {
+    return NextResponse.json({ error: "nao_autenticado" }, { status: 401 });
+  }
+
+  const { user: authUser, error } = await getUserFromAccessToken(token);
+  if (error || !authUser?.email) {
+    return NextResponse.json({ error: "nao_autenticado" }, { status: 401 });
+  }
+
+  const userId = authUser.id;
+  const email = authUser.email;
+
   const admin = getSupabaseAdmin();
-  if (!admin || !token) {
-    return NextResponse.json({ error: "nao_autenticado" }, { status: 401 });
+  let profileName = authUser.user_metadata?.name as string | undefined;
+  let profileRole: string | undefined;
+
+  if (admin) {
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("name, role")
+      .eq("user_id", userId)
+      .maybeSingle();
+    profileName = profile?.name ?? profileName;
+    profileRole = profile?.role;
   }
-
-  const { data: authData, error } = await admin.auth.getUser(token);
-  if (error || !authData.user) {
-    return NextResponse.json({ error: "nao_autenticado" }, { status: 401 });
-  }
-
-  const userId = authData.user.id;
-  const email = authData.user.email ?? "";
-
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("name, role")
-    .eq("user_id", userId)
-    .maybeSingle();
 
   const sub = await fetchSubscriptionForUser(userId);
   const plan = (sub?.plan as DbPlan) ?? "free";
@@ -57,8 +97,8 @@ export async function GET(request: NextRequest) {
     user: {
       id: userId,
       email,
-      name: profile?.name ?? authData.user.user_metadata?.name ?? "",
-      role: isAdminEmail(email) ? "admin" : (profile?.role as "user") ?? "user",
+      name: profileName ?? "",
+      role: isAdminEmail(email) ? "admin" : (profileRole as "user") ?? "user",
     },
     plan,
     subscriptionStatus: sub?.status ?? "active",

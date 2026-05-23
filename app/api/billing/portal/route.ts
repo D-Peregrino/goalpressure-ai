@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth/requireUser";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const user = await requireUser();
+  const user = await requireUser(request);
   const base = request.nextUrl.origin;
   if (!user) {
     return NextResponse.redirect(`${base}/entrar`);

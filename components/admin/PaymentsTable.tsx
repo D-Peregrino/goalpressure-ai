@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchWithAuth } from "@/lib/auth/fetchWithAuth";
 import SubscriptionStatusBadge from "@/components/admin/SubscriptionStatusBadge";
 import { formatarPreco } from "@/lib/subscription/plans";
 
@@ -21,7 +22,7 @@ export default function PaymentsTable() {
   const [payments, setPayments] = useState<Payment[]>([]);
 
   useEffect(() => {
-    fetch("/api/admin/payments", { credentials: "include" })
+    fetchWithAuth("/api/admin/payments")
       .then((r) => r.json())
       .then((d) => setPayments(d.payments ?? []));
   }, []);

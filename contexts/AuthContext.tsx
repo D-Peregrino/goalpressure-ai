@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { getSupabaseBrowser, isSupabaseAuthConfigured } from "@/lib/auth/supabaseClient";
+import { getSupabaseBrowser, isSupabaseAuthConfigured } from "@/lib/supabase/browser";
 import type { AccountPayload } from "@/lib/auth/session";
 import type { DbPlan } from "@/lib/subscription/permissions";
 
@@ -54,16 +54,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const supabase = getSupabaseBrowser();
-    if (supabase) {
-      supabase.auth.getSession().then(() => refreshAccount());
-      const { data: sub } = supabase.auth.onAuthStateChange(() => {
-        refreshAccount();
-      });
-      setLoading(false);
-      return () => sub.subscription.unsubscribe();
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
+
+    async function init() {
+      const supabase = getSupabaseBrowser();
+      if (supabase) {
+        await supabase.auth.getSession();
+        if (!cancelled) await refreshAccount();
+        const { data: sub } = supabase.auth.onAuthStateChange(() => {
+          if (!cancelled) void refreshAccount();
+        });
+        unsubscribe = () => sub.subscription.unsubscribe();
+      } else if (!cancelled) {
+        await refreshAccount();
+      }
+      if (!cancelled) setLoading(false);
     }
-    refreshAccount().finally(() => setLoading(false));
+
+    void init();
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, [refreshAccount]);
 
   const signUp = useCallback(
@@ -133,7 +146,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) return { error: error.message };
       return {};
     }
-    return { error: "Configure Supabase Auth para recuperação de senha." };
+    return {
+      error:
+        "Recuperação de senha indisponível. Verifique NEXT_PUBLIC_SUPABASE_URL e a chave pública (ANON_KEY ou PUBLISHABLE_KEY).",
+    };
   }, []);
 
   const value = useMemo<AuthContextValue>(

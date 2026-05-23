@@ -5,7 +5,7 @@ import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/client";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  const admin = await requireAdmin();
+  const admin = await requireAdmin(request);
   if (!admin) {
     return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
   }

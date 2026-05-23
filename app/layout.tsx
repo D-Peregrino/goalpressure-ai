@@ -5,6 +5,7 @@ import "./globals.css";
 import { BRAND } from "@/lib/design/brand";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
+import SupabasePublicConfig from "@/components/supabase/SupabasePublicConfig";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -39,6 +40,7 @@ export default function RootLayout({
       className={`${inter.variable} ${rajdhani.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-body bg-[var(--gp-white)] text-[var(--text)]">
+        <SupabasePublicConfig />
         <AuthProvider>
           <SubscriptionProvider>{children}</SubscriptionProvider>
         </AuthProvider>

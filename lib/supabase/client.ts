@@ -5,18 +5,15 @@
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { logWarn } from "@/lib/utils/logger";
+import { getSupabasePublicUrl } from "@/lib/supabase/env";
 
 const LOG_SCOPE = "supabase-client";
 
 let adminClient: SupabaseClient | null = null;
 
-/** URL do projeto — aceita SUPABASE_URL ou NEXT_PUBLIC_SUPABASE_URL (Vercel/Railway). */
+/** URL do projeto — servidor (service role). */
 export function getSupabaseProjectUrl(): string {
-  return (
-    process.env.SUPABASE_URL?.trim() ||
-    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() ||
-    ""
-  );
+  return process.env.SUPABASE_URL?.trim() || getSupabasePublicUrl();
 }
 
 export function isSupabaseConfigured(): boolean {

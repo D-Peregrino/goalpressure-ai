@@ -1,10 +1,34 @@
 import { cookies } from "next/headers";
-import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/client";
 import { isAdminEmail } from "@/lib/auth/admin";
 import { DEV_USER_COOKIE, type SessionUser } from "@/lib/auth/session";
 import { findDevUserById, devAuthEnabled } from "@/lib/auth/devStore";
+import { getSupabaseAdmin } from "@/lib/supabase/client";
+import { getSupabaseProjectRef } from "@/lib/supabase/env";
+import { getUserFromAccessToken } from "@/lib/supabase/server-auth";
 
-export async function requireUser(): Promise<SessionUser | null> {
+async function tokenFromCookies(): Promise<string | null> {
+  const cookieStore = await cookies();
+  const direct = cookieStore.get("sb-access-token")?.value;
+  if (direct) return direct;
+
+  const ref = getSupabaseProjectRef();
+  if (!ref) return null;
+
+  const raw = cookieStore.get(`sb-${ref}-auth-token`)?.value;
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw) as {
+      access_token?: string;
+      currentSession?: { access_token?: string };
+    };
+    return parsed.access_token ?? parsed.currentSession?.access_token ?? null;
+  } catch {
+    return raw;
+  }
+}
+
+export async function requireUser(request?: Request): Promise<SessionUser | null> {
   if (devAuthEnabled()) {
     const cookieStore = await cookies();
     const id = cookieStore.get(DEV_USER_COOKIE)?.value;
@@ -19,36 +43,40 @@ export async function requireUser(): Promise<SessionUser | null> {
     };
   }
 
-  const admin = getSupabaseAdmin();
-  if (!admin || !isSupabaseConfigured()) return null;
-
-  const cookieStore = await cookies();
-  const token =
-    cookieStore.get("sb-access-token")?.value ??
-    cookieStore.get(`sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split("//")[1]?.split(".")[0]}-auth-token`)?.value;
-
+  const bearer = request?.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
+  const token = bearer || (await tokenFromCookies());
   if (!token) return null;
 
-  const { data, error } = await admin.auth.getUser(token);
-  if (error || !data.user?.email) return null;
+  const { user, error } = await getUserFromAccessToken(token);
+  if (error || !user?.email) return null;
 
-  const email = data.user.email;
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("name, role")
-    .eq("user_id", data.user.id)
-    .maybeSingle();
+  const email = user.email;
+  const admin = getSupabaseAdmin();
+  let name = (user.user_metadata?.name as string) ?? "";
+  let role: "user" | "admin" = "user";
+
+  if (admin) {
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("name, role")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    name = profile?.name ?? name;
+    role = isAdminEmail(email) ? "admin" : (profile?.role as "user" | "admin") ?? "user";
+  } else {
+    role = isAdminEmail(email) ? "admin" : "user";
+  }
 
   return {
-    id: data.user.id,
+    id: user.id,
     email,
-    name: profile?.name ?? data.user.user_metadata?.name ?? "",
-    role: isAdminEmail(email) ? "admin" : (profile?.role as "user" | "admin") ?? "user",
+    name,
+    role,
   };
 }
 
-export async function requireAdmin(): Promise<SessionUser | null> {
-  const user = await requireUser();
+export async function requireAdmin(request?: Request): Promise<SessionUser | null> {
+  const user = await requireUser(request);
   if (!user || user.role !== "admin") return null;
   return user;
 }

@@ -6,6 +6,7 @@ import AdminKpiCard from "@/components/admin/AdminKpiCard";
 import { adminAreaEnabled } from "@/lib/auth/admin";
 import Link from "next/link";
 import { formatarPreco } from "@/lib/subscription/plans";
+import { fetchWithAuth } from "@/lib/auth/fetchWithAuth";
 
 export default function AdminPage() {
   const [stats, setStats] = useState<{
@@ -20,7 +21,7 @@ export default function AdminPage() {
   } | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/stats", { credentials: "include" })
+    fetchWithAuth("/api/admin/stats")
       .then((r) => r.json())
       .then(setStats);
   }, []);

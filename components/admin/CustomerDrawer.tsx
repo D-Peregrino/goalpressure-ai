@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchWithAuth } from "@/lib/auth/fetchWithAuth";
 import SubscriptionStatusBadge from "@/components/admin/SubscriptionStatusBadge";
 
 interface CustomerRow {
@@ -38,9 +39,7 @@ export default function CustomerDrawer({
 
   useEffect(() => {
     if (!customer?.user_id) return;
-    fetch(`/api/admin/customer-detail?userId=${encodeURIComponent(customer.user_id)}`, {
-      credentials: "include",
-    })
+    fetchWithAuth(`/api/admin/customer-detail?userId=${encodeURIComponent(customer.user_id)}`)
       .then((r) => r.json())
       .then((d) => {
         setEvents(d.events ?? []);
@@ -54,17 +53,15 @@ export default function CustomerDrawer({
     if (!noteText.trim() || !customer) return;
     setSaving(true);
     try {
-      const res = await fetch("/api/admin/support-notes", {
+      const res = await fetchWithAuth("/api/admin/support-notes", {
         method: "POST",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: customer.user_id, note: noteText }),
       });
       if (res.ok) {
         setNoteText("");
-        const detail = await fetch(
-          `/api/admin/customer-detail?userId=${encodeURIComponent(customer.user_id)}`,
-          { credentials: "include" }
+        const detail = await fetchWithAuth(
+          `/api/admin/customer-detail?userId=${encodeURIComponent(customer.user_id)}`
         ).then((r) => r.json());
         setNotes(detail.notes ?? []);
       }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
+import { fetchWithAuth } from "@/lib/auth/fetchWithAuth";
 import { aplicarCupom } from "@/lib/subscription/coupons";
 import {
   formatarPreco,
@@ -35,10 +36,9 @@ export default function UpgradeCard({
         window.location.href = `/cadastro?cupom=${encodeURIComponent(cupom)}&redirect=/precos`;
         return;
       }
-      const res = await fetch("/api/billing/checkout", {
+      const res = await fetchWithAuth("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ planId: UNICO_PLANO_COMPRAVEL, couponCode: cupom }),
       });
       const data = await res.json();

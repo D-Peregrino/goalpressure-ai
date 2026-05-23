@@ -5,8 +5,8 @@ import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/client";
 export const dynamic = "force-dynamic";
 
 
-export async function GET() {
-  const admin = await requireAdmin();
+export async function GET(request: Request) {
+  const admin = await requireAdmin(request);
   if (!admin) {
     return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
   }
@@ -28,7 +28,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const adminUser = await requireAdmin();
+  const adminUser = await requireAdmin(request);
   if (!adminUser) {
     return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
   }

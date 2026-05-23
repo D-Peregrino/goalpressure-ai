@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchWithAuth } from "@/lib/auth/fetchWithAuth";
 import SubscriptionStatusBadge from "@/components/admin/SubscriptionStatusBadge";
 import { formatarPreco } from "@/lib/subscription/plans";
 
@@ -22,7 +23,7 @@ export default function SubscriptionsTable() {
   const [planFilter, setPlanFilter] = useState("");
 
   useEffect(() => {
-    fetch("/api/admin/subscriptions", { credentials: "include" })
+    fetchWithAuth("/api/admin/subscriptions")
       .then((r) => r.json())
       .then((d) => setSubs(d.subscriptions ?? []));
   }, []);

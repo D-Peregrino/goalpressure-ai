@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   const session = request.nextUrl.searchParams.get("session");
   const base = request.nextUrl.origin;
 
-  const user = await requireUser();
+  const user = await requireUser(request);
   if (!user) {
     return NextResponse.redirect(`${base}/entrar?redirect=/precos`);
   }
@@ -58,8 +58,8 @@ export async function GET(request: NextRequest) {
   return NextResponse.redirect(`${base}/precos?erro=provedor`);
 }
 
-export async function POST(request: Request) {
-  const user = await requireUser();
+export async function POST(request: NextRequest) {
+  const user = await requireUser(request);
   if (!user) {
     return NextResponse.json({ error: "Faça login para continuar." }, { status: 401 });
   }

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import AuthLayout from "@/components/auth/AuthLayout";
-import { getSupabaseBrowser } from "@/lib/auth/supabaseClient";
+import { getSupabaseBrowser } from "@/lib/supabase/browser";
 
 export default function RedefinirSenhaPage() {
   const [password, setPassword] = useState("");
