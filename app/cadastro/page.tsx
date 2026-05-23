@@ -3,6 +3,8 @@
 import { Suspense } from "react";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { SignupForm } from "@/components/auth/AuthForm";
+import GuestGuard from "@/components/layout/GuestGuard";
+import AppLoading from "@/components/layout/AppLoading";
 
 export default function CadastroPage() {
   return (
@@ -10,8 +12,10 @@ export default function CadastroPage() {
       title="Criar conta"
       subtitle="Comece grátis ou ative o Plano Fundador na sequência."
     >
-      <Suspense fallback={<p className="text-sm text-[var(--muted)]">Carregando…</p>}>
-        <SignupForm />
+      <Suspense fallback={<AppLoading />}>
+        <GuestGuard>
+          <SignupForm />
+        </GuestGuard>
       </Suspense>
     </AuthLayout>
   );

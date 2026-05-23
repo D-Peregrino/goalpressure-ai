@@ -1,4 +1,5 @@
 import AppShell from "@/components/layout/AppShell";
+import ProGate from "@/components/layout/ProGate";
 import ValidationDashboard from "@/components/validation/ValidationDashboard";
 import { PAGE_COPY } from "@/lib/ux/productCopy";
 
@@ -6,7 +7,9 @@ export default function ValidationPage() {
   const copy = PAGE_COPY.validation;
   return (
     <AppShell title={copy.title} subtitle={copy.subtitle} intro={copy.intro}>
-      <ValidationDashboard />
+      <ProGate>
+        <ValidationDashboard />
+      </ProGate>
     </AppShell>
   );
 }

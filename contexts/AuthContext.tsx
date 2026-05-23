@@ -154,23 +154,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = useCallback(
     async (email: string, password: string) => {
-      const supabase = getSupabaseBrowser();
-      if (supabase) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) return { error: error.message };
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ email, password }),
+        });
+
+        let data: {
+          error?: string;
+          message?: string;
+          accessToken?: string | null;
+          refreshToken?: string | null;
+        } = {};
+
+        try {
+          data = await res.json();
+        } catch {
+          return { error: `Resposta inválida do servidor (${res.status}).` };
+        }
+
+        if (!res.ok) {
+          return {
+            error: data.error ?? data.message ?? `Erro ao entrar (${res.status}).`,
+          };
+        }
+
+        const supabase = getSupabaseBrowser();
+        if (supabase && data.accessToken && data.refreshToken) {
+          await supabase.auth.setSession({
+            access_token: data.accessToken,
+            refresh_token: data.refreshToken,
+          });
+        } else if (supabase) {
+          const { error } = await supabase.auth.signInWithPassword({
+            email: email.trim(),
+            password,
+          });
+          if (error) return { error: error.message };
+        }
+
         await refreshAccount();
         return {};
+      } catch (e) {
+        return {
+          error: e instanceof Error ? e.message : "Falha de rede ao entrar.",
+        };
       }
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) return { error: data.error ?? "E-mail ou senha inválidos." };
-      await refreshAccount();
-      return {};
     },
     [refreshAccount]
   );

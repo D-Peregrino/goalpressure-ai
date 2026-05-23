@@ -29,7 +29,7 @@ const FAQ = [
 
 export default function CommercialLanding() {
   return (
-    <div className="gp-landing gp-landing--commercial">
+    <div className="gp-landing gp-landing--commercial gp-marketing">
       <div className="gp-landing__ambient" aria-hidden />
       <LandingNav />
 

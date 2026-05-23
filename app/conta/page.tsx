@@ -2,10 +2,11 @@
 
 import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import AccountShell from "@/components/account/AccountShell";
+import AppShell from "@/components/layout/AppShell";
 import ProfileForm from "@/components/account/ProfileForm";
 import BillingSummary from "@/components/account/BillingSummary";
 import AlertPreferences from "@/components/account/AlertPreferences";
+import AppLoading from "@/components/layout/AppLoading";
 import { useAuth } from "@/hooks/useAuth";
 
 function ContaContent() {
@@ -18,24 +19,32 @@ function ContaContent() {
   }, [pagamentoOk, refreshAccount]);
 
   return (
-    <AccountShell>
+    <>
       {pagamentoOk && (
         <p className="gp-conta-banner">Pagamento confirmado. Bem-vindo ao Plano Fundador!</p>
       )}
       <h1 className="gp-conta-title">Minha conta</h1>
-      <div className="gp-conta-grid">
+      <div className="gp-conta-grid gp-conta-grid--saas">
         <ProfileForm />
         <BillingSummary />
         <AlertPreferences />
       </div>
-    </AccountShell>
+    </>
   );
 }
 
 export default function ContaPage() {
   return (
-    <Suspense fallback={<AccountShell><p>Carregando…</p></AccountShell>}>
-      <ContaContent />
-    </Suspense>
+    <AppShell
+      requireAuth
+      darkPremium
+      title="Minha conta"
+      subtitle="Área do cliente"
+      intro="Gerencie perfil, plano e preferências de alerta."
+    >
+      <Suspense fallback={<AppLoading />}>
+        <ContaContent />
+      </Suspense>
+    </AppShell>
   );
 }

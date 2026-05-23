@@ -119,8 +119,11 @@ export default function TerminalSidebar({
             <p className="gp-sidebar__meta">{BRAND_PRODUCT.footer}</p>
           </>
         )}
-        <Link href="/upgrade" className="gp-sidebar__home-link text-xs">
-          {collapsed ? "◎" : "Planos e upgrade"}
+        <Link href="/conta" className="gp-sidebar__account-link">
+          {collapsed ? "◎" : "Minha conta"}
+        </Link>
+        <Link href="/precos" className="gp-sidebar__home-link text-xs">
+          {collapsed ? "◎" : "Planos"}
         </Link>
         <Link href="/" className="gp-sidebar__home-link">
           {collapsed ? "↵" : `← ${BRAND.domain}`}

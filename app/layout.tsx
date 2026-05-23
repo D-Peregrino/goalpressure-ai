@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Rajdhani } from "next/font/google";
 import { Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./styles/saas-stabilization.css";
 import { BRAND } from "@/lib/design/brand";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";

@@ -9,6 +9,8 @@ import TerminalSidebar, {
   TerminalSidebarMobile,
   useTerminalNavActive,
 } from "@/components/terminal/TerminalSidebar";
+import AppTopbar from "@/components/layout/AppTopbar";
+import AuthGuard from "@/components/layout/AuthGuard";
 
 export default function AppShell({
   children,
@@ -16,21 +18,35 @@ export default function AppShell({
   subtitle,
   intro,
   darkPremium = true,
+  requireAuth = false,
 }: {
   children: React.ReactNode;
   title?: string;
   subtitle?: string;
   intro?: string;
   darkPremium?: boolean;
+  /** Quando true, envolve conteúdo com AuthGuard (ex.: /conta). */
+  requireAuth?: boolean;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const isActive = useTerminalNavActive(pathname);
 
+  const inner = (
+    <>
+      {(title || subtitle || intro) && (
+        <div className="gp-sport-page-heading">
+          {subtitle && <p className="gp-sport-page-heading__eyebrow">{subtitle}</p>}
+          {title && <h1 className="gp-sport-page-heading__title">{title}</h1>}
+          {intro && <p className="gp-sport-page-heading__intro">{intro}</p>}
+        </div>
+      )}
+      <div className="gp-app-shell__content-inner">{children}</div>
+    </>
+  );
+
   return (
-    <div
-      className={`gp-app-shell ${darkPremium ? "gp-app-shell--central" : ""}`}
-    >
+    <div className={`gp-app-shell ${darkPremium ? "gp-app-shell--central" : ""}`}>
       <div className="gp-app-shell__ambient" aria-hidden />
 
       <TerminalSidebar isActive={isActive} />
@@ -49,6 +65,8 @@ export default function AppShell({
             <Menu className="h-5 w-5" />
           </button>
         </header>
+
+        <AppTopbar />
 
         <AnimatePresence>
           {open && (
@@ -84,20 +102,9 @@ export default function AppShell({
         </AnimatePresence>
 
         <main className="gp-app-shell__content-wrap">
-          {(title || subtitle || intro) && (
-            <div className="gp-sport-page-heading">
-              {subtitle && (
-                <p className="gp-sport-page-heading__eyebrow">{subtitle}</p>
-              )}
-              {title && (
-                <h1 className="gp-sport-page-heading__title">{title}</h1>
-              )}
-              {intro && (
-                <p className="gp-sport-page-heading__intro">{intro}</p>
-              )}
-            </div>
-          )}
-          <div className="gp-app-shell__content">{children}</div>
+          <div className="gp-app-shell__content">
+            {requireAuth ? <AuthGuard>{inner}</AuthGuard> : inner}
+          </div>
         </main>
       </div>
     </div>
