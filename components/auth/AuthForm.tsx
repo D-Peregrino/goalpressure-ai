@@ -77,16 +77,22 @@ export function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [erro, setErro] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setErro(null);
+    setInfo(null);
     const res = await signUp(name, email, password);
     setLoading(false);
     if (res.error) {
       setErro(res.error);
+      return;
+    }
+    if (res.info) {
+      setInfo(res.info);
       return;
     }
     const redirect = params.get("redirect") ?? "/precos";
@@ -96,6 +102,7 @@ export function SignupForm() {
   return (
     <form onSubmit={submit} className="gp-auth-form">
       {erro && <p className="gp-auth-form__erro">{erro}</p>}
+      {info && <p className="gp-auth-form__ok">{info}</p>}
       <label className="gp-auth-form__label">
         Nome
         <input

@@ -18,7 +18,11 @@ interface AuthContextValue {
   subscriptionStatus: string;
   couponCode: string | null;
   loading: boolean;
-  signUp: (name: string, email: string, password: string) => Promise<{ error?: string }>;
+  signUp: (
+    name: string,
+    email: string,
+    password: string
+  ) => Promise<{ error?: string; info?: string }>;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error?: string }>;
@@ -81,27 +85,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = useCallback(
     async (name: string, email: string, password: string) => {
-      const supabase = getSupabaseBrowser();
-      if (supabase) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { name } },
+      try {
+        const res = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ name, email, password }),
         });
-        if (error) return { error: error.message };
+
+        let data: {
+          ok?: boolean;
+          error?: string;
+          message?: string;
+          accessToken?: string | null;
+          refreshToken?: string | null;
+          needsEmailConfirmation?: boolean;
+        } = {};
+
+        try {
+          data = await res.json();
+        } catch {
+          return { error: `Resposta inválida do servidor (${res.status}).` };
+        }
+
+        if (!res.ok) {
+          return {
+            error: data.error ?? data.message ?? `Erro ao criar conta (${res.status}).`,
+          };
+        }
+
+        if (data.needsEmailConfirmation) {
+          return {
+            info: data.message ?? "Conta criada. Confirme seu e-mail para entrar.",
+          };
+        }
+
+        const supabase = getSupabaseBrowser();
+        if (supabase && data.accessToken && data.refreshToken) {
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: data.accessToken,
+            refresh_token: data.refreshToken,
+          });
+          if (sessionError) {
+            const { error: loginError } = await supabase.auth.signInWithPassword({
+              email: email.trim(),
+              password,
+            });
+            if (loginError) return { error: loginError.message };
+          }
+        } else if (supabase) {
+          const { error: loginError } = await supabase.auth.signInWithPassword({
+            email: email.trim(),
+            password,
+          });
+          if (loginError) return { error: loginError.message };
+        }
+
         await refreshAccount();
         return {};
+      } catch (e) {
+        return {
+          error: e instanceof Error ? e.message : "Falha de rede ao criar conta.",
+        };
       }
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ name, email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) return { error: data.error ?? "Erro ao criar conta." };
-      await refreshAccount();
-      return {};
     },
     [refreshAccount]
   );
