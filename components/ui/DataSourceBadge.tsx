@@ -5,7 +5,7 @@ import type { ActiveDataSource } from "@/lib/data-source/config";
 export function dataSourceBadgeLabel(source: ActiveDataSource | string): string {
   switch (source) {
     case "sportmonks":
-      return "Dados reais · SportMonks";
+      return "DADOS REAIS · SPORTMONKS";
     case "seed":
       return "Seed dev (sem token SportMonks)";
     case "none":

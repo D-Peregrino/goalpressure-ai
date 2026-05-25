@@ -18,6 +18,8 @@ import OperationalTimeline from "@/components/terminal/OperationalTimeline";
 import TerminalPremiumAmbient from "@/components/terminal/TerminalPremiumAmbient";
 import { polishStagger } from "@/components/ui/terminal/motion";
 import TerminalAuditToggle from "@/components/terminal/TerminalAuditToggle";
+import LiveDataSourceStrip from "@/components/live/LiveDataSourceStrip";
+import LiveFeedEmptyState from "@/components/live/LiveFeedEmptyState";
 import { useTerminalAuditMode } from "@/hooks/useTerminalAuditMode";
 import PaywallGate from "@/components/subscription/PaywallGate";
 import UpgradeBanner from "@/components/subscription/UpgradeBanner";
@@ -50,6 +52,9 @@ export default function TerminalHome() {
     dataSourceBadge,
     feedError,
     isLoading,
+    isEmpty,
+    lastUpdated,
+    responseTime,
   } = useLiveMatchCenter();
   const { auditMode, setAuditMode } = useTerminalAuditMode();
   const { can, limits } = useSubscription();
@@ -161,6 +166,25 @@ export default function TerminalHome() {
       />
 
       <TerminalKpiStrip {...kpis} className="gp-kpi-strip--quiet" />
+
+      <LiveDataSourceStrip
+        source={source}
+        status={feedStatus}
+        lastUpdated={lastUpdated}
+        matchCount={allMatches.length}
+        responseTimeMs={responseTime}
+        error={feedError}
+      />
+
+      {isEmpty && allMatches.length === 0 && !isLoading && (
+        <LiveFeedEmptyState
+          source={source}
+          matchCount={0}
+          lastUpdated={lastUpdated}
+          responseTimeMs={responseTime}
+          error={feedError}
+        />
+      )}
 
       <div className="gp-terminal-v2__desk">
         <aside className="gp-terminal-v2__rail gp-terminal-v2__rail--quiet">

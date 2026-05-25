@@ -10,3 +10,4 @@ export { default as PressureGauge } from "@/components/ui/terminal/PressureGauge
 export { default as ChaosIndicator } from "@/components/ui/terminal/ChaosIndicator";
 export { default as EngineConsensusBar } from "@/components/ui/terminal/EngineConsensusBar";
 export { default as TerminalMock } from "@/components/ui/terminal/TerminalMock";
+export { default as LiveTerminalPreview } from "@/components/ui/terminal/LiveTerminalPreview";

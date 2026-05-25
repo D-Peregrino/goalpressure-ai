@@ -20,8 +20,9 @@ import { useUserWorkspace } from "@/hooks/useUserWorkspace";
 import { useLiveMatches } from "@/hooks/useLiveMatches";
 import DataSourceBadge from "@/components/ui/DataSourceBadge";
 import { hasTerminalAccess } from "@/lib/auth/entitlements";
-import type { GlobalFeedPayload } from "@/lib/dashboard/globalFeed";
 import PlanBadge from "@/components/billing/PlanBadge";
+import LiveDataSourceStrip from "@/components/live/LiveDataSourceStrip";
+import LiveFeedEmptyState from "@/components/live/LiveFeedEmptyState";
 import { planLabelPt, subscriptionActive, isPaidPlan } from "@/lib/subscription/permissions";
 import OnboardingModal from "@/components/onboarding/OnboardingModal";
 import SpotlightTour from "@/components/onboarding/SpotlightTour";
@@ -42,26 +43,25 @@ function formatRelative(ts: number | string): string {
   return `há ${Math.floor(h / 24)}d`;
 }
 
-const EMPTY_FEED: GlobalFeedPayload = {
-  matches: [],
-  signals: [],
-  dispatches: [],
-  metrics: [],
-  edges: [],
-  operational: [],
-  source: "empty",
-};
-
 export default function PersonalDashboard() {
   const { user, loading: authLoading, plan, subscriptionStatus } = useAuth();
   const { isAdmin } = useSubscription();
   const ws = useUserWorkspace();
   const onboarding = useOnboarding();
-  const { matches, source, dataSourceBadge, error: liveError } = useLiveMatches({
+  const {
+    matches,
+    signals,
+    source,
+    dataSourceBadge,
+    error: liveError,
+    lastUpdated,
+    responseTime,
+    status: feedStatus,
+    isEmpty,
+  } = useLiveMatches({
     pollIntervalMs: 30_000,
     staleAfterMs: 60_000,
   });
-  const [globalFeed, setGlobalFeed] = useState<GlobalFeedPayload>(EMPTY_FEED);
 
   const terminalAccess = user
     ? hasTerminalAccess(plan, user.role, subscriptionStatus)
@@ -72,66 +72,51 @@ export default function PersonalDashboard() {
     ws.persistRoute("/minha-central");
   }, [user, ws.persistRoute]);
 
-  useEffect(() => {
-    void fetch("/api/user/global-feed", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((json) => {
-        if (json?.feed) setGlobalFeed(json.feed as GlobalFeedPayload);
-      })
-      .catch(() => {});
-  }, []);
-
   const hotFromLive = useMemo(
     () => rankMatchesForUser(matches, ws.favorites, ws.watched).slice(0, 6),
     [matches, ws.favorites, ws.watched]
   );
 
   type HotRow = { id: string; label: string; score: number };
-  const hotMatches: HotRow[] =
-    hotFromLive.length > 0
-      ? hotFromLive.map((m) => ({
-          id: String(m.externalId ?? m.id),
-          label: matchListLabel(m),
-          score: Math.round(m.pressure.score),
-        }))
-      : globalFeed.matches.slice(0, 6).map((g) => ({
-          id: g.fixtureId,
-          label: `${g.label} · ${g.minute}'`,
-          score: Math.round(g.pressureScore),
-        }));
+  const hotMatches: HotRow[] = hotFromLive.map((m) => ({
+    id: String(m.externalId ?? m.id),
+    label: matchListLabel(m),
+    score: Math.round(m.pressure.score),
+  }));
 
-  const showPersonalAlerts = ws.recentAlerts.length > 0;
-  const alertsList = showPersonalAlerts
-    ? ws.recentAlerts
-    : globalFeed.dispatches.slice(0, 5).map((d) => ({
-        id: d.id,
-        fixtureId: d.fixtureId,
-        label: `Fixture ${d.fixtureId}`,
-        message: `${d.market} · pressão ${Math.round(d.pressureScore)}${d.triggered ? " · disparado" : ""}`,
-        ts: new Date(d.createdAt).getTime(),
-      }));
+  const liveReadingsFromSignals = useMemo(
+    () =>
+      signals.slice(0, 8).map((s) => {
+        const m = matches.find((x) => x.id === s.matchId || x.externalId === s.matchId);
+        return {
+          fixtureId: s.matchId,
+          label: m ? matchListLabel(m) : s.matchId,
+          narrative: `${s.market} · ${s.confidence}`,
+          ts: Date.now(),
+        };
+      }),
+    [signals, matches]
+  );
+
+  const alertsList =
+    ws.recentAlerts.length > 0
+      ? ws.recentAlerts
+      : signals.slice(0, 5).map((s, i) => {
+          const m = matches.find((x) => x.id === s.matchId || x.externalId === s.matchId);
+          return {
+            id: `live-sig-${i}`,
+            fixtureId: s.matchId,
+            label: m ? matchListLabel(m) : s.matchLabel,
+            message: `${s.market} · pressão ${Math.round(s.pressureScore)}`,
+            ts: Date.now(),
+          };
+        });
 
   const readingsList =
-    ws.readingHistory.length > 0
-      ? ws.readingHistory
-      : globalFeed.signals.slice(0, 6).map((s) => ({
-          fixtureId: s.fixtureId,
-          label: s.label,
-          narrative: `${s.market} · ${s.confidence}`,
-          ts: new Date(s.createdAt).getTime(),
-        }));
+    ws.readingHistory.length > 0 ? ws.readingHistory : liveReadingsFromSignals;
 
   const opportunitiesList =
-    ws.saved.length > 0
-      ? ws.saved
-      : ws.recent.length > 0
-        ? ws.recent
-        : globalFeed.edges.slice(0, 5).map((e) => ({
-            fixtureId: e.fixtureId,
-            label: `${e.fixtureId} · ${e.market}`,
-            narrative: `Edge ${e.edgePercent.toFixed(1)}% · ${e.classification}`,
-            ts: new Date(e.createdAt).getTime(),
-          }));
+    ws.saved.length > 0 ? ws.saved : ws.recent.length > 0 ? ws.recent : [];
 
   if (authLoading) {
     return <DashboardSkeleton />;
@@ -281,11 +266,25 @@ export default function PersonalDashboard() {
         </Link>
       </div>
 
-      {globalFeed.source === "supabase" && (
-        <p className="gp-dash-feed-hint">
-          Feed global do sistema ({globalFeed.matches.length} jogos · {globalFeed.signals.length}{" "}
-          sinais · {globalFeed.dispatches.length} disparos · {globalFeed.operational.length} eventos)
-        </p>
+      <LiveDataSourceStrip
+        source={source}
+        status={feedStatus}
+        lastUpdated={lastUpdated}
+        matchCount={matches.length}
+        responseTimeMs={responseTime}
+        error={liveError}
+        className="mb-4"
+      />
+
+      {isEmpty && matches.length === 0 && (
+        <LiveFeedEmptyState
+          source={source}
+          matchCount={0}
+          lastUpdated={lastUpdated}
+          responseTimeMs={responseTime}
+          error={liveError}
+          compact
+        />
       )}
 
       <div className="gp-dash-grid">
@@ -298,19 +297,13 @@ export default function PersonalDashboard() {
           </h2>
           {ws.favorites.size === 0 ? (
             <p className="gp-dash-muted">
-              Nenhum favorito ainda.{" "}
-              {globalFeed.matches[0]
-                ? `Último jogo no sistema: ${globalFeed.matches[0].label}.`
-                : "Abra a central ao vivo."}
+              Nenhum favorito ainda. Abra a central ao vivo e marque jogos reais da SportMonks.
             </p>
           ) : (
             <ul className="gp-dash-list">
               {[...ws.favorites].slice(0, 6).map((id) => {
                 const live = matches.find((m) => m.id === id || m.externalId === id);
-                const global = globalFeed.matches.find((g) => g.fixtureId === id);
-                const label = live
-                  ? getMatchLabel(live)
-                  : global?.label ?? `Jogo ${id}`;
+                const label = live ? getMatchLabel(live) : `Jogo ${id}`;
                 return (
                   <li key={id}>
                     <Link href={`/match/${encodeURIComponent(id)}`}>{label}</Link>
@@ -327,7 +320,7 @@ export default function PersonalDashboard() {
           </h2>
           {ws.watched.length === 0 ? (
             <p className="gp-dash-muted">
-              Histórico pessoal vazio — mostrando atividade global quando disponível.
+              Histórico pessoal vazio — acompanhe jogos na central ao vivo.
             </p>
           ) : (
             <ul className="gp-dash-list">
@@ -347,12 +340,11 @@ export default function PersonalDashboard() {
         <section className="gp-dash-panel">
           <h2>
             <Bell className="h-4 w-4" /> Alertas recentes
-            {!showPersonalAlerts && globalFeed.dispatches.length > 0 && (
-              <span className="gp-dash-tag">global</span>
-            )}
           </h2>
           {alertsList.length === 0 ? (
-            <p className="gp-dash-muted">Nenhum alerta no sistema ainda.</p>
+            <p className="gp-dash-muted">
+              Nenhum alerta ao vivo. Aguarde sincronização SportMonks ou abra o terminal.
+            </p>
           ) : (
             <ul className="gp-dash-readings">
               {alertsList.map((a) => (
@@ -371,12 +363,11 @@ export default function PersonalDashboard() {
         <section className="gp-dash-panel gp-dash-panel--wide">
           <h2>
             Leituras recentes
-            {ws.readingHistory.length === 0 && globalFeed.signals.length > 0 && (
-              <span className="gp-dash-tag">global</span>
-            )}
           </h2>
           {readingsList.length === 0 ? (
-            <p className="gp-dash-muted">Abra um jogo na central ou aguarde sinais no feed global.</p>
+            <p className="gp-dash-muted">
+              Nenhuma leitura recente. Os sinais aparecem quando há jogos ao vivo na SportMonks.
+            </p>
           ) : (
             <ul className="gp-dash-readings">
               {readingsList.slice(0, 8).map((item) => (
@@ -397,52 +388,12 @@ export default function PersonalDashboard() {
           )}
         </section>
 
-        {globalFeed.operational.length > 0 && (
-          <section className="gp-dash-panel gp-dash-panel--wide">
-            <h2>
-              <Flame className="h-4 w-4" /> Eventos operacionais
-              <span className="gp-dash-tag">global</span>
-            </h2>
-            <ul className="gp-dash-readings">
-              {globalFeed.operational.slice(0, 8).map((e) => (
-                <li key={e.id}>
-                  {e.fixtureId ? (
-                    <Link
-                      href={`/match/${encodeURIComponent(e.fixtureId)}`}
-                      className="gp-dash-reading"
-                    >
-                      <span className="gp-dash-reading__label">
-                        {e.headline} · {e.label}
-                      </span>
-                      {e.narrative && (
-                        <span className="gp-dash-reading__sub">{e.narrative}</span>
-                      )}
-                      <span className="gp-dash-reading__time">{formatRelative(e.createdAt)}</span>
-                    </Link>
-                  ) : (
-                    <div className="gp-dash-reading">
-                      <span className="gp-dash-reading__label">{e.headline}</span>
-                      {e.narrative && (
-                        <span className="gp-dash-reading__sub">{e.narrative}</span>
-                      )}
-                      <span className="gp-dash-reading__time">{formatRelative(e.createdAt)}</span>
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
         <section className="gp-dash-panel">
           <h2>
             <Zap className="h-4 w-4" /> Oportunidades
-            {ws.saved.length === 0 && ws.recent.length === 0 && globalFeed.edges.length > 0 && (
-              <span className="gp-dash-tag">global</span>
-            )}
           </h2>
           {opportunitiesList.length === 0 ? (
-            <p className="gp-dash-muted">Sem oportunidades salvas ou edges recentes.</p>
+            <p className="gp-dash-muted">Sem oportunidades salvas no momento.</p>
           ) : (
             <ul className="gp-dash-readings">
               {opportunitiesList.slice(0, 5).map((item) => (
@@ -463,13 +414,10 @@ export default function PersonalDashboard() {
         <section className="gp-dash-panel gp-dash-panel--wide" data-gp-tour="hot-matches">
           <h2>
             <Flame className="h-4 w-4" /> Mais quentes
-            {hotFromLive.length === 0 && globalFeed.matches.length > 0 && (
-              <span className="gp-dash-tag">global</span>
-            )}
           </h2>
           {hotMatches.length === 0 ? (
             <p className="gp-dash-muted">
-              Aguardando jogos ao vivo. Verifique se o runtime está ativo em /terminal.
+              Nenhuma partida ao vivo disponível no momento. Dados exclusivos SportMonks.
             </p>
           ) : (
             <ul className="gp-dash-hot">
@@ -513,11 +461,7 @@ export default function PersonalDashboard() {
         <section className="gp-dash-panel gp-dash-panel--wide">
           <h2>Atividade recente</h2>
           {ws.activityLog.length === 0 ? (
-            <p className="gp-dash-muted">
-              {globalFeed.metrics[0]
-                ? `Última métrica: fixture ${globalFeed.metrics[0].fixtureId} · momentum ${globalFeed.metrics[0].momentum.toFixed(1)}`
-                : "Suas ações na central aparecem aqui."}
-            </p>
+            <p className="gp-dash-muted">Suas ações na central aparecem aqui.</p>
           ) : (
             <ul className="gp-dash-activity">
               {ws.activityLog.slice(0, 8).map((a) => (

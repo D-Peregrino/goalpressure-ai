@@ -88,20 +88,21 @@ export const SPOTLIGHT_STEPS = [
   },
 ] as const;
 
+/** @deprecated Use SocialProofStrip (fetch /api/live-matches) */
 export const SOCIAL_PROOF_ITEMS = [
   {
-    label: "Pressão alta detectada",
-    detail: "Flamengo x Vasco · 67'",
-    time: "há 4 min",
+    label: "Feed ao vivo",
+    detail: "Dados SportMonks em sincronização",
+    time: "agora",
   },
   {
     label: "Oportunidade monitorada",
-    detail: "Over 2.5 · leitura favorável",
-    time: "há 11 min",
+    detail: "Leitura baseada em pressão real",
+    time: "ao vivo",
   },
   {
     label: "Steam de mercado",
-    detail: "Odd principal em queda",
+    detail: "Odd principal em movimento",
     time: "há 18 min",
   },
 ] as const;

@@ -24,6 +24,7 @@ import {
 } from "@/lib/ux/sportsLanguage";
 import { getCardFocusTier } from "@/lib/ux/operationalIntelligence";
 import TrustIndicator from "@/components/ui/TrustIndicator";
+import DataSourceBadge from "@/components/ui/DataSourceBadge";
 
 function MatchCardProInner({
   match,
@@ -144,6 +145,9 @@ function MatchCardProInner({
             <span className="gp-type-label gp-sport-card__league gp-clamp-1">{match.league}</span>
             <div className="gp-sport-card__top-actions">
               {isLive && (
+                <DataSourceBadge source="sportmonks" className="gp-sport-card__source-badge" />
+              )}
+              {isLive && (
               <span
                 className="gp-sport-card__live-dot gp-sport-card__live-dot--pulse"
                 title="Ao vivo"
@@ -208,6 +212,12 @@ function MatchCardProInner({
           <p className="gp-type-narrative gp-sport-card__decision gp-clamp-2" title={insight}>
             {insight}
           </p>
+
+          {isLive && !match.premiumFeed && match.dataQuality === "sparse" && (
+            <p className="gp-type-caption gp-sport-card__stats-pending">
+              Aguardando estatísticas live
+            </p>
+          )}
 
           <div className="gp-sport-card__state-row">
             <TrustIndicator

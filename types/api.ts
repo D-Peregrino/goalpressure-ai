@@ -27,11 +27,15 @@ export interface LiveMatchesApiMeta {
   cacheAgeMs?: number;
   cacheExpiresInMs?: number;
   activeFixtures?: number;
+  /** true quando SportMonks respondeu OK mas sem fixtures in-play */
+  empty?: boolean;
 }
 
 export interface LiveMatchesSuccessResponse {
   ok: true;
   matches: Match[];
+  /** true se matches.length === 0 e fonte é SportMonks real */
+  empty?: boolean;
   signals?: Signal[];
   engine?: LiveEngineSnapshot;
   meta: LiveMatchesApiMeta;

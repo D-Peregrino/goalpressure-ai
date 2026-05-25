@@ -8,7 +8,7 @@ import type { LiveMatchesApiResponse } from "@/types/api";
 import type { Match, Signal } from "@/types/domain";
 
 const API_PATH = "/api/live-matches";
-const DEFAULT_POLL_INTERVAL_MS = 20_000;
+const DEFAULT_POLL_INTERVAL_MS = 30_000;
 const DEFAULT_STALE_AFTER_MS = 45_000;
 
 export type LiveMatchSource = ActiveDataSource;
@@ -30,6 +30,7 @@ export interface UseLiveMatchesResult {
   dataSourceBadge: string | null;
   responseTime: number | null;
   isInitialLoad: boolean;
+  isEmpty: boolean;
   sportmonksError: { httpStatus?: number; message: string; endpoint?: string } | null;
 }
 
@@ -60,6 +61,7 @@ export function useLiveMatches(
   const [sportmonksError, setSportmonksError] = useState<UseLiveMatchesResult["sportmonksError"]>(null);
   const [responseTime, setResponseTime] = useState<number | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isEmpty, setIsEmpty] = useState(false);
 
   const fetchGenerationRef = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
@@ -146,7 +148,12 @@ export function useLiveMatches(
       setError(null);
       setSportmonksError(null);
       setDataSourceBadge(body.meta.dataSourceBadge ?? null);
-      setStatus(enriched.length === 0 ? "empty" : "live");
+      const emptyFeed =
+        Boolean(body.empty) ||
+        Boolean(body.meta.empty) ||
+        (resolvedSource === "sportmonks" && enriched.length === 0);
+      setIsEmpty(emptyFeed);
+      setStatus(emptyFeed ? "empty" : "live");
       setLastUpdated(Date.now());
       setResponseTime(body.meta.responseTimeMs ?? elapsed);
       setIsInitialLoad(false);
@@ -207,6 +214,7 @@ export function useLiveMatches(
     dataSourceBadge,
     responseTime,
     isInitialLoad,
+    isEmpty,
     sportmonksError,
   };
 }

@@ -24,9 +24,9 @@ export default function BacktestSection() {
         <TerminalCard glow className="max-w-md">
           <div className="mb-5 flex flex-wrap justify-between gap-4">
             <div>
-              <p className="font-display text-lg">Arsenal vs Chelsea</p>
+              <p className="font-display text-lg">Partida ao vivo · SportMonks</p>
               <p className="mt-1 font-mono-data text-sm text-[var(--text-muted-on-dark)]">
-                Over 0.5 · 67&apos;
+                Over 0.5 · janela calibrada
               </p>
             </div>
             <ExecutionBadge decision="EXECUTE" />

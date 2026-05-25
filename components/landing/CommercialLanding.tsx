@@ -6,6 +6,7 @@ import LandingNav from "@/components/landing/LandingNav";
 import UpgradeCard from "@/components/billing/UpgradeCard";
 import LeadCaptureForm from "@/components/landing/LeadCaptureForm";
 import FooterSection from "@/components/landing/FooterSection";
+import LiveTerminalPreview from "@/components/ui/terminal/LiveTerminalPreview";
 import { CUPOM_BARBOSATIPS75 } from "@/lib/subscription/plans";
 
 const FAQ = [
@@ -83,12 +84,18 @@ export default function CommercialLanding() {
       </section>
 
       <section className="gp-landing-section gp-landing-section--muted">
-        <div className="gp-landing-container">
-          <h2 className="gp-landing-section__title">Central ao vivo</h2>
-          <p className="gp-comm-section__sub">
-            Cards por partida com placar, escudos, barra de pressão e uma linha de decisão em
-            menos de dois segundos.
-          </p>
+        <div className="gp-landing-container gp-comm-hero__grid">
+          <div>
+            <h2 className="gp-landing-section__title">Central ao vivo</h2>
+            <p className="gp-comm-section__sub">
+              Dados reais da SportMonks — placar, pressão e leitura por partida. Sem fixtures
+              fictícias; se não houver jogo in-play, o feed fica vazio de forma honesta.
+            </p>
+            <Link href="/terminal" className="gp-btn gp-btn--secondary mt-4 inline-flex">
+              Abrir terminal
+            </Link>
+          </div>
+          <LiveTerminalPreview />
         </div>
       </section>
 

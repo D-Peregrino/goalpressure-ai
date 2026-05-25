@@ -217,7 +217,7 @@ function buildRecentEvents(parts: {
 }
 
 export function useLiveMatchCenter() {
-  const live = useLiveMatches({ pollIntervalMs: 20_000 });
+  const live = useLiveMatches({ pollIntervalMs: 30_000 });
   const ops = useOps({ pollIntervalMs: 15_000 });
   const { favorites, toggleFavorite, ready: workspaceReady } = useUserWorkspace();
   const [filter, setFilter] = useState<MatchCenterFilter>("all");
@@ -612,7 +612,13 @@ export function useLiveMatchCenter() {
       };
     });
 
-    return applyTrustLayer(mapped);
+    const sorted = [...mapped].sort((a, b) => {
+      if (a.isLive !== b.isLive) return a.isLive ? -1 : 1;
+      if (a.isPreMatch !== b.isPreMatch) return a.isPreMatch ? 1 : -1;
+      return b.pressureScore - a.pressureScore;
+    });
+
+    return applyTrustLayer(sorted);
   }, [live.matches, ops]);
 
   const liveSignals = useMemo(
@@ -683,6 +689,8 @@ export function useLiveMatchCenter() {
     dataSourceBadge: live.dataSourceBadge,
     feedError: live.error,
     sportmonksError: live.sportmonksError,
+    isEmpty: live.isEmpty,
+    responseTime: live.responseTime,
     isLoading: live.isInitialLoad && ops.isInitialLoad,
     normalizeFixtureId,
   };

@@ -7635,6 +7635,77 @@ body {
   color: #94a3b8;
 }
 
+.gp-live-source-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.5rem;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.gp-live-source-strip__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.gp-live-source-strip__label {
+  font-size: 0.8rem;
+  color: rgba(148, 163, 184, 0.95);
+}
+
+.gp-live-source-strip__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.72rem;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.gp-live-source-strip__status {
+  color: #4ade80;
+}
+
+.gp-live-source-strip__error {
+  font-size: 0.75rem;
+  color: #fbbf24;
+}
+
+.gp-empty-state--premium {
+  padding: 2rem 1.5rem;
+  text-align: center;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 0.75rem;
+  margin: 1rem 0;
+}
+
+.gp-empty-state__title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0.75rem 0 0.5rem;
+}
+
+.gp-empty-state__stats {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+  font-size: 0.8rem;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.gp-empty-state__stats li + li {
+  margin-top: 0.35rem;
+}
+
+.gp-sport-card__stats-pending {
+  color: rgba(251, 191, 36, 0.9);
+  margin-top: 0.35rem;
+}
+
 .gp-app-shell--central .gp-sidebar__meta {
   text-transform: none;
   letter-spacing: 0;

@@ -11,6 +11,8 @@ import Header from "@/components/Header";
 import { useEngineInsights } from "@/hooks/useEngineInsights";
 import LiveGameCard from "@/components/LiveGameCard";
 import OperationalBar from "@/components/OperationalBar";
+import LiveDataSourceStrip from "@/components/live/LiveDataSourceStrip";
+import LiveFeedEmptyState from "@/components/live/LiveFeedEmptyState";
 import SignalCard, { SignalEmptyState } from "@/components/SignalCard";
 import SystemStatus from "@/components/SystemStatus";
 
@@ -45,7 +47,8 @@ export default function LiveDashboard() {
     lastUpdated,
     source,
     responseTime,
-  } = useLiveMatches();
+    isEmpty,
+  } = useLiveMatches({ pollIntervalMs: 30_000 });
 
   const { signalActivity } = useSystemMetrics();
   const {
@@ -76,6 +79,16 @@ export default function LiveDashboard() {
         engineStatus={status === "error" ? "DEGRADED" : "ONLINE"}
       />
 
+      <LiveDataSourceStrip
+        source={source}
+        status={status}
+        lastUpdated={lastUpdated}
+        matchCount={matches.length}
+        responseTimeMs={displayLatency}
+        error={error}
+        className="mb-4"
+      />
+
       <OperationalBar
         trackedCount={matches.length}
         activeSignals={signals.length}
@@ -85,6 +98,16 @@ export default function LiveDashboard() {
         lastUpdated={lastUpdated ?? undefined}
         signalActivity={signalActivity}
       />
+
+      {isEmpty && matches.length === 0 && status !== "loading" && (
+        <LiveFeedEmptyState
+          source={source}
+          matchCount={0}
+          lastUpdated={lastUpdated}
+          responseTimeMs={displayLatency}
+          error={error}
+        />
+      )}
 
       <EngineTelemetryStrip
         engine={engine}

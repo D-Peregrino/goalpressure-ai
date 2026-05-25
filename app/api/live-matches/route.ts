@@ -49,7 +49,7 @@ const SPORTMONKS_FAILURE_HEADLINE =
   "SportMonks configurado, mas falhou ao buscar dados reais.";
 
 function metaBadgeFor(source: ActiveDataSource): string | undefined {
-  if (source === "sportmonks") return "Dados reais · SportMonks";
+  if (source === "sportmonks") return "DADOS REAIS · SPORTMONKS";
   if (source === "seed") return "Seed operacional (dev)";
   return undefined;
 }
@@ -187,8 +187,10 @@ function buildSuccessMeta(
   cacheExpiresInMs: number,
   extra?: Partial<LiveMatchesSuccessResponse["meta"]>
 ): LiveMatchesSuccessResponse["meta"] {
+  const empty = count === 0 && activeSource === "sportmonks";
   return {
     count,
+    empty,
     responseTimeMs,
     fetchedAt: new Date(entry.fetchedAt).toISOString(),
     source: activeSource,
@@ -221,6 +223,7 @@ function buildSuccessFromCache(
   const body: LiveMatchesSuccessResponse = {
     ok: true,
     matches: engineResult.matches,
+    empty: engineResult.matches.length === 0 && activeSource === "sportmonks",
     signals: engineResult.signals,
     engine: engineResult.snapshot,
     meta: buildSuccessMeta(
@@ -305,6 +308,7 @@ async function fetchAndCacheMatches(
   const body: LiveMatchesSuccessResponse = {
     ok: true,
     matches: engineResult.matches,
+    empty: engineResult.matches.length === 0,
     signals: engineResult.signals,
     engine: engineResult.snapshot,
     meta: buildSuccessMeta(
@@ -317,6 +321,13 @@ async function fetchAndCacheMatches(
       cacheExpiresInMs
     ),
   };
+
+  logInfo(ROUTE_SCOPE, "SportMonks live-matches response", {
+    matchCount: engineResult.matches.length,
+    empty: body.empty,
+    endpoint: endpointUrlRedacted,
+    responseTimeMs: totalMs,
+  });
 
   recordLiveFetchTelemetry({
     activeSource: "sportmonks",
