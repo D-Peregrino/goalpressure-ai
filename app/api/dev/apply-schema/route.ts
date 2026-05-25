@@ -1,8 +1,7 @@
 import { createHash } from "crypto";
-import { readFileSync } from "fs";
-import { join } from "path";
 import { NextResponse } from "next/server";
 import { getSupabaseProjectUrl } from "@/lib/supabase/client";
+import { applyAllSchemas, OPERATIONAL_SCHEMA_FILES } from "@/lib/system/applyAllSchemas";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -22,18 +21,6 @@ function isSportmonksBootstrap(request: Request): boolean {
   return Boolean(expected && bootstrap === expected);
 }
 
-const SCHEMA_FILES = [
-  "operational-seed-schema.sql",
-  "live-runtime-schema.sql",
-  "live-pressure-snapshots-schema.sql",
-  "live-ev-signals-schema.sql",
-  "operational-insights-schema.sql",
-  "learning-layer-schema.sql",
-  "live-signal-dispatches-schema.sql",
-  "autonomous-decisions-schema.sql",
-  "commercial-schema.sql",
-];
-
 /**
  * POST /api/dev/apply-schema — aplica SQL idempotente (bootstrap projeto/SportMonks).
  */
@@ -43,54 +30,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Bootstrap inválido." }, { status: 403 });
   }
 
-  const dbUrl =
-    process.env.DATABASE_URL?.trim() ||
-    process.env.POSTGRES_URL?.trim() ||
-    process.env.SUPABASE_DB_URL?.trim() ||
-    process.env.DIRECT_URL?.trim();
-  if (!dbUrl) {
-    return NextResponse.json(
-      { ok: false, error: "DATABASE_URL não configurada no servidor." },
-      { status: 503 }
-    );
-  }
-
-  let pg: typeof import("pg");
-  try {
-    pg = await import("pg");
-  } catch {
-    return NextResponse.json(
-      { ok: false, error: "Pacote pg não instalado. Rode npm install pg." },
-      { status: 500 }
-    );
-  }
-
-  const client = new pg.Client({ connectionString: dbUrl, ssl: { rejectUnauthorized: false } });
-  const applied: string[] = [];
-  const errors: string[] = [];
-
-  try {
-    await client.connect();
-    const base = join(process.cwd(), "supabase");
-
-    for (const file of SCHEMA_FILES) {
-      const path = join(base, file);
-      try {
-        const sql = readFileSync(path, "utf8");
-        await client.query(sql);
-        applied.push(file);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        errors.push(`${file}: ${msg}`);
-      }
-    }
-  } finally {
-    await client.end().catch(() => {});
-  }
-
+  const result = await applyAllSchemas(OPERATIONAL_SCHEMA_FILES);
   return NextResponse.json({
-    ok: errors.length === 0,
-    applied,
-    errors,
+    ok: result.ok,
+    applied: result.applied,
+    errors: result.errors,
+    schemas: OPERATIONAL_SCHEMA_FILES,
   });
 }

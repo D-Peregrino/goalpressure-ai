@@ -27,11 +27,11 @@ export default function LiveFeedEmptyState({
     <div className={`gp-empty-state gp-empty-state--premium ${compact ? "gp-empty-state--compact" : ""}`}>
       <DataSourceBadge source={source} error={error} />
       <h3 className="gp-empty-state__title">
-        Nenhuma partida ao vivo disponível no momento
+        Nenhum jogo ao vivo disponível na SportMonks agora.
       </h3>
       <p className="gp-empty-state__sub">
-        A SportMonks não retornou jogos in-play neste ciclo. O sistema não preenche com
-        dados fictícios — aguarde a próxima sincronização automática.
+        A API SportMonks não retornou fixtures in-play neste ciclo. O terminal não usa mock
+        nem seed — aguarde a próxima sincronização ou confira o diagnóstico.
       </p>
       <ul className="gp-empty-state__stats">
         <li>Fixtures no feed: {matchCount}</li>
