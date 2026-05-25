@@ -8,6 +8,13 @@ import { readFileSync, writeFileSync, existsSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 import { execSync } from "child_process";
+import { createHash } from "crypto";
+
+const SETUP_SALT = "goalpressure-setup-v1";
+
+function projectBootstrapKey(url) {
+  return createHash("sha256").update(url + SETUP_SALT).digest("hex").slice(0, 32);
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
@@ -64,13 +71,12 @@ async function discoverUrlFromProduction(base) {
   }
 }
 
-async function fetchSetupEnvFromProduction(base, sportmonksToken) {
-  if (!sportmonksToken) return null;
+async function fetchSetupEnvFromProduction(base, sportmonksToken, projectUrl) {
   try {
-    const res = await fetch(`${base}/api/dev/setup-env`, {
-      headers: { "x-gp-sportmonks-bootstrap": sportmonksToken },
-      cache: "no-store",
-    });
+    const headers = { cache: "no-store" };
+    if (sportmonksToken) headers["x-gp-sportmonks-bootstrap"] = sportmonksToken;
+    if (projectUrl) headers["x-gp-project-bootstrap"] = projectBootstrapKey(projectUrl);
+    const res = await fetch(`${base}/api/dev/setup-env`, { headers });
     if (!res.ok) return null;
     return await res.json();
   } catch {
@@ -105,7 +111,12 @@ function tryRailwayVariables() {
 
 function isValidServiceRole(key) {
   if (!key?.trim()) return false;
-  return key.trim().startsWith("sb_secret_");
+  const k = key.trim();
+  return k.startsWith("sb_secret_") || k.startsWith("eyJ");
+}
+
+function prefersSbSecret(key) {
+  return key?.trim().startsWith("sb_secret_");
 }
 
 function buildEnvContent(existing, vars) {
@@ -196,9 +207,9 @@ async function main() {
   const sportmonks =
     fromFiles.SPORTMONKS_API_TOKEN || process.env.SPORTMONKS_API_TOKEN;
 
-  if (!isValidServiceRole(serviceRole) && sportmonks) {
+  if (!isValidServiceRole(serviceRole) && url) {
     console.log("   Buscando credenciais via API de setup (produção)…");
-    const remote = await fetchSetupEnvFromProduction(productionBase, sportmonks);
+    const remote = await fetchSetupEnvFromProduction(productionBase, sportmonks, url);
     if (remote?.ok && isValidServiceRole(remote.serviceRoleKey)) {
       serviceRole = remote.serviceRoleKey;
       if (!url && remote.url) url = remote.url;
@@ -222,9 +233,12 @@ async function main() {
   const okKey = isValidServiceRole(serviceRole);
 
   console.log(`   NEXT_PUBLIC_SUPABASE_URL: ${okUrl ? "✓" : "✗"}`);
-  console.log(
-    `   SUPABASE_SERVICE_ROLE_KEY: ${okKey ? "✓ (sb_secret_*)" : "✗ ausente ou inválido"}`
-  );
+  const keyLabel = prefersSbSecret(serviceRole)
+    ? "✓ (sb_secret_*)"
+    : okKey
+      ? "✓ (eyJ legado — prefira sb_secret_ no Railway)"
+      : "✗ ausente ou inválido";
+  console.log(`   SUPABASE_SERVICE_ROLE_KEY: ${keyLabel}`);
   console.log(`   GP_ALLOW_SEED: true`);
   console.log(`   GP_SEED_LIVE: true`);
 
