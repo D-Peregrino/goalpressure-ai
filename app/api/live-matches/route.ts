@@ -205,18 +205,18 @@ function buildSuccessMeta(
   };
 }
 
-function buildSuccessFromCache(
+async function buildSuccessFromCache(
   entry: LiveMatchesCacheEntry,
   cacheStatus: LiveMatchesCacheStatus,
   routeStartedAt: number,
   activeSource: ActiveDataSource = "sportmonks"
-): NextResponse<LiveMatchesSuccessResponse> {
+): Promise<NextResponse<LiveMatchesSuccessResponse>> {
   const now = Date.now();
   const cacheAgeMs = getCacheAgeMs(entry, now);
   const cacheExpiresInMs = getCacheExpiresInMs(entry, now);
   const totalMs = now - routeStartedAt;
 
-  const engineResult = processLiveEngineBatch(entry.matches, {
+  const engineResult = await processLiveEngineBatch(entry.matches, {
     dispatchTelegram: true,
   });
 
@@ -267,7 +267,7 @@ function buildSuccessFromCache(
   });
 }
 
-function runEngineOnMatches(matches: LiveMatchesSuccessResponse["matches"]) {
+async function runEngineOnMatches(matches: LiveMatchesSuccessResponse["matches"]) {
   return processLiveEngineBatch(matches, { dispatchTelegram: true });
 }
 
@@ -297,7 +297,7 @@ async function fetchAndCacheMatches(
     rateLimit,
   });
 
-  const engineResult = runEngineOnMatches(matches);
+  const engineResult = await runEngineOnMatches(matches);
 
   void persistLiveMatches(engineResult.matches).catch((err) => {
     logWarn(ROUTE_SCOPE, "Supabase persist failed", {
@@ -352,7 +352,7 @@ async function buildSeedLiveResponse(
   routeStartedAt: number
 ): Promise<NextResponse<LiveMatchesSuccessResponse>> {
   const matches = await loadSeedLiveMatches();
-  const engineResult = processLiveEngineBatch(matches, { dispatchTelegram: false });
+  const engineResult = await processLiveEngineBatch(matches, { dispatchTelegram: false });
   const totalMs = Date.now() - routeStartedAt;
   const fetchedAt = Date.now();
 
@@ -433,7 +433,7 @@ export async function GET(): Promise<NextResponse<LiveMatchesApiResponse>> {
 
   const cached = getLiveMatchesCacheEntry();
   if (cached && isLiveMatchesCacheValid(cached)) {
-    return buildSuccessFromCache(cached, "HIT", routeStartedAt, "sportmonks");
+    return await buildSuccessFromCache(cached, "HIT", routeStartedAt, "sportmonks");
   }
 
   try {
@@ -459,7 +459,7 @@ export async function GET(): Promise<NextResponse<LiveMatchesApiResponse>> {
     }
 
     if (cached) {
-      return buildSuccessFromCache(cached, "STALE", routeStartedAt, "sportmonks");
+      return await buildSuccessFromCache(cached, "STALE", routeStartedAt, "sportmonks");
     }
 
     if (isSportmonksServiceError(error)) {

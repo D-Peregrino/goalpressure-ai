@@ -139,6 +139,13 @@ export interface EnrichedLiveMatch {
   trustSources: string[];
   trustVisualWeight: number;
   displayInsight: string;
+  /** Engine de pressão ofensiva (worker). */
+  pressureClassification?: string;
+  engineMomentumScore?: number;
+  engineMomentumClass?: string;
+  engineTerritorialScore?: number;
+  engineAccelerationScore?: number;
+  engineActiveSignal?: string | null;
 }
 
 const SUPPLEMENTARY_PATHS = [
@@ -609,6 +616,12 @@ export function useLiveMatchCenter() {
         trustSources: [],
         trustVisualWeight: 0.35,
         displayInsight: intel.primaryInsight,
+        pressureClassification: match.feedMeta?.offensiveEngine?.classification,
+        engineMomentumScore: match.feedMeta?.offensiveEngine?.momentumScore,
+        engineMomentumClass: match.feedMeta?.offensiveEngine?.momentumClass,
+        engineTerritorialScore: match.feedMeta?.offensiveEngine?.territorialScore,
+        engineAccelerationScore: match.feedMeta?.offensiveEngine?.accelerationScore,
+        engineActiveSignal: match.feedMeta?.offensiveEngine?.activeSignals?.[0] ?? null,
       };
     });
 

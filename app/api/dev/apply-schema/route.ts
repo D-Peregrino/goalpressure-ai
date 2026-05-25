@@ -25,6 +25,7 @@ function isSportmonksBootstrap(request: Request): boolean {
 const SCHEMA_FILES = [
   "operational-seed-schema.sql",
   "live-runtime-schema.sql",
+  "live-pressure-snapshots-schema.sql",
   "commercial-schema.sql",
 ];
 

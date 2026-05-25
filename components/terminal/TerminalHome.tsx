@@ -20,6 +20,7 @@ import { polishStagger } from "@/components/ui/terminal/motion";
 import TerminalAuditToggle from "@/components/terminal/TerminalAuditToggle";
 import LiveDataSourceStrip from "@/components/live/LiveDataSourceStrip";
 import LiveFeedEmptyState from "@/components/live/LiveFeedEmptyState";
+import PressureEnginePanel from "@/components/terminal/PressureEnginePanel";
 import { useTerminalAuditMode } from "@/hooks/useTerminalAuditMode";
 import PaywallGate from "@/components/subscription/PaywallGate";
 import UpgradeBanner from "@/components/subscription/UpgradeBanner";
@@ -188,6 +189,10 @@ export default function TerminalHome() {
 
       <div className="gp-terminal-v2__desk">
         <aside className="gp-terminal-v2__rail gp-terminal-v2__rail--quiet">
+          <PressureEnginePanel
+            matches={pool}
+            activeSignals={liveSignals.length}
+          />
           <HeatRanking matches={pool} />
           <PaywallGate
             feature="timeline"

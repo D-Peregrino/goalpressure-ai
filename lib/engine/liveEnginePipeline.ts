@@ -1,6 +1,7 @@
 import type { Match, Signal } from "@/types/domain";
 import type { LiveEngineProcessResult, LiveEngineSnapshot } from "@/types/engine";
 import { generateLiveSignals } from "@/lib/engine/signals/liveSignalGenerator";
+import { runLivePressureWorker } from "@/lib/workers/livePressureWorker";
 import {
   getLiveEngineSnapshot,
   pruneEngineMemory,
@@ -47,21 +48,29 @@ function buildSnapshot(
 }
 
 export interface ProcessLiveEngineOptions {
-  /** Dispatch signals to Telegram (real when TELEGRAM_SANDBOX_MODE=false) */
   dispatchTelegram?: boolean;
   modelId?: string;
 }
 
 /**
- * Full live quantitative pipeline: pressure → momentum → EV → signals → snapshot.
+ * Pipeline live: worker de pressão → sinais → snapshot (async por persistência Supabase).
  */
-export function processLiveEngineBatch(
+export async function processLiveEngineBatch(
   matches: Match[],
   options: ProcessLiveEngineOptions = {}
-): LiveEngineProcessResult {
+): Promise<LiveEngineProcessResult> {
   maybePruneMemory();
 
-  const { signals, insights, enrichedMatches } = generateLiveSignals(matches);
+  const workerResult = await runLivePressureWorker(matches);
+  const { signals: extraSignals, insights, enrichedMatches } =
+    generateLiveSignals(workerResult.matches);
+
+  const signalByMatch = new Map<string, Signal>();
+  for (const s of workerResult.signals) signalByMatch.set(s.matchId, s);
+  for (const s of extraSignals) {
+    if (!signalByMatch.has(s.matchId)) signalByMatch.set(s.matchId, s);
+  }
+  const signals = [...signalByMatch.values()];
 
   let snapshot = buildSnapshot(enrichedMatches, signals, insights);
 
@@ -80,6 +89,7 @@ export function processLiveEngineBatch(
   logInfo(LOG_SCOPE, "Live engine batch processed", {
     matches: enrichedMatches.length,
     signals: signals.length,
+    snapshots: workerResult.snapshotsPersisted,
     strongestPressure: snapshot.strongestPressure?.pressure.score ?? 0,
   });
 

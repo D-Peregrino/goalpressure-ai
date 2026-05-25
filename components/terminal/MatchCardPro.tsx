@@ -25,6 +25,10 @@ import {
 import { getCardFocusTier } from "@/lib/ux/operationalIntelligence";
 import TrustIndicator from "@/components/ui/TrustIndicator";
 import DataSourceBadge from "@/components/ui/DataSourceBadge";
+import {
+  classificationGlowClass,
+  type PressureClassification,
+} from "@/lib/engine/pressure/classifyPressure";
 
 function MatchCardProInner({
   match,
@@ -94,6 +98,17 @@ function MatchCardProInner({
       trustWeight *
       (isHot ? 1 : isWarm ? 0.45 : 0.12);
 
+  const pressureClass = (match.pressureClassification ??
+    (match.pressureScore >= 90
+      ? "EXTREME"
+      : match.pressureScore >= 75
+        ? "VERY_HIGH"
+        : match.pressureScore >= 60
+          ? "HIGH"
+          : match.pressureScore >= 40
+            ? "MEDIUM"
+            : "LOW")) as PressureClassification;
+
   const badgeSize = isHot ? "xl" : isWarm ? "lg" : "md";
 
   return (
@@ -111,6 +126,7 @@ function MatchCardProInner({
         "gp-flow-card",
         `gp-sport-card--focus-${focusTier}`,
         `gp-sport-card--trust-${match.trustLevel}`,
+        classificationGlowClass(pressureClass),
         tacticalProfileClass(match.tacticalProfile),
         isLive ? "gp-sport-card--live" : "",
         isPreMatch ? "gp-sport-card--prematch" : "",
@@ -217,6 +233,18 @@ function MatchCardProInner({
             <p className="gp-type-caption gp-sport-card__stats-pending">
               Aguardando estatísticas live
             </p>
+          )}
+
+          {isLive && (
+            <div className="gp-sport-card__engine-metrics tabular-nums">
+              <span>P {Math.round(match.pressureScore)}</span>
+              <span>M {match.engineMomentumScore ?? Math.round(match.momentum)}</span>
+              <span>A {match.engineAccelerationScore ?? "—"}</span>
+              <span>T {match.engineTerritorialScore ?? "—"}</span>
+              {match.engineActiveSignal && (
+                <span className="gp-sport-card__engine-signal">{match.engineActiveSignal}</span>
+              )}
+            </div>
           )}
 
           <div className="gp-sport-card__state-row">

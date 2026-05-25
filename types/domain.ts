@@ -132,6 +132,15 @@ export interface MatchFeedMeta {
   pressureTrend?: PressureTrend;
   steamMove?: boolean;
   oddsDrift?: number;
+  /** Métricas da engine de pressão ofensiva (live worker). */
+  offensiveEngine?: {
+    classification: string;
+    momentumScore: number;
+    momentumClass: string;
+    territorialScore: number;
+    accelerationScore: number;
+    activeSignals: string[];
+  };
 }
 
 export interface TimelineEventSummary {

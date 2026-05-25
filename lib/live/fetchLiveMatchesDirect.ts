@@ -45,7 +45,7 @@ export async function fetchLiveMatchesDirect(options?: {
   if (useCache) {
     const cached = getLiveMatchesCacheEntry();
     if (cached && isLiveMatchesCacheValid(cached)) {
-      const engineResult = processLiveEngineBatch(cached.matches, {
+      const engineResult = await processLiveEngineBatch(cached.matches, {
         dispatchTelegram,
         modelId: options?.modelId,
       });
@@ -83,7 +83,7 @@ export async function fetchLiveMatchesDirect(options?: {
       rateLimitResetsInSeconds: rateLimit?.resetsInSeconds,
     });
 
-    const engineResult = processLiveEngineBatch(mapped, {
+    const engineResult = await processLiveEngineBatch(mapped, {
       dispatchTelegram,
       modelId: options?.modelId,
     });
@@ -127,7 +127,7 @@ export async function fetchLiveMatchesDirect(options?: {
 
     const cached = getLiveMatchesCacheEntry();
     if (cached && !isSportmonksTokenConfigured()) {
-      const engineResult = processLiveEngineBatch(cached.matches, {
+      const engineResult = await processLiveEngineBatch(cached.matches, {
         dispatchTelegram: false,
         modelId: options?.modelId,
       });
@@ -151,7 +151,7 @@ export async function fetchLiveMatchesDirect(options?: {
       };
     }
 
-    const emptyEngine = processLiveEngineBatch([], { dispatchTelegram: false });
+    const emptyEngine = await processLiveEngineBatch([], { dispatchTelegram: false });
 
     return {
       ok: false,
