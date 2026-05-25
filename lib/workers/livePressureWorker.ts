@@ -1,6 +1,5 @@
 /**
- * Worker live — recalcula pressão ofensiva, sinais e snapshots Supabase.
- * Server-side only; debounce leve por fixture.
+ * Worker live — pressão ofensiva + EV engine + snapshots Supabase.
  */
 
 import {
@@ -11,16 +10,18 @@ import {
   offensiveSignalToMarket,
 } from "@/lib/engine/pressure/calculateSignalStrength";
 import { persistPressureSnapshots } from "@/lib/engine/pressure/livePressureSnapshotPersistence";
+import { applyEvEngineToMatch, runEvEngine } from "@/lib/engine/ev/runEvEngine";
+import { persistEvSignals } from "@/lib/engine/ev/liveEvSignalPersistence";
 import {
   markSignalEmitted,
   validateSignalAntiSpam,
 } from "@/lib/engine/signals/signalAntiSpam";
 import { calculatePressureScore as legacyPressure } from "@/lib/engine/pressure/pressureCalculator";
-import { calculateExpectedValue } from "@/lib/engine/ev/expectedValue";
 import type {
   LivePressureWorkerResult,
   OffensivePressureResult,
 } from "@/lib/engine/pressure/pressure.types";
+import type { RankedEvSignal } from "@/lib/engine/ev/ev.types";
 import type { Match, Signal } from "@/types/domain";
 import {
   deriveSignalConfidence,
@@ -43,6 +44,55 @@ function shouldProcessFixture(fixtureId: string): boolean {
   return true;
 }
 
+function evSignalToDomainSignal(match: Match, ranked: RankedEvSignal): Signal | null {
+  const confidence =
+    ranked.confidenceClass === "ELITE" || ranked.confidenceClass === "HIGH"
+      ? "HIGH"
+      : ranked.confidenceClass === "MEDIUM"
+        ? "MEDIUM"
+        : null;
+  if (!confidence && ranked.evPercent < 4) return null;
+
+  const market =
+    ranked.signalType === "EV_OVER_0_5"
+      ? "OVER_0_5"
+      : ranked.signalType === "EV_OVER_1_5"
+        ? "OVER_1_5"
+        : "OVER_0_5";
+
+  const odd = ranked.marketOdds;
+  const conf = confidence ?? "MEDIUM";
+  const pressure = legacyPressure(match, { skipTickRecord: true });
+
+  const spam = validateSignalAntiSpam({
+    matchId: match.id,
+    market,
+    pressure,
+    ev: {
+      probability: ranked.probability / 100,
+      fairOdd: ranked.fairOdds,
+      edge: ranked.edge,
+      evPercent: ranked.evPercent,
+      impliedProbability: 1 / odd,
+    },
+    requirePositiveEv: ranked.evPercent >= 2,
+  });
+  if (!spam.allowed) return null;
+
+  markSignalEmitted(match.id, market);
+
+  return {
+    matchId: match.id,
+    matchLabel: getMatchLabel(match),
+    market,
+    confidence: conf,
+    reason: `${ranked.label} · EV ${ranked.evPercent.toFixed(1)}% · fair ${ranked.fairOdds.toFixed(2)} vs ${ranked.marketOdds.toFixed(2)} · ${ranked.distortionLevel}`,
+    stake: deriveStake(conf),
+    pressureScore: match.pressure.score,
+    odd,
+  };
+}
+
 function offensiveResultToSignal(
   match: Match,
   result: OffensivePressureResult
@@ -51,37 +101,11 @@ function offensiveResultToSignal(
   if (!top) return null;
 
   const market = offensiveSignalToMarket(top.type);
-  if (!market) {
-    return {
-      matchId: match.id,
-      matchLabel: getMatchLabel(match),
-      market: "OVER_0_5",
-      confidence: deriveSignalConfidence(result.pressureScore) ?? "MEDIUM",
-      reason: `${top.label} · ${top.reason}`,
-      stake: deriveStake(deriveSignalConfidence(result.pressureScore) ?? "MEDIUM"),
-      pressureScore: result.pressureScore,
-      odd: match.odds.primary,
-    };
-  }
+  if (!market) return null;
 
   const odd = market === "OVER_0_5" ? match.odds.over05 : match.odds.over15;
   const confidence = deriveSignalConfidence(result.pressureScore);
   if (!confidence) return null;
-
-  const pressure = legacyPressure(match, { skipTickRecord: true });
-  const ev = calculateExpectedValue(market, odd, pressure, {
-    momentumScore: result.momentumScore,
-  });
-  const spam = validateSignalAntiSpam({
-    matchId: match.id,
-    market,
-    pressure,
-    ev,
-    requirePositiveEv: false,
-  });
-  if (!spam.allowed) return null;
-
-  markSignalEmitted(match.id, market);
 
   return {
     matchId: match.id,
@@ -95,15 +119,13 @@ function offensiveResultToSignal(
   };
 }
 
-/**
- * Processa batch de jogos ao vivo: engine → match state → sinais → snapshots.
- */
 export async function runLivePressureWorker(
   matches: Match[]
 ): Promise<LivePressureWorkerResult> {
   const results: OffensivePressureResult[] = [];
   const enriched: Match[] = [];
   const signals: Signal[] = [];
+  let evSnapshots = 0;
 
   for (const match of matches) {
     const fixtureId = match.externalId ?? match.id;
@@ -113,18 +135,30 @@ export async function runLivePressureWorker(
       continue;
     }
 
-    const result = runOffensivePressureEngine(match, {
+    const pressureResult = runOffensivePressureEngine(match, {
       previousScore: match.pressure?.score,
     });
-    results.push(result);
+    results.push(pressureResult);
 
-    const updated = applyOffensivePressureToMatch(match, result, {
+    let updated = applyOffensivePressureToMatch(match, pressureResult, {
       previousScore: match.pressure?.score,
     });
+
+    const evResult = runEvEngine(updated, pressureResult);
+    updated = applyEvEngineToMatch(updated, evResult);
+    evSnapshots += await persistEvSignals(evResult.fixtureId, evResult.rankedSignals);
+
     enriched.push(updated);
 
-    const signal = offensiveResultToSignal(updated, result);
-    if (signal) signals.push(signal);
+    const topEv = evResult.rankedSignals[0];
+    const evSig = topEv ? evSignalToDomainSignal(updated, topEv) : null;
+    const pressureSig = offensiveResultToSignal(updated, pressureResult);
+
+    if (evSig && (!pressureSig || topEv.evPercent >= 3)) {
+      signals.push(evSig);
+    } else if (pressureSig) {
+      signals.push(pressureSig);
+    }
   }
 
   const snapshotsPersisted = await persistPressureSnapshots(results);
@@ -133,7 +167,8 @@ export async function runLivePressureWorker(
     matches: matches.length,
     processed: results.length,
     signals: signals.length,
-    snapshotsPersisted,
+    pressureSnapshots: snapshotsPersisted,
+    evSnapshots,
   });
 
   return {

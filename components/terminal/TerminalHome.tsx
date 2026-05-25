@@ -21,6 +21,7 @@ import TerminalAuditToggle from "@/components/terminal/TerminalAuditToggle";
 import LiveDataSourceStrip from "@/components/live/LiveDataSourceStrip";
 import LiveFeedEmptyState from "@/components/live/LiveFeedEmptyState";
 import PressureEnginePanel from "@/components/terminal/PressureEnginePanel";
+import EVEnginePanel from "@/components/terminal/EVEnginePanel";
 import { useTerminalAuditMode } from "@/hooks/useTerminalAuditMode";
 import PaywallGate from "@/components/subscription/PaywallGate";
 import UpgradeBanner from "@/components/subscription/UpgradeBanner";
@@ -193,6 +194,7 @@ export default function TerminalHome() {
             matches={pool}
             activeSignals={liveSignals.length}
           />
+          <EVEnginePanel matches={pool} />
           <HeatRanking matches={pool} />
           <PaywallGate
             feature="timeline"

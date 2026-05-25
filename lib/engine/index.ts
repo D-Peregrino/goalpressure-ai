@@ -19,6 +19,8 @@ export {
   calculateExpectedValue,
   hasPositiveEV,
 } from "@/lib/engine/ev/expectedValue";
+export { runEvEngine, applyEvEngineToMatch } from "@/lib/engine/ev/runEvEngine";
+export type { MatchEvEngine, RankedEvSignal } from "@/lib/engine/ev/ev.types";
 export { generateLiveSignals, buildMatchEngineInsight } from "@/lib/engine/signals/liveSignalGenerator";
 export {
   evaluateSignalOpportunity,

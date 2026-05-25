@@ -7820,6 +7820,126 @@ body {
   color: #fb923c;
 }
 
+.gp-ev-engine-panel {
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: rgba(6, 24, 18, 0.55);
+}
+
+.gp-ev-engine-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.gp-ev-engine-panel__kpis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.gp-ev-engine-panel__value {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.gp-ev-engine-panel__table {
+  width: 100%;
+  font-size: 0.72rem;
+  border-collapse: collapse;
+}
+
+.gp-ev-engine-panel__table th {
+  text-align: left;
+  color: rgba(148, 163, 184, 0.9);
+  font-weight: 600;
+  padding: 0.35rem 0.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gp-ev-engine-panel__table td {
+  padding: 0.45rem 0.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.gp-ev-engine-panel__match {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-ev-row--positive {
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.gp-ev-row--trap {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.gp-ev-row--watch {
+  background: rgba(251, 146, 60, 0.06);
+}
+
+.gp-ev-panel__dist--extreme {
+  color: #4ade80;
+  font-weight: 700;
+}
+
+.gp-ev-panel__dist--high {
+  color: #86efac;
+}
+
+.gp-ev-panel__dist--medium {
+  color: #fbbf24;
+}
+
+.gp-ev-badge {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+
+.gp-ev-badge--value {
+  background: rgba(34, 197, 94, 0.25);
+  color: #4ade80;
+}
+
+.gp-ev-badge--edge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+.gp-ev-badge--confidence {
+  background: rgba(168, 85, 247, 0.2);
+  color: #c4b5fd;
+}
+
+.gp-ev-glow--positive {
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.45),
+    0 0 18px rgba(34, 197, 94, 0.12);
+}
+
+.gp-ev-glow--trap {
+  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.4),
+    0 0 12px rgba(239, 68, 68, 0.1);
+}
+
+.gp-ev-glow--watch {
+  box-shadow: inset 0 0 0 1px rgba(251, 146, 60, 0.35);
+}
+
+.gp-ev-metric--pos {
+  color: #4ade80;
+  font-weight: 700;
+}
+
 .gp-app-shell--central .gp-sidebar__meta {
   text-transform: none;
   letter-spacing: 0;

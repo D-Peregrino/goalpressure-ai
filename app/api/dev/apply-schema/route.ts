@@ -26,6 +26,7 @@ const SCHEMA_FILES = [
   "operational-seed-schema.sql",
   "live-runtime-schema.sql",
   "live-pressure-snapshots-schema.sql",
+  "live-ev-signals-schema.sql",
   "commercial-schema.sql",
 ];
 

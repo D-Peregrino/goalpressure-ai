@@ -100,18 +100,34 @@ function evaluateOver15Production(match: Match, score: number): Signal | null {
 export function buildMatchEngineInsight(match: Match): MatchEngineInsight {
   const pressure = calculatePressureScore(match);
   const momentum = calculateLiveMomentum(match);
-  const over05Ev = calculateExpectedValue(
-    "OVER_0_5",
-    match.odds.over05,
-    pressure,
-    { momentumScore: momentum.momentumScore }
-  );
-  const over15Ev = calculateExpectedValue(
-    "OVER_1_5",
-    match.odds.over15,
-    pressure,
-    { xG: calculateProductionPressureRaw(match).xG, momentumScore: momentum.momentumScore }
-  );
+
+  const ev05 = match.evEngine?.expectedValue.over05;
+  const ev15 = match.evEngine?.expectedValue.over15;
+
+  const over05Ev = ev05
+    ? {
+        probability: ev05.probability / 100,
+        fairOdd: ev05.fairOdds,
+        edge: ev05.edge,
+        evPercent: ev05.evPercent,
+        impliedProbability: 1 / ev05.marketOdds,
+      }
+    : calculateExpectedValue("OVER_0_5", match.odds.over05, pressure, {
+        momentumScore: momentum.momentumScore,
+      });
+
+  const over15Ev = ev15
+    ? {
+        probability: ev15.probability / 100,
+        fairOdd: ev15.fairOdds,
+        edge: ev15.edge,
+        evPercent: ev15.evPercent,
+        impliedProbability: 1 / ev15.marketOdds,
+      }
+    : calculateExpectedValue("OVER_1_5", match.odds.over15, pressure, {
+        xG: calculateProductionPressureRaw(match).xG,
+        momentumScore: momentum.momentumScore,
+      });
 
   return {
     matchId: match.id,

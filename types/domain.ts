@@ -210,6 +210,8 @@ export interface Match {
   premium?: MatchPremiumContext;
   /** bet365 quotes normalizadas (Market Calibration / steam / drift) */
   oddsQuotes?: import("@/lib/mappers/normalizeSportmonksOdds").NormalizedOddQuote[];
+  /** EV Engine — probabilidade, fair odds, distorção, ranking */
+  evEngine?: import("@/lib/engine/ev/ev.types").MatchEvEngine;
 }
 
 // ─── Signal ──────────────────────────────────────────────────────────────────

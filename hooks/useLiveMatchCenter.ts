@@ -146,6 +146,12 @@ export interface EnrichedLiveMatch {
   engineTerritorialScore?: number;
   engineAccelerationScore?: number;
   engineActiveSignal?: string | null;
+  evPercent?: number | null;
+  evConfidence?: number | null;
+  evConfidenceClass?: string | null;
+  evDistortionLevel?: string | null;
+  evSignalType?: string | null;
+  probabilityGoal?: number | null;
 }
 
 const SUPPLEMENTARY_PATHS = [
@@ -622,6 +628,23 @@ export function useLiveMatchCenter() {
         engineTerritorialScore: match.feedMeta?.offensiveEngine?.territorialScore,
         engineAccelerationScore: match.feedMeta?.offensiveEngine?.accelerationScore,
         engineActiveSignal: match.feedMeta?.offensiveEngine?.activeSignals?.[0] ?? null,
+        fairOdd:
+          match.evEngine?.expectedValue.best?.fairOdds ??
+          row.fairOdd ??
+          null,
+        marketOdd:
+          match.evEngine?.expectedValue.best?.marketOdds ??
+          row.marketOdd ??
+          null,
+        evPercent:
+          match.evEngine?.expectedValue.best?.evPercent ??
+          match.evEngine?.expectedValue.over05.evPercent ??
+          null,
+        evConfidence: match.evEngine?.confidence.score ?? null,
+        evConfidenceClass: match.evEngine?.confidence.class ?? null,
+        evDistortionLevel: match.evEngine?.distortion.level ?? null,
+        evSignalType: match.evEngine?.rankedSignals[0]?.signalType ?? null,
+        probabilityGoal: match.evEngine?.probabilityGoal ?? null,
       };
     });
 

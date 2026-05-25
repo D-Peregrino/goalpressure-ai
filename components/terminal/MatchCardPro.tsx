@@ -127,6 +127,13 @@ function MatchCardProInner({
         `gp-sport-card--focus-${focusTier}`,
         `gp-sport-card--trust-${match.trustLevel}`,
         classificationGlowClass(pressureClass),
+        (match.evPercent ?? 0) >= 5
+          ? "gp-ev-glow--positive"
+          : (match.evPercent ?? 0) < -2
+            ? "gp-ev-glow--trap"
+            : (match.evPercent ?? 0) >= 1
+              ? "gp-ev-glow--watch"
+              : "",
         tacticalProfileClass(match.tacticalProfile),
         isLive ? "gp-sport-card--live" : "",
         isPreMatch ? "gp-sport-card--prematch" : "",
@@ -160,6 +167,17 @@ function MatchCardProInner({
           <header className="gp-sport-card__section gp-sport-card__section--header">
             <span className="gp-type-label gp-sport-card__league gp-clamp-1">{match.league}</span>
             <div className="gp-sport-card__top-actions">
+              {isLive && match.evPercent != null && match.evPercent >= 3 && (
+                <span className="gp-ev-badge gp-ev-badge--value">EV+</span>
+              )}
+              {isLive &&
+                (match.evDistortionLevel === "HIGH" ||
+                  match.evDistortionLevel === "EXTREME") && (
+                  <span className="gp-ev-badge gp-ev-badge--edge">DISTORÇÃO</span>
+                )}
+              {isLive && match.evConfidenceClass === "ELITE" && (
+                <span className="gp-ev-badge gp-ev-badge--confidence">HIGH CONF</span>
+              )}
               {isLive && (
                 <DataSourceBadge source="sportmonks" className="gp-sport-card__source-badge" />
               )}
@@ -241,8 +259,21 @@ function MatchCardProInner({
               <span>M {match.engineMomentumScore ?? Math.round(match.momentum)}</span>
               <span>A {match.engineAccelerationScore ?? "—"}</span>
               <span>T {match.engineTerritorialScore ?? "—"}</span>
+              {match.evPercent != null && (
+                <span className={match.evPercent >= 3 ? "gp-ev-metric--pos" : ""}>
+                  EV {match.evPercent.toFixed(1)}%
+                </span>
+              )}
+              {match.fairOdd != null && match.marketOdd != null && (
+                <span>
+                  {match.fairOdd.toFixed(2)} → {match.marketOdd.toFixed(2)}
+                </span>
+              )}
               {match.engineActiveSignal && (
                 <span className="gp-sport-card__engine-signal">{match.engineActiveSignal}</span>
+              )}
+              {match.evSignalType && (
+                <span className="gp-sport-card__engine-signal">{match.evSignalType}</span>
               )}
             </div>
           )}
