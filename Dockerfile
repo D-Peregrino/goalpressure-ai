@@ -28,6 +28,7 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/supabase ./supabase
 
 RUN mkdir -p data/signals data/matches data/snapshots data/analytics data/experimental data/ops config/models && \
     chown -R nextjs:nodejs data config

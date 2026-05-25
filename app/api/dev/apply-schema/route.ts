@@ -31,10 +31,19 @@ export async function POST(request: Request) {
   }
 
   const result = await applyAllSchemas(OPERATIONAL_SCHEMA_FILES);
-  return NextResponse.json({
-    ok: result.ok,
-    applied: result.applied,
-    errors: result.errors,
-    schemas: OPERATIONAL_SCHEMA_FILES,
-  });
+  const fatal =
+    !result.databaseUrlConfigured || result.connectError !== null || result.schemaDir === null;
+  return NextResponse.json(
+    {
+      success: result.success,
+      ok: result.ok,
+      applied: result.applied,
+      skipped: result.skipped,
+      failed: result.failed,
+      errors: result.errors,
+      schemaDir: result.schemaDir,
+      schemas: OPERATIONAL_SCHEMA_FILES,
+    },
+    { status: fatal ? 500 : 200 }
+  );
 }

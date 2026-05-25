@@ -30,6 +30,58 @@ function ApiErrorCard({ title, detail }: { title: string; detail: string }) {
   );
 }
 
+type SchemaApplyUiResult = {
+  applied: string[];
+  skipped: Array<{ file: string; reason: string }>;
+  failed: Array<{ file: string; error: string; statement?: number }>;
+};
+
+function parseSchemaApplyBody(body: unknown): SchemaApplyUiResult & {
+  ok: boolean;
+  success: boolean;
+  errors: string[];
+} {
+  const record = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+  const applied = Array.isArray(record.applied)
+    ? record.applied.filter((x): x is string => typeof x === "string")
+    : [];
+  const skipped = Array.isArray(record.skipped)
+    ? record.skipped
+        .map((item) => {
+          if (!item || typeof item !== "object") return null;
+          const row = item as Record<string, unknown>;
+          const file = typeof row.file === "string" ? row.file : "?";
+          const reason =
+            typeof row.reason === "string" ? row.reason : "ignorado (idempotente)";
+          return { file, reason };
+        })
+        .filter((x): x is { file: string; reason: string } => x !== null)
+    : [];
+  const failed: SchemaApplyUiResult["failed"] = [];
+  if (Array.isArray(record.failed)) {
+    for (const item of record.failed) {
+      if (!item || typeof item !== "object") continue;
+      const row = item as Record<string, unknown>;
+      failed.push({
+        file: typeof row.file === "string" ? row.file : "?",
+        error: typeof row.error === "string" ? row.error : "erro desconhecido",
+        statement: typeof row.statement === "number" ? row.statement : undefined,
+      });
+    }
+  }
+  const errors = Array.isArray(record.errors)
+    ? record.errors.filter((x): x is string => typeof x === "string")
+    : [];
+  return {
+    applied,
+    skipped,
+    failed,
+    errors,
+    ok: record.ok === true,
+    success: record.success === true,
+  };
+}
+
 function AdminValidacaoPageInner() {
   const [report, setReport] = useState<OperationalValidationReport | null>(null);
   const [loading, setLoading] = useState(false);
@@ -37,6 +89,7 @@ function AdminValidacaoPageInner() {
   const [runtimeLoading, setRuntimeLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [fetchErrors, setFetchErrors] = useState<string[]>([]);
+  const [schemaResult, setSchemaResult] = useState<SchemaApplyUiResult | null>(null);
 
   useEffect(() => {
     const onWindowError = (event: ErrorEvent): void => {
@@ -128,6 +181,8 @@ function AdminValidacaoPageInner() {
   const applySchemas = useCallback(async () => {
     setSchemaLoading(true);
     setMessage(null);
+    setSchemaResult(null);
+    clearFetchErrors();
     try {
       const res = await fetchWithAuth("/api/admin/apply-schemas", { method: "POST" });
       let body: unknown = null;
@@ -138,24 +193,40 @@ function AdminValidacaoPageInner() {
         return;
       }
 
+      const parsed = parseSchemaApplyBody(body);
+      setSchemaResult({
+        applied: parsed.applied,
+        skipped: parsed.skipped,
+        failed: parsed.failed,
+      });
+
       if (!res.ok) {
-        pushFetchError("Schemas", parseApiErrorMessage(body, `HTTP ${res.status}`));
+        const detail =
+          parsed.errors.join("; ") ||
+          parseApiErrorMessage(body, `HTTP ${res.status}`);
+        pushFetchError("Schemas", detail);
+        setMessage(`Falha crítica ao aplicar schemas: ${detail}`);
         return;
       }
 
-      const record = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
-      if (record.ok === true) {
-        const applied = Array.isArray(record.applied)
-          ? (record.applied as string[]).join(", ")
-          : "—";
-        setMessage(`Schemas aplicados: ${applied}`);
+      if (parsed.failed.length > 0) {
+        for (const f of parsed.failed) {
+          const stmt = f.statement ? ` (stmt ${f.statement})` : "";
+          pushFetchError("Schemas", `${f.file}${stmt}: ${f.error}`);
+        }
+        setMessage(
+          `Schemas parciais: ${parsed.applied.length} aplicados, ${parsed.failed.length} falharam, ${parsed.skipped.length} ignorados.`
+        );
+      } else if (parsed.ok || parsed.success) {
+        setMessage(
+          `Schemas aplicados (${parsed.applied.length}): ${parsed.applied.join(", ") || "—"}`
+        );
       } else {
-        const errors = Array.isArray(record.errors)
-          ? (record.errors as string[]).join("; ")
-          : parseApiErrorMessage(body, "Falha ao aplicar schemas");
-        pushFetchError("Schemas", errors);
-        setMessage(`Erros schema: ${errors}`);
+        const detail = parsed.errors.join("; ") || "Nenhum schema aplicado.";
+        pushFetchError("Schemas", detail);
+        setMessage(detail);
       }
+
       await runValidation();
     } catch (e) {
       const detail = e instanceof Error ? e.message : "Falha ao aplicar schemas";
@@ -164,7 +235,7 @@ function AdminValidacaoPageInner() {
     } finally {
       setSchemaLoading(false);
     }
-  }, [pushFetchError, runValidation]);
+  }, [clearFetchErrors, pushFetchError, runValidation]);
 
   const startRuntime = useCallback(async () => {
     setRuntimeLoading(true);
@@ -268,6 +339,47 @@ function AdminValidacaoPageInner() {
       {fetchErrors.map((err, i) => (
         <ApiErrorCard key={`${i}-${err.slice(0, 24)}`} title="Falha na operação" detail={err} />
       ))}
+
+      {schemaResult && (
+        <div className="gp-val-schema-results">
+          <h2 className="gp-type-title">Resultado — aplicar schemas</h2>
+          {schemaResult.applied.length > 0 && (
+            <div className="gp-val-schema-results__ok">
+              <strong>Aplicados</strong>
+              <ul>
+                {schemaResult.applied.map((f) => (
+                  <li key={f}>{f}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {schemaResult.skipped.length > 0 && (
+            <div className="gp-val-schema-results__skip">
+              <strong>Ignorados (idempotente)</strong>
+              <ul>
+                {schemaResult.skipped.map((s, i) => (
+                  <li key={`${s.file}-${i}`}>
+                    {s.file}: {s.reason}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {schemaResult.failed.length > 0 && (
+            <div className="gp-val-schema-results__fail">
+              <strong>Falharam</strong>
+              <ul>
+                {schemaResult.failed.map((f, i) => (
+                  <li key={`${f.file}-${i}`}>
+                    {f.file}
+                    {f.statement ? ` #${f.statement}` : ""}: {f.error}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       {!loading && !report && fetchErrors.length === 0 && (
         <p className="gp-val-empty">

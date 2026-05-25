@@ -10791,6 +10791,38 @@ body {
   gap: 0.5rem;
 }
 
+.gp-val-schema-results {
+  margin: 1rem 0 1.5rem;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--gp-gray-light);
+  font-size: 0.85rem;
+}
+
+.gp-val-schema-results ul {
+  margin: 0.35rem 0 0.75rem;
+  padding-left: 1.2rem;
+}
+
+.gp-val-schema-results__ok strong {
+  color: #15803d;
+}
+
+.gp-val-schema-results__skip strong {
+  color: #b45309;
+}
+
+.gp-val-schema-results__fail {
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.gp-val-schema-results__fail strong {
+  color: #b91c1c;
+}
+
 .gp-val-summary {
   font-size: 0.9rem;
   margin-bottom: 1rem;
