@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
 
 const NAV = [
   { href: "/admin", label: "Painel" },
@@ -14,18 +13,9 @@ const NAV = [
   { href: "/admin/configuracoes", label: "Configurações" },
 ];
 
+/** Shell do painel — acesso validado em app/admin/layout (AdminGuard + /api/auth/me). */
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user } = useAuth();
-
-  if (!user || user.role !== "admin") {
-    return (
-      <div className="gp-admin-denied">
-        <p>Acesso restrito à equipe GoalPressure.</p>
-        <Link href="/">Voltar ao início</Link>
-      </div>
-    );
-  }
 
   return (
     <div className="gp-admin-shell">
