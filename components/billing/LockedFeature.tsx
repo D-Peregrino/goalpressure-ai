@@ -14,8 +14,8 @@ export default function LockedFeature({
   children: React.ReactNode;
   preview?: React.ReactNode;
 }) {
-  const { can } = useSubscription();
-  if (can(feature)) return <>{children}</>;
+  const { can, isAdmin } = useSubscription();
+  if (isAdmin || can(feature)) return <>{children}</>;
 
   const label = FEATURE_LABELS[feature] ?? "Recurso do Plano Fundador";
 

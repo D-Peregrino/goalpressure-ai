@@ -25,9 +25,9 @@ export default function PaywallGate({
   title?: string;
   compact?: boolean;
 }) {
-  const { can } = useSubscription();
+  const { can, isAdmin } = useSubscription();
 
-  if (can(feature)) {
+  if (isAdmin || can(feature)) {
     return <>{children}</>;
   }
 

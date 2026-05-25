@@ -10,7 +10,7 @@ import PlanBadge from "@/components/billing/PlanBadge";
 
 export default function AppTopbar() {
   const { user, signOut, loading } = useAuth();
-  const { plan } = useSubscription();
+  const { plan, isAdmin } = useSubscription();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -41,7 +41,7 @@ export default function AppTopbar() {
             </span>
             <span className="gp-app-topbar__meta">
               <span className="gp-app-topbar__name">{user.name || "Conta"}</span>
-              <PlanBadge plan={plan} />
+              <PlanBadge plan={plan} isAdmin={isAdmin} />
             </span>
             <ChevronDown className="h-4 w-4 opacity-70" />
           </button>

@@ -129,9 +129,10 @@ export function UserWorkspaceProvider({ children }: { children: React.ReactNode 
         setData(merged);
         saveLocalWorkspace(merged);
         setSyncState("synced");
-        if (!merged.onboardingCompleted) {
+        const isAdminUser = user.role === "admin";
+        if (!isAdminUser && !merged.onboardingCompleted) {
           setOnboardingOpen(true);
-        } else if (!merged.spotlightCompleted) {
+        } else if (!isAdminUser && !merged.spotlightCompleted) {
           setSpotlightOpen(true);
         }
         if (JSON.stringify(merged) !== JSON.stringify(remote)) {
@@ -151,7 +152,6 @@ export function UserWorkspaceProvider({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     if (authLoading) return;
-    setReady(false);
     void hydrate();
   }, [authLoading, user?.id, hydrate]);
 

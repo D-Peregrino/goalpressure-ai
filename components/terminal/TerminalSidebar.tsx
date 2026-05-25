@@ -23,6 +23,7 @@ import type { LucideIcon } from "lucide-react";
 const STORAGE_KEY = "gp-sidebar-collapsed";
 
 const NAV_ICONS: Record<string, LucideIcon> = {
+  "/admin": Settings2,
   "/minha-central": Home,
   "/terminal": Radio,
   "/feed": Radio,
@@ -39,9 +40,9 @@ export default function TerminalSidebar({
 }: {
   isActive: (href: string) => boolean;
 }) {
-  const { tier, can } = useSubscription();
+  const { tier, can, isAdmin } = useSubscription();
   const [collapsed, setCollapsed] = useState(false);
-  const nav = navItemsForTier(tier, can("ops"));
+  const nav = navItemsForTier(tier, can("ops"), isAdmin);
 
   useEffect(() => {
     try {
@@ -141,8 +142,8 @@ export function TerminalSidebarMobile({
   isActive: (href: string) => boolean;
   onNavigate?: () => void;
 }) {
-  const { tier, can } = useSubscription();
-  const nav = navItemsForTier(tier, can("ops"));
+  const { tier, can, isAdmin } = useSubscription();
+  const nav = navItemsForTier(tier, can("ops"), isAdmin);
 
   return (
     <nav className="gp-sidebar gp-sidebar--mobile">
@@ -166,6 +167,9 @@ export function TerminalSidebarMobile({
 
 export function useTerminalNavActive(pathname: string) {
   return (href: string) => {
+    if (href === "/admin") {
+      return pathname.startsWith("/admin");
+    }
     if (href === "/minha-central") {
       return pathname === "/minha-central" || pathname === "/inicio";
     }

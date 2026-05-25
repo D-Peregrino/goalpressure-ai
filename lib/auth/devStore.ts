@@ -54,7 +54,7 @@ export function createDevUser(input: {
     password: input.password,
     name: input.name.trim(),
     role: isAdminEmail(email) ? "admin" : "user",
-    plan: "free",
+    plan: isAdminEmail(email) ? "fundador" : "free",
     subscriptionStatus: "active",
     couponCode: null,
     createdAt: new Date().toISOString(),

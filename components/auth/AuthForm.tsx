@@ -24,8 +24,7 @@ export function LoginForm() {
       setErro(res.error);
       return;
     }
-    const redirect = params.get("redirect") ?? "/minha-central";
-    router.push(redirect);
+    router.push(res.redirectTo ?? params.get("redirect") ?? "/minha-central");
   }
 
   return (
@@ -95,8 +94,7 @@ export function SignupForm() {
       setInfo(res.info);
       return;
     }
-    const redirect = params.get("redirect") ?? "/minha-central";
-    router.push(redirect);
+    router.push(res.redirectTo ?? params.get("redirect") ?? "/minha-central");
   }
 
   return (

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { isAdminEmail } from "@/lib/auth/admin";
+import { resolveAccountPayload } from "@/lib/auth/resolveAccount";
 import { DEV_USER_COOKIE } from "@/lib/auth/session";
 import { findDevUserById, devAuthEnabled } from "@/lib/auth/devStore";
-import { fetchSubscriptionForUser } from "@/lib/commercial/db";
+import { getEffectivePlan } from "@/lib/auth/entitlements";
 import type { DbPlan } from "@/lib/subscription/permissions";
 import { getUserFromAccessToken } from "@/lib/supabase/server-auth";
 import { getSupabaseAdmin } from "@/lib/supabase/client";
@@ -50,15 +51,18 @@ export async function GET(request: NextRequest) {
     if (!id) return NextResponse.json({ error: "nao_autenticado" }, { status: 401 });
     const u = findDevUserById(id);
     if (!u) return NextResponse.json({ error: "nao_autenticado" }, { status: 401 });
+    const role = isAdminEmail(u.email) ? "admin" : u.role;
+    const rawPlan = role === "admin" ? "fundador" : u.plan;
+    const plan = getEffectivePlan(rawPlan, role, u.subscriptionStatus);
     return NextResponse.json({
       user: {
         id: u.id,
         email: u.email,
         name: u.name,
-        role: isAdminEmail(u.email) ? "admin" : u.role,
+        role,
       },
-      plan: u.plan,
-      subscriptionStatus: u.subscriptionStatus,
+      plan,
+      subscriptionStatus: role === "admin" ? "active" : u.subscriptionStatus,
       couponCode: u.couponCode,
     });
   }
@@ -73,9 +77,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "nao_autenticado" }, { status: 401 });
   }
 
-  const userId = authUser.id;
-  const email = authUser.email;
-
   const admin = getSupabaseAdmin();
   let profileName = authUser.user_metadata?.name as string | undefined;
   let profileRole: string | undefined;
@@ -84,24 +85,18 @@ export async function GET(request: NextRequest) {
     const { data: profile } = await admin
       .from("profiles")
       .select("name, role")
-      .eq("user_id", userId)
+      .eq("user_id", authUser.id)
       .maybeSingle();
     profileName = profile?.name ?? profileName;
     profileRole = profile?.role;
   }
 
-  const sub = await fetchSubscriptionForUser(userId);
-  const plan = (sub?.plan as DbPlan) ?? "free";
-
-  return NextResponse.json({
-    user: {
-      id: userId,
-      email,
-      name: profileName ?? "",
-      role: isAdminEmail(email) ? "admin" : (profileRole as "user") ?? "user",
-    },
-    plan,
-    subscriptionStatus: sub?.status ?? "active",
-    couponCode: sub?.coupon_code ?? null,
+  const account = await resolveAccountPayload({
+    userId: authUser.id,
+    email: authUser.email,
+    name: profileName ?? "",
+    profileRole,
   });
+
+  return NextResponse.json(account);
 }

@@ -10,6 +10,7 @@ import {
 } from "react";
 import { getSupabaseBrowser, isSupabaseAuthConfigured } from "@/lib/supabase/browser";
 import type { AccountPayload } from "@/lib/auth/session";
+import { getPostLoginRedirect } from "@/lib/auth/entitlements";
 import type { DbPlan } from "@/lib/subscription/permissions";
 
 interface AuthContextValue {
@@ -17,16 +18,17 @@ interface AuthContextValue {
   plan: DbPlan;
   subscriptionStatus: string;
   couponCode: string | null;
+  isAdmin: boolean;
   loading: boolean;
   signUp: (
     name: string,
     email: string,
     password: string
-  ) => Promise<{ error?: string; info?: string }>;
-  signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  ) => Promise<{ error?: string; info?: string; redirectTo?: string }>;
+  signIn: (email: string, password: string) => Promise<{ error?: string; redirectTo?: string }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error?: string }>;
-  refreshAccount: () => Promise<void>;
+  refreshAccount: () => Promise<AccountPayload | null>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -35,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [account, setAccount] = useState<AccountPayload | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const refreshAccount = useCallback(async () => {
+  const refreshAccount = useCallback(async (): Promise<AccountPayload | null> => {
     const headers: HeadersInit = {};
     const supabase = getSupabaseBrowser();
     if (supabase) {
@@ -57,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (res.ok) {
         const data = (await res.json()) as AccountPayload;
         setAccount(data);
-        return;
+        return data;
       }
       if (res.status === 401) {
         setAccount(null);
@@ -65,6 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       /* Mantém conta em cache — evita logout aleatório em falha de rede */
     }
+    return null;
   }, []);
 
   useEffect(() => {
@@ -165,8 +168,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (loginError) return { error: loginError.message };
         }
 
-        await refreshAccount();
-        return {};
+        const acc = await refreshAccount();
+        const redirectTo = acc
+          ? getPostLoginRedirect({
+              role: acc.user.role,
+              plan: acc.plan,
+              subscriptionStatus: acc.subscriptionStatus,
+            })
+          : "/minha-central";
+        return { redirectTo };
       } catch (e) {
         return {
           error: e instanceof Error ? e.message : "Falha de rede ao criar conta.",
@@ -219,8 +229,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (error) return { error: error.message };
         }
 
-        await refreshAccount();
-        return {};
+        const acc = await refreshAccount();
+        const redirectTo = acc
+          ? getPostLoginRedirect({
+              role: acc.user.role,
+              plan: acc.plan,
+              subscriptionStatus: acc.subscriptionStatus,
+            })
+          : "/minha-central";
+        return { redirectTo };
       } catch (e) {
         return {
           error: e instanceof Error ? e.message : "Falha de rede ao entrar.",
@@ -257,8 +274,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => ({
       user: account?.user ?? null,
       plan: account?.plan ?? "free",
-      subscriptionStatus: account?.subscriptionStatus ?? "active",
+      subscriptionStatus: account?.subscriptionStatus ?? "inactive",
       couponCode: account?.couponCode ?? null,
+      isAdmin: account?.user?.role === "admin",
       loading,
       signUp,
       signIn,
@@ -278,14 +296,15 @@ export function useAuth(): AuthContextValue {
     return {
       user: null,
       plan: "free",
-      subscriptionStatus: "active",
+      subscriptionStatus: "inactive",
       couponCode: null,
+      isAdmin: false,
       loading: false,
       signUp: async () => ({}),
       signIn: async () => ({}),
       signOut: async () => {},
       resetPassword: async () => ({ error: "Auth não inicializado" }),
-      refreshAccount: async () => {},
+      refreshAccount: async () => null,
     };
   }
   return ctx;

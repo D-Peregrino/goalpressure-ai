@@ -182,3 +182,45 @@ export async function activateFundadorManualAdmin(input: {
 
   return { ok: true, subscriptionId: data.id };
 }
+
+/** Assinatura automática para e-mails em ADMIN_EMAILS sem plano ativo. */
+export async function ensureAdminAutoSubscription(userId: string): Promise<void> {
+  const admin = getSupabaseAdmin();
+  if (!admin || !isSupabaseConfigured()) return;
+
+  const existing = await fetchSubscriptionForUser(userId);
+  if (existing?.plan === "fundador" && existing.status === "active") return;
+
+  const now = new Date();
+  const periodEnd = new Date(now);
+  periodEnd.setMonth(periodEnd.getMonth() + 12);
+
+  const row = {
+    user_id: userId,
+    plan: "fundador" as DbPlan,
+    status: "active",
+    provider: "admin_auto",
+    provider_customer_id: null,
+    provider_subscription_id: null,
+    coupon_code: null,
+    original_amount_cents: null,
+    discount_percent: 0,
+    final_amount_cents: 0,
+    current_period_start: now.toISOString(),
+    current_period_end: periodEnd.toISOString(),
+    updated_at: now.toISOString(),
+  };
+
+  if (existing) {
+    await admin.from("subscriptions").update(row).eq("user_id", userId);
+  } else {
+    await admin.from("subscriptions").insert(row);
+  }
+
+  await admin.from("customer_events").insert({
+    user_id: userId,
+    type: "admin_auto_founder",
+    description: "Plano Fundador automático (ADMIN_EMAILS)",
+    metadata: { provider: "admin_auto", period_end: periodEnd.toISOString() },
+  });
+}

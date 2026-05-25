@@ -3,19 +3,20 @@
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { hasTerminalAccess } from "@/lib/auth/entitlements";
 import { tierMeetsMinimum } from "@/lib/subscription/tiers";
 import { planLabelPt } from "@/lib/subscription/permissions";
 import AppLoading from "@/components/layout/AppLoading";
 
 export default function ProGate({ children }: { children: React.ReactNode }) {
-  const { loading: authLoading } = useAuth();
-  const { tier, plan, isAuthenticated } = useSubscription();
+  const { loading: authLoading, user, plan, subscriptionStatus } = useAuth();
+  const { tier, isAdmin } = useSubscription();
 
   if (authLoading) {
     return <AppLoading label="Carregando permissões…" />;
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <div className="gp-pro-gate">
         <h2>Faça login para continuar</h2>
@@ -27,7 +28,11 @@ export default function ProGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!tierMeetsMinimum(tier, "pro")) {
+  if (
+    !isAdmin &&
+    !hasTerminalAccess(plan, user.role, subscriptionStatus) &&
+    !tierMeetsMinimum(tier, "pro")
+  ) {
     return (
       <div className="gp-pro-gate">
         <h2>Recurso Profissional</h2>

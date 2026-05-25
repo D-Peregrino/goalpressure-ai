@@ -32,7 +32,8 @@ export type NavItem = {
 
 export function navItemsForTier(
   tier: SubscriptionTier,
-  opsAccess: boolean
+  opsAccess: boolean,
+  isAdmin = false
 ): NavItem[] {
   const items: NavItem[] = NAV_ITEMS.filter(
     (item) =>
@@ -44,10 +45,13 @@ export function navItemsForTier(
     short: item.short,
     advancedOnly: "advancedOnly" in item ? item.advancedOnly : undefined,
   }));
-  if (opsAccess) {
-    return [...items, { href: "/ops", label: "Operações", short: "Ops" }];
+  const withOps = opsAccess
+    ? [...items, { href: "/ops", label: "Operações", short: "Ops" }]
+    : items;
+  if (isAdmin) {
+    return [{ href: "/admin", label: "Admin", short: "Admin" }, ...withOps];
   }
-  return items;
+  return withOps;
 }
 
 export const PAGE_COPY = {
