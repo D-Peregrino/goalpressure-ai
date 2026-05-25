@@ -25,6 +25,8 @@ import { saveLiveSnapshotAsync } from "@/lib/storage/snapshotStorage";
 import { generateSignalAnalytics } from "@/lib/analytics/signalAnalytics";
 import { runExperimentalEvaluationAsync } from "@/lib/experimental/experimentalSignalEngine";
 import { trackSignalOutcomes } from "@/lib/storage/signalOutcomeStorage";
+import { scheduleLearningFeedbackLoop } from "@/lib/engine/learning/runLearningFeedbackLoop";
+import { isLearningCacheStale } from "@/lib/engine/learning/learningSnapshotStore";
 import { persistLiveMatches } from "@/lib/live/liveMatchPersistence";
 import { logError, logInfo, logWarn } from "@/lib/utils/logger";
 import {
@@ -62,6 +64,9 @@ async function persistTimelineThenOutcomes(
   await appendMatchTimeline(matches, signals, meta);
   await trackSignalOutcomes(matches, signals, meta);
   await generateSignalAnalytics();
+  if (isLearningCacheStale()) {
+    scheduleLearningFeedbackLoop();
+  }
 }
 
 function scheduleHistoricalPersistence(

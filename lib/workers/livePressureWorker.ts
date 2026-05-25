@@ -14,6 +14,7 @@ import { applyEvEngineToMatch, runEvEngine } from "@/lib/engine/ev/runEvEngine";
 import { persistEvSignals } from "@/lib/engine/ev/liveEvSignalPersistence";
 import { runOperationalIntelligence } from "@/lib/engine/ops/runOperationalIntelligence";
 import { persistOperationalInsight } from "@/lib/engine/ops/operationalInsightsPersistence";
+import { applyLearningFromSnapshot } from "@/lib/engine/learning/applyLearningToMatch";
 import {
   markSignalEmitted,
   validateSignalAntiSpam,
@@ -154,6 +155,8 @@ export async function runLivePressureWorker(
     const opsResult = runOperationalIntelligence(updated, pressureResult);
     updated = opsResult.match;
     if (await persistOperationalInsight(opsResult.insight)) opsSnapshots += 1;
+
+    updated = applyLearningFromSnapshot(updated);
 
     enriched.push(updated);
 

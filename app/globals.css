@@ -8043,6 +8043,109 @@ body {
   animation: gp-ops-ignite-pulse 2.4s ease-in-out infinite;
 }
 
+/* Learning Engine */
+.gp-learning-panel {
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 12px;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.gp-learning-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.gp-learning-panel__kpis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.gp-learning-panel__value {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.gp-learning-panel__block {
+  margin-bottom: 0.65rem;
+}
+
+.gp-learning-panel__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.7rem;
+}
+
+.gp-learning-panel__list li {
+  margin-bottom: 0.35rem;
+  line-height: 1.4;
+}
+
+.gp-learning-panel__list strong {
+  display: block;
+  color: rgba(226, 232, 240, 0.95);
+}
+
+.gp-learning-panel__list span {
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.gp-learning-panel__tags {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  font-size: 0.65rem;
+}
+
+.gp-learning-panel__tags li {
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  background: rgba(51, 65, 85, 0.5);
+  color: rgba(203, 213, 225, 0.95);
+}
+
+.gp-learning-panel__rec,
+.gp-learning-panel__late {
+  margin: 0.5rem 0 0;
+  line-height: 1.45;
+}
+
+.gp-learn-badge {
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 0.12rem 0.35rem;
+  border-radius: 4px;
+}
+
+.gp-learn-badge--edge {
+  background: rgba(20, 184, 166, 0.25);
+  color: #5eead4;
+}
+
+.gp-learn-badge--league {
+  background: rgba(99, 102, 241, 0.25);
+  color: #a5b4fc;
+}
+
+.gp-learn-badge--team {
+  background: rgba(234, 179, 8, 0.2);
+  color: #fde047;
+}
+
+.gp-learn-badge--pattern {
+  background: rgba(244, 114, 182, 0.2);
+  color: #f9a8d4;
+}
+
 .gp-ev-glow--trap {
   box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.4),
     0 0 12px rgba(239, 68, 68, 0.1);

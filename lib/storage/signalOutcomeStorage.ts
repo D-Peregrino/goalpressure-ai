@@ -19,6 +19,11 @@ import {
   type MatchTimelineDocument,
 } from "@/lib/storage/matchTimelineStorage";
 import { logInfo, logWarn } from "@/lib/utils/logger";
+import {
+  recordFromResolvedSignal,
+  recordSignalOutcome,
+} from "@/lib/engine/learning/recordSignalOutcome";
+import { scheduleLearningFeedbackLoop } from "@/lib/engine/learning/runLearningFeedbackLoop";
 
 const LOG_SCOPE = "signal-outcome-storage";
 const SIGNALS_DIR = path.join(process.cwd(), "data", "signals");
@@ -407,6 +412,11 @@ async function processOpenSignals(
 
       await writeFile(filePath, JSON.stringify(resolved, null, 2), "utf8");
       result.resolved += 1;
+
+      const matchForRecord = findMatchForRecord(record, matches);
+      void recordSignalOutcome(
+        recordFromResolvedSignal(resolved, matchForRecord)
+      );
       continue;
     }
 
@@ -489,6 +499,10 @@ export async function trackSignalOutcomes(
       resolved: result.resolved,
       skippedDuplicate: result.skippedDuplicate,
     });
+  }
+
+  if (result.resolved > 0) {
+    scheduleLearningFeedbackLoop();
   }
 
   return result;

@@ -179,6 +179,26 @@ function MatchCardProInner({
               {isLive && match.evConfidenceClass === "ELITE" && (
                 <span className="gp-ev-badge gp-ev-badge--confidence">HIGH CONF</span>
               )}
+              {isLive &&
+                match.learningBadges?.includes("HIGH_HISTORICAL_EDGE") && (
+                  <span className="gp-learn-badge gp-learn-badge--edge">
+                    HIST. EDGE
+                  </span>
+                )}
+              {isLive &&
+                match.learningBadges?.includes("LEAGUE_FAVORABLE") && (
+                  <span className="gp-learn-badge gp-learn-badge--league">LIGA+</span>
+                )}
+              {isLive &&
+                match.learningBadges?.includes("TEAM_PROFILE_DETECTED") && (
+                  <span className="gp-learn-badge gp-learn-badge--team">PERFIL</span>
+                )}
+              {isLive &&
+                match.learningBadges?.includes("HISTORICAL_PATTERN") && (
+                  <span className="gp-learn-badge gp-learn-badge--pattern">
+                    PADRÃO
+                  </span>
+                )}
               {isLive && (
                 <DataSourceBadge source="sportmonks" className="gp-sport-card__source-badge" />
               )}

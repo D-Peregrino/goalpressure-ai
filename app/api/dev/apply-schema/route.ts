@@ -28,6 +28,7 @@ const SCHEMA_FILES = [
   "live-pressure-snapshots-schema.sql",
   "live-ev-signals-schema.sql",
   "operational-insights-schema.sql",
+  "learning-layer-schema.sql",
   "commercial-schema.sql",
 ];
 

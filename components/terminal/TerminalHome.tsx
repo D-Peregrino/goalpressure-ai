@@ -23,6 +23,7 @@ import LiveFeedEmptyState from "@/components/live/LiveFeedEmptyState";
 import PressureEnginePanel from "@/components/terminal/PressureEnginePanel";
 import EVEnginePanel from "@/components/terminal/EVEnginePanel";
 import OperationalIntelligencePanel from "@/components/terminal/OperationalIntelligencePanel";
+import LearningEnginePanel from "@/components/terminal/LearningEnginePanel";
 import { useTerminalAuditMode } from "@/hooks/useTerminalAuditMode";
 import PaywallGate from "@/components/subscription/PaywallGate";
 import UpgradeBanner from "@/components/subscription/UpgradeBanner";
@@ -197,6 +198,7 @@ export default function TerminalHome() {
           />
           <EVEnginePanel matches={pool} />
           <OperationalIntelligencePanel matches={pool} />
+          <LearningEnginePanel />
           <HeatRanking matches={pool} />
           <PaywallGate
             feature="timeline"

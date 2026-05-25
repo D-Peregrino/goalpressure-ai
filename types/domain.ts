@@ -216,6 +216,8 @@ export interface Match {
   opsIntelligence?: import("@/lib/engine/ops/runOperationalIntelligence").MatchOpsIntelligence;
   /** Índice de caos ofensivo (0–100) — engine OPS */
   chaosIndex?: number;
+  /** Memory & Learning — edge histórico, perfis, padrões */
+  learningContext?: import("@/lib/engine/learning/learning.types").MatchLearningContext;
 }
 
 // ─── Signal ──────────────────────────────────────────────────────────────────

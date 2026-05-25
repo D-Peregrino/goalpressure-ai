@@ -162,6 +162,10 @@ export interface EnrichedLiveMatch {
   opsNarrative?: string;
   opsHeadline?: string;
   opsFocusScore?: number;
+  /** Learning layer */
+  historicalEdgeScore?: number;
+  historicalEdgeLabel?: string;
+  learningBadges?: string[];
 }
 
 const SUPPLEMENTARY_PATHS = [
@@ -669,6 +673,9 @@ export function useLiveMatchCenter() {
         opsNarrative: match.opsIntelligence?.narrative,
         opsHeadline: match.opsIntelligence?.headline,
         opsFocusScore: match.opsIntelligence?.focusScore,
+        historicalEdgeScore: match.learningContext?.historicalEdge.score,
+        historicalEdgeLabel: match.learningContext?.historicalEdge.label,
+        learningBadges: match.learningContext?.historicalEdge.badges,
       };
     });
 

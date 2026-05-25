@@ -33,6 +33,10 @@ export type {
   RiskContext,
   PressurePattern,
 } from "@/lib/engine/ops/ops.types";
+export { runLearningFeedbackLoop, scheduleLearningFeedbackLoop } from "@/lib/engine/learning/runLearningFeedbackLoop";
+export { recordSignalOutcome } from "@/lib/engine/learning/recordSignalOutcome";
+export { calculateHistoricalEdge } from "@/lib/engine/learning/calculateHistoricalEdge";
+export type { LearningDashboardSnapshot, MatchLearningContext } from "@/lib/engine/learning/learning.types";
 export { generateLiveSignals, buildMatchEngineInsight } from "@/lib/engine/signals/liveSignalGenerator";
 export {
   evaluateSignalOpportunity,
