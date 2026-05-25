@@ -43,6 +43,10 @@ export function middleware(request: NextRequest) {
   }
 
   if (isAuthPage(pathname) && hasSessionCookie(request)) {
+    // Cookies podem estar expirados: ?reauth=1 mantém /entrar acessível para login real.
+    if (request.nextUrl.searchParams.get("reauth") === "1") {
+      return NextResponse.next();
+    }
     const redirect = request.nextUrl.searchParams.get("redirect") ?? "/terminal";
     const url = request.nextUrl.clone();
     url.pathname = redirect.startsWith("/") ? redirect : "/terminal";

@@ -11,7 +11,9 @@ import {
 import { getSupabaseBrowser, isSupabaseAuthConfigured } from "@/lib/supabase/browser";
 import type { AccountPayload } from "@/lib/auth/session";
 import { syncSessionCookies } from "@/lib/auth/syncSessionCookies";
+import { clearStaleAuthSession } from "@/lib/auth/clearStaleAuthSession";
 import { getPostLoginRedirect } from "@/lib/auth/entitlements";
+import { logAdminAuth } from "@/lib/admin/adminAuthLog";
 import type { Session } from "@supabase/supabase-js";
 import type { DbPlan } from "@/lib/subscription/permissions";
 
@@ -27,7 +29,11 @@ interface AuthContextValue {
     email: string,
     password: string
   ) => Promise<{ error?: string; info?: string; redirectTo?: string }>;
-  signIn: (email: string, password: string) => Promise<{ error?: string; redirectTo?: string }>;
+  signIn: (
+    email: string,
+    password: string,
+    options?: { redirectAfter?: string | null }
+  ) => Promise<{ error?: string; redirectTo?: string }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error?: string }>;
   refreshAccount: () => Promise<AccountPayload | null>;
@@ -77,8 +83,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       if (res.status === 401) {
         setAccount(null);
+        logAdminAuth("[ADMIN_SESSION]", {
+          scope: "auth_me",
+          status: 401,
+          message: "nao_autenticado",
+        });
+        await clearStaleAuthSession("auth_me_401");
       }
-    } catch {
+    } catch (e) {
+      logAdminAuth("[ADMIN_SESSION]", { scope: "auth_me", message: "network_error" }, e);
       /* Mantém conta em cache — evita logout aleatório em falha de rede */
     }
     return null;
@@ -93,8 +106,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (supabase) {
         const { data: sessionData } = await supabase.auth.getSession();
         if (!cancelled && sessionData.session) {
+          logAdminAuth("[ADMIN_SESSION]", {
+            scope: "init",
+            message: "supabase_session_present",
+          });
           await persistServerSession(sessionData.session);
-          await refreshAccount();
+          const acc = await refreshAccount();
+          if (!acc && !cancelled) {
+            logAdminAuth("[ADMIN_SESSION]", {
+              scope: "init",
+              message: "supabase_session_invalid_cleared",
+            });
+          }
         }
         const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
           if (cancelled) return;
@@ -206,7 +229,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const signIn = useCallback(
-    async (email: string, password: string) => {
+    async (email: string, password: string, options?: { redirectAfter?: string | null }) => {
+      logAdminAuth("[ADMIN_LOGIN]", {
+        scope: "sign_in_start",
+        message: options?.redirectAfter ?? undefined,
+      });
       try {
         const res = await fetch("/api/auth/login", {
           method: "POST",
@@ -229,9 +256,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (!res.ok) {
-          return {
-            error: data.error ?? data.message ?? `Erro ao entrar (${res.status}).`,
-          };
+          const err = data.error ?? data.message ?? `Erro ao entrar (${res.status}).`;
+          logAdminAuth("[ADMIN_LOGIN]", { scope: "sign_in_failed", status: res.status, message: err });
+          return { error: err };
         }
 
         const supabase = getSupabaseBrowser();
@@ -259,13 +286,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               role: acc.user.role,
               plan: acc.plan,
               subscriptionStatus: acc.subscriptionStatus,
+              redirectParam: options?.redirectAfter ?? null,
             })
-          : "/minha-central";
+          : options?.redirectAfter?.startsWith("/")
+            ? options.redirectAfter
+            : "/minha-central";
+        logAdminAuth("[ADMIN_LOGIN]", {
+          scope: "sign_in_success",
+          message: redirectTo,
+          extra: { role: acc?.user.role },
+        });
         return { redirectTo };
       } catch (e) {
-        return {
-          error: e instanceof Error ? e.message : "Falha de rede ao entrar.",
-        };
+        const err = e instanceof Error ? e.message : "Falha de rede ao entrar.";
+        logAdminAuth("[ADMIN_LOGIN]", { scope: "sign_in_exception", message: err }, e);
+        return { error: err };
       }
     },
     [refreshAccount]
@@ -325,7 +360,7 @@ export function useAuth(): AuthContextValue {
       isAdmin: false,
       loading: false,
       signUp: async () => ({}),
-      signIn: async () => ({}),
+      signIn: async () => ({ error: "Auth não inicializado" }),
       signOut: async () => {},
       resetPassword: async () => ({ error: "Auth não inicializado" }),
       refreshAccount: async () => null,

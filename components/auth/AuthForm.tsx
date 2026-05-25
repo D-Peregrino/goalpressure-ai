@@ -4,11 +4,15 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { logAdminAuth } from "@/lib/admin/adminAuthLog";
+import { isReauthLoginRequest } from "@/lib/auth/routes";
 
 export function LoginForm() {
   const { signIn } = useAuth();
   const router = useRouter();
   const params = useSearchParams();
+  const redirectAfter = params.get("redirect");
+  const reauth = isReauthLoginRequest(params);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [erro, setErro] = useState<string | null>(null);
@@ -18,18 +22,44 @@ export function LoginForm() {
     e.preventDefault();
     setLoading(true);
     setErro(null);
-    const res = await signIn(email, password);
+    logAdminAuth("[ADMIN_LOGIN]", {
+      scope: "login_form_submit",
+      route: redirectAfter ?? undefined,
+      extra: { reauth },
+    });
+
+    const res = await signIn(email, password, { redirectAfter });
     setLoading(false);
     if (res.error) {
       setErro(res.error);
       return;
     }
-    router.push(res.redirectTo ?? params.get("redirect") ?? "/minha-central");
+
+    const target =
+      (redirectAfter?.startsWith("/") ? redirectAfter : null) ??
+      res.redirectTo ??
+      "/minha-central";
+
+    logAdminAuth("[ADMIN_LOGIN]", {
+      scope: "login_form_redirect",
+      route: target,
+    });
+    router.replace(target);
   }
 
   return (
     <form onSubmit={submit} className="gp-auth-form">
-      {erro && <p className="gp-auth-form__erro">{erro}</p>}
+      {reauth && redirectAfter && (
+        <p className="gp-auth-form__info">
+          Entre novamente para acessar <strong>{redirectAfter}</strong>.
+        </p>
+      )}
+      {erro && (
+        <div className="gp-auth-form__erro-card" role="alert">
+          <strong>Não foi possível entrar</strong>
+          <p>{erro}</p>
+        </div>
+      )}
       <label className="gp-auth-form__label">
         E-mail
         <input
@@ -94,12 +124,22 @@ export function SignupForm() {
       setInfo(res.info);
       return;
     }
-    router.push(res.redirectTo ?? params.get("redirect") ?? "/minha-central");
+    const redirectAfter = params.get("redirect");
+    router.push(
+      (redirectAfter?.startsWith("/") ? redirectAfter : null) ??
+        res.redirectTo ??
+        "/minha-central"
+    );
   }
 
   return (
     <form onSubmit={submit} className="gp-auth-form">
-      {erro && <p className="gp-auth-form__erro">{erro}</p>}
+      {erro && (
+        <div className="gp-auth-form__erro-card" role="alert">
+          <strong>Erro ao criar conta</strong>
+          <p>{erro}</p>
+        </div>
+      )}
       {info && <p className="gp-auth-form__ok">{info}</p>}
       <label className="gp-auth-form__label">
         Nome

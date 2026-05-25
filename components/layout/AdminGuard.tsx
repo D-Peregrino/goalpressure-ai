@@ -19,7 +19,7 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
         <h2>Faça login</h2>
         <p>Entre com sua conta de administrador para acessar esta área.</p>
         <div className="gp-admin-denied__actions">
-          <Link href="/entrar?redirect=%2Fadmin%2Fvalidacao" className="gp-btn gp-btn--primary">
+          <Link href="/entrar?redirect=%2Fadmin%2Fvalidacao&reauth=1" className="gp-btn gp-btn--primary">
             Entrar
           </Link>
         </div>

@@ -44,7 +44,21 @@ export function isProRoute(pathname: string): boolean {
   );
 }
 
-export function loginUrl(redirectPath?: string): string {
-  if (!redirectPath || redirectPath === "/entrar") return "/entrar";
-  return `/entrar?redirect=${encodeURIComponent(redirectPath)}`;
+export type LoginUrlOptions = {
+  /** Força tela de login mesmo com cookies antigos (evita loop middleware ↔ AuthGuard). */
+  reauth?: boolean;
+};
+
+export function loginUrl(redirectPath?: string, options?: LoginUrlOptions): string {
+  const params = new URLSearchParams();
+  if (redirectPath && redirectPath !== "/entrar" && !redirectPath.startsWith("/entrar?")) {
+    params.set("redirect", redirectPath);
+  }
+  if (options?.reauth) params.set("reauth", "1");
+  const q = params.toString();
+  return q ? `/entrar?${q}` : "/entrar";
+}
+
+export function isReauthLoginRequest(searchParams: URLSearchParams | null): boolean {
+  return searchParams?.get("reauth") === "1";
 }

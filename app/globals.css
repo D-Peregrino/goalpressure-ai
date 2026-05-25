@@ -10517,6 +10517,58 @@ body {
   margin-bottom: 0.5rem;
 }
 
+.gp-auth-form__erro-card {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.gp-auth-form__erro-card strong {
+  display: block;
+  color: #b91c1c;
+  margin-bottom: 0.25rem;
+}
+
+.gp-auth-form__erro-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--gp-gray);
+}
+
+.gp-auth-form__info {
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  background: rgba(59, 130, 246, 0.08);
+  border-radius: 8px;
+}
+
+.gp-admin-denied {
+  margin: 2rem auto;
+  max-width: 480px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.gp-admin-denied h2 {
+  margin: 0 0 0.5rem;
+}
+
+.gp-admin-denied__actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.gp-admin-denied__hint {
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: var(--gp-gray);
+}
+
 .gp-auth-form__ok,
 .gp-lead-form__ok {
   color: #15803d;
