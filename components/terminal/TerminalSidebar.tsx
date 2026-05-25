@@ -23,7 +23,7 @@ import type { LucideIcon } from "lucide-react";
 const STORAGE_KEY = "gp-sidebar-collapsed";
 
 const NAV_ICONS: Record<string, LucideIcon> = {
-  "/inicio": Home,
+  "/minha-central": Home,
   "/terminal": Radio,
   "/feed": Radio,
   "/analytics": BarChart3,
@@ -166,8 +166,8 @@ export function TerminalSidebarMobile({
 
 export function useTerminalNavActive(pathname: string) {
   return (href: string) => {
-    if (href === "/inicio") {
-      return pathname === "/inicio";
+    if (href === "/minha-central") {
+      return pathname === "/minha-central" || pathname === "/inicio";
     }
     if (href === "/terminal") {
       return pathname === "/terminal" || pathname === "/ops";

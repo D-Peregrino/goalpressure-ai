@@ -1,12 +1,13 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, Flame, Sparkles, Target, X } from "lucide-react";
+import { Activity, Crosshair, Flame, Sparkles, Target, X } from "lucide-react";
 import { ONBOARDING_STEPS } from "@/lib/subscription/commercialCopy";
 import { FLOW_EASE } from "@/components/ui/terminal/motion";
 
 const ICONS = {
   pressure: Activity,
+  tactical: Crosshair,
   edge: Target,
   heat: Flame,
   narrative: Sparkles,
@@ -87,7 +88,7 @@ export default function OnboardingModal({
               </button>
               {isLast ? (
                 <button type="button" className="gp-onboard__primary" onClick={onComplete}>
-                  Entrar na central
+                  Começar tour
                 </button>
               ) : (
                 <button

@@ -109,9 +109,18 @@ export default function AppShell({
         </AnimatePresence>
 
         <main className="gp-app-shell__content-wrap">
-          <div className="gp-app-shell__content">
-            {requireAuth ? <AuthGuard>{inner}</AuthGuard> : inner}
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={pathname}
+              className="gp-app-shell__content"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {requireAuth ? <AuthGuard>{inner}</AuthGuard> : inner}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </div>

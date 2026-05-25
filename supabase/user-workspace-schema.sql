@@ -7,7 +7,11 @@ create table if not exists public.user_workspace (
   watched text[] not null default '{}',
   reading_history jsonb not null default '[]'::jsonb,
   recent_opportunities jsonb not null default '[]'::jsonb,
+  saved_opportunities jsonb not null default '[]'::jsonb,
+  recent_alerts jsonb not null default '[]'::jsonb,
+  activity_log jsonb not null default '[]'::jsonb,
   onboarding_completed boolean not null default false,
+  spotlight_completed boolean not null default false,
   last_route text,
   updated_at timestamptz not null default now()
 );

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/requireUser";
 import { getWorkspaceForUser, saveWorkspaceForUser } from "@/lib/workspace/serverStore";
-import type { UserWorkspaceData } from "@/lib/workspace/types";
+import { EMPTY_WORKSPACE, type UserWorkspaceData } from "@/lib/workspace/types";
 
 export const dynamic = "force-dynamic";
 
@@ -26,21 +26,18 @@ export async function PUT(request: Request) {
   }
 
   const body = (await request.json()) as Partial<UserWorkspaceData>;
-  const current = (await getWorkspaceForUser(user.id)) ?? {
-    favorites: [],
-    watched: [],
-    readingHistory: [],
-    recentOpportunities: [],
-    onboardingCompleted: false,
-    lastRoute: null,
-  };
+  const current = (await getWorkspaceForUser(user.id)) ?? EMPTY_WORKSPACE;
 
   const next: UserWorkspaceData = {
     favorites: body.favorites ?? current.favorites,
     watched: body.watched ?? current.watched,
     readingHistory: body.readingHistory ?? current.readingHistory,
     recentOpportunities: body.recentOpportunities ?? current.recentOpportunities,
+    savedOpportunities: body.savedOpportunities ?? current.savedOpportunities,
+    recentAlerts: body.recentAlerts ?? current.recentAlerts,
+    activityLog: body.activityLog ?? current.activityLog,
     onboardingCompleted: body.onboardingCompleted ?? current.onboardingCompleted,
+    spotlightCompleted: body.spotlightCompleted ?? current.spotlightCompleted,
     lastRoute: body.lastRoute ?? current.lastRoute,
   };
 

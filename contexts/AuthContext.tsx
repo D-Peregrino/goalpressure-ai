@@ -36,24 +36,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refreshAccount = useCallback(async () => {
-    try {
-      const headers: HeadersInit = {};
-      const supabase = getSupabaseBrowser();
-      if (supabase) {
-        const { data: sess } = await supabase.auth.getSession();
-        if (sess.session?.access_token) {
-          headers.Authorization = `Bearer ${sess.session.access_token}`;
-        }
+    const headers: HeadersInit = {};
+    const supabase = getSupabaseBrowser();
+    if (supabase) {
+      const { data: sess } = await supabase.auth.getSession();
+      if (sess.session?.access_token) {
+        headers.Authorization = `Bearer ${sess.session.access_token}`;
       }
-      const res = await fetch("/api/auth/me", { credentials: "include", headers });
+    }
+
+    const fetchMe = async () =>
+      fetch("/api/auth/me", { credentials: "include", headers });
+
+    try {
+      let res = await fetchMe();
+      if (!res.ok && res.status >= 500) {
+        await new Promise((r) => setTimeout(r, 400));
+        res = await fetchMe();
+      }
       if (res.ok) {
         const data = (await res.json()) as AccountPayload;
         setAccount(data);
-      } else {
+        return;
+      }
+      if (res.status === 401) {
         setAccount(null);
       }
     } catch {
-      setAccount(null);
+      /* Mantém conta em cache — evita logout aleatório em falha de rede */
     }
   }, []);
 

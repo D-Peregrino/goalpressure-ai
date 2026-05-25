@@ -11,6 +11,7 @@ import {
 } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchWithAuth } from "@/lib/auth/fetchWithAuth";
+import { pushActivity } from "@/lib/workspace/activity";
 import {
   loadLocalWorkspace,
   mergeWorkspaces,
@@ -19,8 +20,11 @@ import {
 import {
   EMPTY_WORKSPACE,
   WORKSPACE_LIMITS,
+  type ActivityEntry,
   type ReadingHistoryEntry,
+  type RecentAlert,
   type RecentOpportunity,
+  type SavedOpportunity,
   type UserWorkspaceData,
 } from "@/lib/workspace/types";
 
@@ -32,18 +36,30 @@ interface UserWorkspaceContextValue {
   favorites: Set<string>;
   watched: string[];
   recent: RecentOpportunity[];
+  saved: SavedOpportunity[];
+  recentAlerts: RecentAlert[];
+  activityLog: ActivityEntry[];
   readingHistory: ReadingHistoryEntry[];
   onboardingCompleted: boolean;
+  spotlightCompleted: boolean;
   onboardingOpen: boolean;
   setOnboardingOpen: (open: boolean) => void;
   onboardingStep: number;
   setOnboardingStep: (step: number) => void;
-  toggleFavorite: (fixtureId: string) => void;
-  markWatched: (fixtureId: string) => void;
+  spotlightOpen: boolean;
+  spotlightStep: number;
+  setSpotlightStep: (step: number) => void;
+  toggleFavorite: (fixtureId: string, label?: string) => void;
+  markWatched: (fixtureId: string, label?: string) => void;
   recordOpportunity: (entry: Omit<RecentOpportunity, "ts"> & { ts?: number }) => void;
+  saveOpportunity: (entry: Omit<SavedOpportunity, "ts"> & { ts?: number }) => void;
+  recordAlert: (entry: Omit<RecentAlert, "id" | "ts"> & { id?: string; ts?: number }) => void;
+  recordActivity: (entry: Omit<ActivityEntry, "id" | "ts"> & { ts?: number }) => void;
   recordReading: (entry: Omit<ReadingHistoryEntry, "ts"> & { ts?: number }) => void;
   completeOnboarding: () => void;
   skipOnboarding: () => void;
+  completeSpotlight: () => void;
+  skipSpotlight: () => void;
   persistRoute: (path: string) => void;
   flushSync: () => Promise<void>;
 }
@@ -61,6 +77,8 @@ export function UserWorkspaceProvider({ children }: { children: React.ReactNode 
   const [syncState, setSyncState] = useState<SyncState>("idle");
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
+  const [spotlightOpen, setSpotlightOpen] = useState(false);
+  const [spotlightStep, setSpotlightStep] = useState(0);
   const dataRef = useRef(data);
   const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -98,7 +116,6 @@ export function UserWorkspaceProvider({ children }: { children: React.ReactNode 
       setData(local);
       setSyncState("local");
       setReady(true);
-      if (!local.onboardingCompleted) setOnboardingOpen(false);
       return;
     }
 
@@ -114,6 +131,8 @@ export function UserWorkspaceProvider({ children }: { children: React.ReactNode 
         setSyncState("synced");
         if (!merged.onboardingCompleted) {
           setOnboardingOpen(true);
+        } else if (!merged.spotlightCompleted) {
+          setSpotlightOpen(true);
         }
         if (JSON.stringify(merged) !== JSON.stringify(remote)) {
           scheduleRemoteSync();
@@ -137,26 +156,38 @@ export function UserWorkspaceProvider({ children }: { children: React.ReactNode 
   }, [authLoading, user?.id, hydrate]);
 
   const toggleFavorite = useCallback(
-    (fixtureId: string) => {
+    (fixtureId: string, label?: string) => {
       const ids = [...dataRef.current.favorites];
       const idx = ids.indexOf(fixtureId);
+      const added = idx < 0;
       if (idx >= 0) ids.splice(idx, 1);
       else ids.unshift(fixtureId);
+      const activityLog = pushActivity(dataRef.current.activityLog, {
+        type: added ? "favorite_add" : "favorite_remove",
+        label: added ? `Favorito: ${label ?? fixtureId}` : `Removido dos favoritos`,
+        fixtureId,
+      });
       applyWorkspace({
         ...dataRef.current,
         favorites: ids.slice(0, WORKSPACE_LIMITS.favorites),
+        activityLog,
       });
     },
     [applyWorkspace]
   );
 
   const markWatched = useCallback(
-    (fixtureId: string) => {
+    (fixtureId: string, label?: string) => {
       const ids = [
         fixtureId,
         ...dataRef.current.watched.filter((id) => id !== fixtureId),
       ].slice(0, WORKSPACE_LIMITS.watched);
-      applyWorkspace({ ...dataRef.current, watched: ids });
+      const activityLog = pushActivity(dataRef.current.activityLog, {
+        type: "watched",
+        label: label ?? `Acompanhando ${fixtureId}`,
+        fixtureId,
+      });
+      applyWorkspace({ ...dataRef.current, watched: ids, activityLog });
     },
     [applyWorkspace]
   );
@@ -173,6 +204,49 @@ export function UserWorkspaceProvider({ children }: { children: React.ReactNode 
     [applyWorkspace]
   );
 
+  const saveOpportunity = useCallback(
+    (entry: Omit<SavedOpportunity, "ts"> & { ts?: number }) => {
+      const item: SavedOpportunity = { ...entry, ts: entry.ts ?? Date.now(), pinned: true };
+      const savedOpportunities = [
+        item,
+        ...dataRef.current.savedOpportunities.filter((p) => p.fixtureId !== item.fixtureId),
+      ].slice(0, WORKSPACE_LIMITS.savedOpportunities);
+      const activityLog = pushActivity(dataRef.current.activityLog, {
+        type: "save_opportunity",
+        label: `Oportunidade salva: ${item.label}`,
+        fixtureId: item.fixtureId,
+      });
+      applyWorkspace({ ...dataRef.current, savedOpportunities, activityLog });
+    },
+    [applyWorkspace]
+  );
+
+  const recordAlert = useCallback(
+    (entry: Omit<RecentAlert, "id" | "ts"> & { id?: string; ts?: number }) => {
+      const item: RecentAlert = {
+        ...entry,
+        id: entry.id ?? `alert_${Date.now()}`,
+        ts: entry.ts ?? Date.now(),
+      };
+      const recentAlerts = [
+        item,
+        ...dataRef.current.recentAlerts.filter((a) => a.id !== item.id),
+      ].slice(0, WORKSPACE_LIMITS.recentAlerts);
+      applyWorkspace({ ...dataRef.current, recentAlerts });
+    },
+    [applyWorkspace]
+  );
+
+  const recordActivity = useCallback(
+    (entry: Omit<ActivityEntry, "id" | "ts"> & { ts?: number }) => {
+      applyWorkspace({
+        ...dataRef.current,
+        activityLog: pushActivity(dataRef.current.activityLog, entry),
+      });
+    },
+    [applyWorkspace]
+  );
+
   const recordReading = useCallback(
     (entry: Omit<ReadingHistoryEntry, "ts"> & { ts?: number }) => {
       const item: ReadingHistoryEntry = { ...entry, ts: entry.ts ?? Date.now() };
@@ -184,7 +258,12 @@ export function UserWorkspaceProvider({ children }: { children: React.ReactNode 
         item.fixtureId,
         ...dataRef.current.watched.filter((id) => id !== item.fixtureId),
       ].slice(0, WORKSPACE_LIMITS.watched);
-      applyWorkspace({ ...dataRef.current, readingHistory, watched });
+      const activityLog = pushActivity(dataRef.current.activityLog, {
+        type: "reading",
+        label: `Leitura: ${item.label}`,
+        fixtureId: item.fixtureId,
+      });
+      applyWorkspace({ ...dataRef.current, readingHistory, watched, activityLog });
     },
     [applyWorkspace]
   );
@@ -193,9 +272,21 @@ export function UserWorkspaceProvider({ children }: { children: React.ReactNode 
     applyWorkspace({ ...dataRef.current, onboardingCompleted: true });
     setOnboardingOpen(false);
     setOnboardingStep(0);
+    if (!dataRef.current.spotlightCompleted) {
+      setSpotlightOpen(true);
+      setSpotlightStep(0);
+    }
   }, [applyWorkspace]);
 
   const skipOnboarding = completeOnboarding;
+
+  const completeSpotlight = useCallback(() => {
+    applyWorkspace({ ...dataRef.current, spotlightCompleted: true });
+    setSpotlightOpen(false);
+    setSpotlightStep(0);
+  }, [applyWorkspace]);
+
+  const skipSpotlight = completeSpotlight;
 
   const persistRoute = useCallback(
     (path: string) => {
@@ -220,18 +311,30 @@ export function UserWorkspaceProvider({ children }: { children: React.ReactNode 
       favorites: toSet(data.favorites),
       watched: data.watched,
       recent: data.recentOpportunities,
+      saved: data.savedOpportunities,
+      recentAlerts: data.recentAlerts,
+      activityLog: data.activityLog,
       readingHistory: data.readingHistory,
       onboardingCompleted: data.onboardingCompleted,
+      spotlightCompleted: data.spotlightCompleted,
       onboardingOpen,
       setOnboardingOpen,
       onboardingStep,
       setOnboardingStep,
+      spotlightOpen,
+      spotlightStep,
+      setSpotlightStep,
       toggleFavorite,
       markWatched,
       recordOpportunity,
+      saveOpportunity,
+      recordAlert,
+      recordActivity,
       recordReading,
       completeOnboarding,
       skipOnboarding,
+      completeSpotlight,
+      skipSpotlight,
       persistRoute,
       flushSync,
     }),
@@ -241,12 +344,19 @@ export function UserWorkspaceProvider({ children }: { children: React.ReactNode 
       data,
       onboardingOpen,
       onboardingStep,
+      spotlightOpen,
+      spotlightStep,
       toggleFavorite,
       markWatched,
       recordOpportunity,
+      saveOpportunity,
+      recordAlert,
+      recordActivity,
       recordReading,
       completeOnboarding,
       skipOnboarding,
+      completeSpotlight,
+      skipSpotlight,
       persistRoute,
       flushSync,
     ]
@@ -266,18 +376,30 @@ export function useUserWorkspace(): UserWorkspaceContextValue {
       favorites: new Set(),
       watched: [],
       recent: [],
+      saved: [],
+      recentAlerts: [],
+      activityLog: [],
       readingHistory: [],
       onboardingCompleted: false,
+      spotlightCompleted: false,
       onboardingOpen: false,
       setOnboardingOpen: () => {},
       onboardingStep: 0,
       setOnboardingStep: () => {},
+      spotlightOpen: false,
+      spotlightStep: 0,
+      setSpotlightStep: () => {},
       toggleFavorite: () => {},
       markWatched: () => {},
       recordOpportunity: () => {},
+      saveOpportunity: () => {},
+      recordAlert: () => {},
+      recordActivity: () => {},
       recordReading: () => {},
       completeOnboarding: () => {},
       skipOnboarding: () => {},
+      completeSpotlight: () => {},
+      skipSpotlight: () => {},
       persistRoute: () => {},
       flushSync: async () => {},
     };

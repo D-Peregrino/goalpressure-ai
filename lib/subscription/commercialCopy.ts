@@ -39,24 +39,52 @@ export const FEATURE_REQUIRED_PLAN: Partial<Record<FeatureKey, DbPlan>> = {
 
 export const ONBOARDING_STEPS = [
   {
-    title: "Pressão ao vivo",
-    body: "A barra mostra quem domina o jogo agora — sem precisar abrir estatísticas.",
+    title: "Intensidade ofensiva",
+    body: "A barra de pressão mostra quem está atacando com mais volume agora — sem abrir estatísticas.",
     icon: "pressure",
   },
   {
-    title: "Oportunidade",
-    body: "O sistema destaca quando há vantagem contextual no mercado, com linguagem clara.",
+    title: "Leitura tática",
+    body: "Cada jogo traz contexto tático: ritmo, domínio e onde o jogo pode virar nos próximos minutos.",
+    icon: "tactical",
+  },
+  {
+    title: "Narrativa IA",
+    body: "Uma linha clara resume o momento: o que está acontecendo e o que merece sua atenção.",
+    icon: "narrative",
+  },
+  {
+    title: "Vantagem encontrada",
+    body: "Quando há edge contextual no mercado, o sistema destaca com linguagem direta — sem jargão.",
     icon: "edge",
   },
   {
-    title: "Intensidade",
-    body: "Jogos quentes sobem na fila. Jogos frios ficam silenciosos — sua atenção vai ao que importa.",
+    title: "Momento quente",
+    body: "Jogos quentes sobem na fila. Jogos frios ficam silenciosos — você foca no que importa.",
     icon: "heat",
   },
+] as const;
+
+export const SPOTLIGHT_STEPS = [
   {
-    title: "Narrativa",
-    body: "Cada jogo traz uma linha de decisão: o que fazer agora, em menos de dois segundos.",
-    icon: "narrative",
+    title: "Sua central",
+    body: "Tudo que você favorita, acompanha e salva fica aqui — sincronizado entre dispositivos.",
+    target: "[data-gp-tour='central-hero']",
+  },
+  {
+    title: "Favoritos e acompanhados",
+    body: "Marque jogos na central ao vivo; eles aparecem neste painel em segundos.",
+    target: "[data-gp-tour='favorites']",
+  },
+  {
+    title: "Jogos mais quentes",
+    body: "A lista prioriza pressão alta e jogos que você já segue.",
+    target: "[data-gp-tour='hot-matches']",
+  },
+  {
+    title: "Central ao vivo",
+    body: "Abra o terminal para ver pressão, leitura tática e narrativa em tempo real.",
+    target: "[data-gp-tour='terminal-link']",
   },
 ] as const;
 

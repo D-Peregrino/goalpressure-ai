@@ -3,8 +3,11 @@ import { devAuthEnabled } from "@/lib/auth/devStore";
 import {
   EMPTY_WORKSPACE,
   WORKSPACE_LIMITS,
+  type ActivityEntry,
   type ReadingHistoryEntry,
+  type RecentAlert,
   type RecentOpportunity,
+  type SavedOpportunity,
   type UserWorkspaceData,
 } from "@/lib/workspace/types";
 
@@ -25,7 +28,11 @@ function rowToWorkspace(row: {
   watched?: string[] | null;
   reading_history?: unknown;
   recent_opportunities?: unknown;
+  saved_opportunities?: unknown;
+  recent_alerts?: unknown;
+  activity_log?: unknown;
   onboarding_completed?: boolean | null;
+  spotlight_completed?: boolean | null;
   last_route?: string | null;
 }): UserWorkspaceData {
   return {
@@ -33,7 +40,11 @@ function rowToWorkspace(row: {
     watched: row.watched ?? [],
     readingHistory: (row.reading_history as ReadingHistoryEntry[]) ?? [],
     recentOpportunities: (row.recent_opportunities as RecentOpportunity[]) ?? [],
+    savedOpportunities: (row.saved_opportunities as SavedOpportunity[]) ?? [],
+    recentAlerts: (row.recent_alerts as RecentAlert[]) ?? [],
+    activityLog: (row.activity_log as ActivityEntry[]) ?? [],
     onboardingCompleted: Boolean(row.onboarding_completed),
+    spotlightCompleted: Boolean(row.spotlight_completed),
     lastRoute: row.last_route ?? null,
   };
 }
@@ -71,7 +82,14 @@ export async function saveWorkspaceForUser(
       0,
       WORKSPACE_LIMITS.recentOpportunities
     ),
+    saved_opportunities: workspace.savedOpportunities.slice(
+      0,
+      WORKSPACE_LIMITS.savedOpportunities
+    ),
+    recent_alerts: workspace.recentAlerts.slice(0, WORKSPACE_LIMITS.recentAlerts),
+    activity_log: workspace.activityLog.slice(0, WORKSPACE_LIMITS.activityLog),
     onboarding_completed: workspace.onboardingCompleted,
+    spotlight_completed: workspace.spotlightCompleted,
     last_route: workspace.lastRoute ?? null,
     updated_at: new Date().toISOString(),
   };

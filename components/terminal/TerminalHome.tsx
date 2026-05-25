@@ -52,7 +52,8 @@ export default function TerminalHome() {
   const { auditMode, setAuditMode } = useTerminalAuditMode();
   const { can, limits } = useSubscription();
   const onboarding = useOnboarding();
-  const { recent, watched, recordOpportunity, markWatched } = useRetentionHistory();
+  const { recent, watched, recordOpportunity, recordAlert, markWatched } =
+    useRetentionHistory();
 
   const pool = allMatches.length > 0 ? allMatches : matches;
 
@@ -78,6 +79,17 @@ export default function TerminalHome() {
     });
     markWatched(m.fixtureId);
   }, [hero?.match.fixtureId, hero?.narrative, recordOpportunity, markWatched]);
+
+  useEffect(() => {
+    const top = alertsPreview[0];
+    if (!top) return;
+    recordAlert({
+      id: top.id,
+      fixtureId: top.fixtureId,
+      label: top.matchLabel,
+      message: top.headline,
+    });
+  }, [alertsPreview[0]?.id, recordAlert]);
 
   return (
     <motion.div

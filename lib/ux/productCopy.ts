@@ -13,7 +13,7 @@ export const BRAND_PRODUCT = {
 } as const;
 
 export const NAV_ITEMS = [
-  { href: "/inicio", label: "Início", short: "Início" },
+  { href: "/minha-central", label: "Minha central", short: "Central" },
   { href: "/terminal", label: "Central ao vivo", short: "Central" },
   { href: "/feed", label: "Feed ao vivo", short: "Feed" },
   { href: "/analytics", label: "Insights", short: "Insights" },
