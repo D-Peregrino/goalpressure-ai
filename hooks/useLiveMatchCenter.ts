@@ -152,6 +152,16 @@ export interface EnrichedLiveMatch {
   evDistortionLevel?: string | null;
   evSignalType?: string | null;
   probabilityGoal?: number | null;
+  /** Operational Intelligence Layer */
+  opsGameState?: string;
+  opsPressurePattern?: string;
+  opsTacticalScenario?: string;
+  opsChaosLevel?: number;
+  opsTemperature?: string;
+  opsRiskContext?: string;
+  opsNarrative?: string;
+  opsHeadline?: string;
+  opsFocusScore?: number;
 }
 
 const SUPPLEMENTARY_PATHS = [
@@ -277,7 +287,11 @@ export function useLiveMatchCenter() {
         )
       );
       const chaosIndex =
-        sequence?.sustainedChaosLevel ?? temporal?.chaosIndex ?? micro?.microeventScore ?? 0;
+        match.opsIntelligence?.chaosLevel ??
+        sequence?.sustainedChaosLevel ??
+        temporal?.chaosIndex ??
+        micro?.microeventScore ??
+        0;
       const sortedEdges = [...edges].sort((a, b) => b.edgePercent - a.edgePercent);
       const topEdge = sortedEdges[0];
       const fpAlert = ops.metaConsensus?.falsePositiveAlerts.find(
@@ -621,7 +635,8 @@ export function useLiveMatchCenter() {
         trustLabel: "Leitura limitada",
         trustSources: [],
         trustVisualWeight: 0.35,
-        displayInsight: intel.primaryInsight,
+        displayInsight:
+          match.opsIntelligence?.narrative ?? intel.primaryInsight,
         pressureClassification: match.feedMeta?.offensiveEngine?.classification,
         engineMomentumScore: match.feedMeta?.offensiveEngine?.momentumScore,
         engineMomentumClass: match.feedMeta?.offensiveEngine?.momentumClass,
@@ -645,6 +660,15 @@ export function useLiveMatchCenter() {
         evDistortionLevel: match.evEngine?.distortion.level ?? null,
         evSignalType: match.evEngine?.rankedSignals[0]?.signalType ?? null,
         probabilityGoal: match.evEngine?.probabilityGoal ?? null,
+        opsGameState: match.opsIntelligence?.gameState,
+        opsPressurePattern: match.opsIntelligence?.pressurePattern,
+        opsTacticalScenario: match.opsIntelligence?.tacticalScenario,
+        opsChaosLevel: match.opsIntelligence?.chaosLevel,
+        opsTemperature: match.opsIntelligence?.temperature,
+        opsRiskContext: match.opsIntelligence?.riskContext,
+        opsNarrative: match.opsIntelligence?.narrative,
+        opsHeadline: match.opsIntelligence?.headline,
+        opsFocusScore: match.opsIntelligence?.focusScore,
       };
     });
 

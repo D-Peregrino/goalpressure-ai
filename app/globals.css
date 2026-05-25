@@ -7926,6 +7926,123 @@ body {
     0 0 18px rgba(34, 197, 94, 0.12);
 }
 
+/* Operational Intelligence Layer */
+.gp-ops-intel-panel {
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 12px;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.gp-ops-intel-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.gp-ops-intel-panel__kpis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.gp-ops-intel-panel__value {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.gp-ops-intel-panel__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.gp-ops-intel-panel__item {
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  border-left: 3px solid rgba(148, 163, 184, 0.35);
+  background: rgba(30, 41, 59, 0.4);
+}
+
+.gp-ops-intel-panel__item-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.gp-ops-intel-panel__match {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.gp-ops-intel-panel__temp {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.gp-ops-intel-panel__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.65rem;
+  color: rgba(148, 163, 184, 0.9);
+  margin-bottom: 0.35rem;
+}
+
+.gp-ops-intel-panel__pattern {
+  font-size: 0.7rem;
+  color: rgba(251, 191, 36, 0.9);
+  margin: 0 0 0.25rem;
+}
+
+.gp-ops-intel-panel__narrative {
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: rgba(226, 232, 240, 0.88);
+  margin: 0;
+}
+
+.gp-ops-temp--cold {
+  border-left-color: rgba(148, 163, 184, 0.45);
+}
+
+.gp-ops-temp--warm {
+  border-left-color: rgba(59, 130, 246, 0.75);
+  box-shadow: inset 0 0 12px rgba(59, 130, 246, 0.06);
+}
+
+.gp-ops-temp--hot {
+  border-left-color: rgba(251, 146, 60, 0.85);
+  box-shadow: inset 0 0 14px rgba(251, 146, 60, 0.08);
+}
+
+.gp-ops-temp--ignite {
+  border-left-color: rgba(239, 68, 68, 0.9);
+  animation: gp-ops-ignite-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes gp-ops-ignite-pulse {
+  0%,
+  100% {
+    box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.08);
+  }
+  50% {
+    box-shadow: inset 0 0 22px rgba(239, 68, 68, 0.18);
+  }
+}
+
+.gp-card-focus--ignite {
+  animation: gp-ops-ignite-pulse 2.4s ease-in-out infinite;
+}
+
 .gp-ev-glow--trap {
   box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.4),
     0 0 12px rgba(239, 68, 68, 0.1);

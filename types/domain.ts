@@ -212,6 +212,10 @@ export interface Match {
   oddsQuotes?: import("@/lib/mappers/normalizeSportmonksOdds").NormalizedOddQuote[];
   /** EV Engine — probabilidade, fair odds, distorção, ranking */
   evEngine?: import("@/lib/engine/ev/ev.types").MatchEvEngine;
+  /** Operational Intelligence — estado, narrativa, risco, temperatura */
+  opsIntelligence?: import("@/lib/engine/ops/runOperationalIntelligence").MatchOpsIntelligence;
+  /** Índice de caos ofensivo (0–100) — engine OPS */
+  chaosIndex?: number;
 }
 
 // ─── Signal ──────────────────────────────────────────────────────────────────

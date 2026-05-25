@@ -21,6 +21,18 @@ export {
 } from "@/lib/engine/ev/expectedValue";
 export { runEvEngine, applyEvEngineToMatch } from "@/lib/engine/ev/runEvEngine";
 export type { MatchEvEngine, RankedEvSignal } from "@/lib/engine/ev/ev.types";
+export {
+  runOperationalIntelligence,
+  applyOpsIntelligenceToMatch,
+  runOperationalIntelligenceForMatch,
+} from "@/lib/engine/ops/runOperationalIntelligence";
+export type { MatchOpsIntelligence } from "@/lib/engine/ops/runOperationalIntelligence";
+export type {
+  GameState,
+  MatchTemperature,
+  RiskContext,
+  PressurePattern,
+} from "@/lib/engine/ops/ops.types";
 export { generateLiveSignals, buildMatchEngineInsight } from "@/lib/engine/signals/liveSignalGenerator";
 export {
   evaluateSignalOpportunity,

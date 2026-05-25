@@ -20,6 +20,8 @@ import {
   rotuloVantagem,
 } from "@/lib/ux/sportsLanguage";
 import type { OperationalState } from "@/lib/signals/executionWindow";
+import { temperatureToMoment } from "@/lib/engine/ops/classifyMatchTemperature";
+import type { MatchTemperature } from "@/lib/engine/ops/ops.types";
 
 export type MomentLevel = "calm" | "warm" | "hot" | "ignite";
 
@@ -30,13 +32,27 @@ export function getMatchFocusScore(m: EnrichedLiveMatch): number {
   return scoreMatch(m);
 }
 
+function tierFromOpsTemperature(temp?: string): CardFocusTier | null {
+  if (!temp) return null;
+  const map: Record<string, CardFocusTier> = {
+    IGNITE: "ignite",
+    HOT: "hot",
+    WARM: "warm",
+    COLD: "cold",
+  };
+  return map[temp] ?? null;
+}
+
 export function getCardFocusTier(m: EnrichedLiveMatch): CardFocusTier {
   if (m.isPreMatch) return "cold";
+  const opsTier = tierFromOpsTemperature(m.opsTemperature);
   const s = scoreMatch(m);
-  let tier: CardFocusTier = "cold";
-  if (s >= 88) tier = "ignite";
-  else if (s >= 62) tier = "hot";
-  else if (s >= 38) tier = "warm";
+  let tier: CardFocusTier = opsTier ?? "cold";
+  if (!opsTier) {
+    if (s >= 88) tier = "ignite";
+    else if (s >= 62) tier = "hot";
+    else if (s >= 38) tier = "warm";
+  }
   const trust = computeMatchTrust(m);
   return capFocusTierForTrust(tier, trust);
 }
@@ -92,17 +108,28 @@ function momentFromScore(score: number): MomentLevel {
 }
 
 function scoreMatch(m: EnrichedLiveMatch): number {
+  if (m.opsFocusScore != null && m.opsFocusScore > 0) {
+    let s = m.opsFocusScore;
+    if (m.operationalState === "EXECUTE") s += 12;
+    if (m.evPlus) s += 10;
+    if (m.opsRiskContext === "DANGEROUS") s *= 0.78;
+    s *= m.trustVisualWeight ?? computeMatchTrust(m).visualWeight;
+    return Math.round(s);
+  }
   let s = 0;
   if (m.operationalState === "EXECUTE") s += 95;
   else if (m.operationalState === "MONITOR") s += 48;
   else if (m.operationalState === "WAIT") s += 12;
   s += Math.min(40, (m.edgePercent ?? 0) * 2.2);
+  s += Math.min(35, (m.evPercent ?? 0) * 2);
   s += m.pressureScore * 0.45;
   s += m.tacticalIntensity * 0.35;
-  s += m.chaosIndex * 0.2;
+  s += (m.opsChaosLevel ?? m.chaosIndex) * 0.2;
   if (m.steamMove) s += 28;
   s += m.urgency * 0.25;
   if (m.evPlus) s += 18;
+  if (m.opsTemperature === "IGNITE") s += 20;
+  else if (m.opsTemperature === "HOT") s += 10;
   if (m.lowConfidence) s *= 0.72;
   s *= m.trustVisualWeight ?? computeMatchTrust(m).visualWeight;
   return Math.round(s);
@@ -131,33 +158,40 @@ export function pickHeroOpportunity(
 
   const heroTrust = computeMatchTrust(best);
 
-  const momentLevel = momentFromScore(bestScore);
+  const momentLevel = best.opsTemperature
+    ? temperatureToMoment(best.opsTemperature as MatchTemperature)
+    : momentFromScore(bestScore);
   const estado = ESTADO_JOGO[best.operationalState];
   const score =
     best.scoreKnown && best.homeScore != null && best.awayScore != null
       ? `${best.homeScore} – ${best.awayScore}`
       : "Ao vivo";
 
-  let headline = `${best.homeTeam} x ${best.awayTeam}`;
-  if (best.operationalState === "EXECUTE") {
-    headline = `Oportunidade agora · ${headline}`;
-  } else if (best.steamMove) {
-    headline = `Mercado reagindo · ${headline}`;
-  } else if (best.pressureScore >= 72) {
-    headline = `Jogo esquentando · ${headline}`;
+  let headline =
+    best.opsHeadline ?? `${best.homeTeam} x ${best.awayTeam}`;
+  if (!best.opsHeadline) {
+    if (best.operationalState === "EXECUTE") {
+      headline = `Convergência operacional · ${best.homeTeam} x ${best.awayTeam}`;
+    } else if (best.steamMove) {
+      headline = `Mercado em defasagem · ${best.homeTeam} x ${best.awayTeam}`;
+    } else if (best.pressureScore >= 72) {
+      headline = `Intensidade elevada · ${best.homeTeam} x ${best.awayTeam}`;
+    }
   }
 
   const narrative = softenNarrative(
-    best.displayInsight ||
+    best.opsNarrative ||
+      best.displayInsight ||
       best.tacticalNarrative ||
       best.cardInsight ||
       rotuloIntensidade(best.pressureScore),
     heroTrust
   );
 
-  const conductor =
-    best.operationalState === "EXECUTE"
-      ? `${estado} — ${best.minuteLabel ?? "ao vivo"}. Vale olhar com atenção neste minuto.`
+  const conductor = best.opsTacticalScenario
+    ? `${estado} · ${best.opsTemperature ?? "—"} · ${score} · ${best.minuteLabel ?? "ao vivo"}`
+    : best.operationalState === "EXECUTE"
+      ? `${estado} — ${best.minuteLabel ?? "ao vivo"}. Leitura institucional priorizada neste ciclo.`
       : best.edgePercent != null && best.edgePercent >= 6
         ? `${estado} · ${rotuloVantagem(best.edgePercent)} · ${score}`
         : `${estado} · ${score} · ${best.minuteLabel ?? ""}`.trim();
@@ -198,7 +232,8 @@ export function rankHotMatches(
 
       const trust = computeMatchTrust(m);
       const narrative = softenNarrative(
-        m.displayInsight ||
+        m.opsNarrative ||
+          m.displayInsight ||
           m.cardInsightSecondary ||
           m.cardInsight ||
           rotuloIntensidade(m.pressureScore),
@@ -257,30 +292,43 @@ function narrativeForSignal(
       };
     case "EV_PLUS":
       return {
-        headline: "Chance destacada",
-        narrative: `Valor esperado positivo em ${entry.matchLabel} — ${entry.market} com leitura favorável.`,
-        momentLevel: "hot",
+        headline: match?.opsHeadline ?? "Valor esperado com contexto favorável",
+        narrative:
+          match?.opsNarrative ||
+          `EV positivo em ${entry.matchLabel} — ${entry.market}. Leitura quantitativa alinhada à pressão em campo.`,
+        momentLevel: match?.opsTemperature
+          ? temperatureToMoment(match.opsTemperature as MatchTemperature)
+          : "hot",
       };
     case "PRESSURE_SPIKE":
       return {
-        headline: "Intensidade subindo",
+        headline: match?.opsHeadline ?? "Pressão ofensiva em aceleração",
         narrative:
+          match?.opsNarrative ||
           tactical ||
-          rotuloIntensidade(match?.pressureScore ?? entry.chaos) +
-            (min ? ` · ${min}` : ""),
-        momentLevel: "warm",
+          `Pressão sustentada com aceleração crescente${min ? ` · ${min}` : ""}. Mercado pode reagir com defasagem.`,
+        momentLevel: match?.opsTemperature
+          ? temperatureToMoment(match.opsTemperature as MatchTemperature)
+          : "warm",
       };
     case "CHAOS_BURST":
       return {
-        headline: "Ritmo imprevisível",
-        narrative: `${entry.matchLabel} abriu o jogo — alta chance de movimento nos próximos minutos.`,
+        headline: "Volatilidade ofensiva elevada",
+        narrative:
+          match?.opsNarrative ||
+          `${entry.matchLabel} — ritmo imprevisível com transições rápidas. Validar risco operacional antes de execução.`,
         momentLevel: "hot",
       };
     default:
       return {
-        headline: "Mudança de contexto",
-        narrative: insight || `${entry.matchLabel} — acompanhe o próximo lance.`,
-        momentLevel: "warm",
+        headline: match?.opsHeadline ?? "Mudança de contexto operacional",
+        narrative:
+          match?.opsNarrative ||
+          insight ||
+          `${entry.matchLabel} — leitura institucional em atualização.`,
+        momentLevel: match?.opsTemperature
+          ? temperatureToMoment(match.opsTemperature as MatchTemperature)
+          : "warm",
       };
   }
 }

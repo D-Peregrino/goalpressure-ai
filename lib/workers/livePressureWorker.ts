@@ -12,6 +12,8 @@ import {
 import { persistPressureSnapshots } from "@/lib/engine/pressure/livePressureSnapshotPersistence";
 import { applyEvEngineToMatch, runEvEngine } from "@/lib/engine/ev/runEvEngine";
 import { persistEvSignals } from "@/lib/engine/ev/liveEvSignalPersistence";
+import { runOperationalIntelligence } from "@/lib/engine/ops/runOperationalIntelligence";
+import { persistOperationalInsight } from "@/lib/engine/ops/operationalInsightsPersistence";
 import {
   markSignalEmitted,
   validateSignalAntiSpam,
@@ -126,6 +128,7 @@ export async function runLivePressureWorker(
   const enriched: Match[] = [];
   const signals: Signal[] = [];
   let evSnapshots = 0;
+  let opsSnapshots = 0;
 
   for (const match of matches) {
     const fixtureId = match.externalId ?? match.id;
@@ -148,6 +151,10 @@ export async function runLivePressureWorker(
     updated = applyEvEngineToMatch(updated, evResult);
     evSnapshots += await persistEvSignals(evResult.fixtureId, evResult.rankedSignals);
 
+    const opsResult = runOperationalIntelligence(updated, pressureResult);
+    updated = opsResult.match;
+    if (await persistOperationalInsight(opsResult.insight)) opsSnapshots += 1;
+
     enriched.push(updated);
 
     const topEv = evResult.rankedSignals[0];
@@ -169,6 +176,7 @@ export async function runLivePressureWorker(
     signals: signals.length,
     pressureSnapshots: snapshotsPersisted,
     evSnapshots,
+    opsSnapshots,
   });
 
   return {

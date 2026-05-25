@@ -27,6 +27,7 @@ const SCHEMA_FILES = [
   "live-runtime-schema.sql",
   "live-pressure-snapshots-schema.sql",
   "live-ev-signals-schema.sql",
+  "operational-insights-schema.sql",
   "commercial-schema.sql",
 ];
 

@@ -125,6 +125,7 @@ function MatchCardProInner({
         "gp-sport-card--focus",
         "gp-flow-card",
         `gp-sport-card--focus-${focusTier}`,
+        focusTier === "ignite" ? "gp-card-focus--ignite" : "",
         `gp-sport-card--trust-${match.trustLevel}`,
         classificationGlowClass(pressureClass),
         (match.evPercent ?? 0) >= 5
