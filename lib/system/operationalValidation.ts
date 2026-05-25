@@ -18,6 +18,21 @@ import { getLearningSnapshot } from "@/lib/engine/learning/learningSnapshotStore
 import { getLiveEngineSnapshot } from "@/lib/engine/engineSnapshotStore";
 import { getDatabaseUrl } from "@/lib/system/applyAllSchemas";
 import { OPERATIONAL_SCHEMA_FILES } from "@/lib/system/applyAllSchemas";
+import type {
+  OperationalValidationReport,
+  RecentSample,
+  TableProbe,
+  ValidationCheck,
+  ValidationStatus,
+} from "@/lib/system/operationalValidation.types";
+
+export type {
+  OperationalValidationReport,
+  RecentSample,
+  TableProbe,
+  ValidationCheck,
+  ValidationStatus,
+} from "@/lib/system/operationalValidation.types";
 
 const ENGINE_TABLES = [
   "live_pressure_snapshots",
@@ -30,87 +45,6 @@ const ENGINE_TABLES = [
   "live_signal_dispatches",
   "autonomous_decisions",
 ] as const;
-
-export type ValidationStatus = "ok" | "warn" | "fail";
-
-export interface ValidationCheck {
-  id: string;
-  label: string;
-  status: ValidationStatus;
-  detail: string;
-}
-
-export interface TableProbe {
-  name: string;
-  exists: boolean;
-  reachable: boolean;
-  rowCountEstimate: number | null;
-  lastRowAt: string | null;
-  error: string | null;
-}
-
-export interface RecentSample {
-  fixtureId?: string;
-  createdAt?: string;
-  summary?: string;
-}
-
-export interface OperationalValidationReport {
-  ok: boolean;
-  generatedAt: string;
-  activeDataSource: string;
-  seedDisabled: boolean;
-  sportmonks: {
-    configured: boolean;
-    connected: boolean;
-    inPlayCount: number;
-    diagnosticOk: boolean;
-    error: string | null;
-  };
-  supabase: {
-    configured: boolean;
-    connected: boolean;
-    projectUrl: string | null;
-    databaseUrlConfigured: boolean;
-    error: string | null;
-  };
-  telegram: {
-    configured: boolean;
-    sandbox: boolean;
-    ready: boolean;
-    status: string;
-  };
-  tables: TableProbe[];
-  schemasExpected: string[];
-  recent: {
-    matches: RecentSample[];
-    pressureSnapshots: RecentSample[];
-    evSignals: RecentSample[];
-    operationalInsights: RecentSample[];
-    dispatches: RecentSample[];
-    autonomousDecisions: RecentSample[];
-    historicalOutcomes: RecentSample[];
-  };
-  engines: {
-    pressure: ValidationStatus;
-    ev: ValidationStatus;
-    ops: ValidationStatus;
-    learning: ValidationStatus;
-    execution: ValidationStatus;
-    autonomous: ValidationStatus;
-  };
-  runtime: {
-    active: boolean;
-    lastPollAt: string | null;
-    lastError: string | null;
-  };
-  production: {
-    domain: string | null;
-    isProduction: boolean;
-  };
-  pendingErrors: string[];
-  checks: ValidationCheck[];
-}
 
 async function probeTable(
   table: string

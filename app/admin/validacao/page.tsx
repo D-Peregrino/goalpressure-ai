@@ -3,7 +3,11 @@
 import { useCallback, useState } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import { fetchWithAuth } from "@/lib/auth/fetchWithAuth";
-import type { OperationalValidationReport } from "@/lib/system/operationalValidation";
+import {
+  isOperationalValidationReport,
+  parseApiErrorMessage,
+  type OperationalValidationReport,
+} from "@/lib/system/operationalValidation.types";
 
 function StatusDot({ status }: { status: "ok" | "warn" | "fail" }) {
   const cls =
@@ -15,63 +19,169 @@ function StatusDot({ status }: { status: "ok" | "warn" | "fail" }) {
   return <span className={`gp-val-status ${cls}`} aria-hidden />;
 }
 
+function ApiErrorCard({ title, detail }: { title: string; detail: string }) {
+  return (
+    <div className="gp-val-api-error" role="alert">
+      <strong>{title}</strong>
+      <p>{detail}</p>
+    </div>
+  );
+}
+
 export default function AdminValidacaoPage() {
   const [report, setReport] = useState<OperationalValidationReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [schemaLoading, setSchemaLoading] = useState(false);
   const [runtimeLoading, setRuntimeLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [fetchErrors, setFetchErrors] = useState<string[]>([]);
+
+  const pushFetchError = useCallback((label: string, detail: string) => {
+    setFetchErrors((prev) => [...prev, `${label}: ${detail}`]);
+  }, []);
+
+  const clearFetchErrors = useCallback(() => {
+    setFetchErrors([]);
+  }, []);
 
   const runValidation = useCallback(async () => {
     setLoading(true);
     setMessage(null);
+    clearFetchErrors();
     try {
       const res = await fetchWithAuth("/api/admin/run-validation", {
         cache: "no-store",
       });
-      const body = await res.json();
+      let body: unknown = null;
+      try {
+        body = await res.json();
+      } catch {
+        pushFetchError("Validação", "Resposta inválida do servidor.");
+        setReport(null);
+        return;
+      }
+
+      if (!res.ok) {
+        pushFetchError(
+          "Validação",
+          parseApiErrorMessage(body, `HTTP ${res.status}`)
+        );
+        setReport(null);
+        setMessage("Validação não concluída — veja o card de erro.");
+        return;
+      }
+
+      if (!isOperationalValidationReport(body)) {
+        pushFetchError("Validação", "Formato de relatório inesperado.");
+        setReport(null);
+        return;
+      }
+
       setReport(body);
-      setMessage(body.ok ? "Validação concluída — sistema operacional." : "Validação com pendências.");
+      setMessage(
+        body.ok
+          ? "Validação concluída — sistema operacional."
+          : "Validação com pendências."
+      );
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Falha na validação");
+      const detail = e instanceof Error ? e.message : "Falha na validação";
+      pushFetchError("Validação", detail);
+      setMessage(detail);
+      setReport(null);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [clearFetchErrors, pushFetchError]);
 
   const applySchemas = useCallback(async () => {
     setSchemaLoading(true);
     setMessage(null);
     try {
       const res = await fetchWithAuth("/api/admin/apply-schemas", { method: "POST" });
-      const body = await res.json();
-      if (body.ok) {
-        setMessage(`Schemas aplicados: ${(body.applied as string[]).join(", ")}`);
+      let body: unknown = null;
+      try {
+        body = await res.json();
+      } catch {
+        pushFetchError("Schemas", "Resposta inválida do servidor.");
+        return;
+      }
+
+      if (!res.ok) {
+        pushFetchError("Schemas", parseApiErrorMessage(body, `HTTP ${res.status}`));
+        return;
+      }
+
+      const record = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+      if (record.ok === true) {
+        const applied = Array.isArray(record.applied)
+          ? (record.applied as string[]).join(", ")
+          : "—";
+        setMessage(`Schemas aplicados: ${applied}`);
       } else {
-        setMessage(`Erros schema: ${(body.errors as string[]).join("; ")}`);
+        const errors = Array.isArray(record.errors)
+          ? (record.errors as string[]).join("; ")
+          : parseApiErrorMessage(body, "Falha ao aplicar schemas");
+        pushFetchError("Schemas", errors);
+        setMessage(`Erros schema: ${errors}`);
       }
       await runValidation();
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Falha ao aplicar schemas");
+      const detail = e instanceof Error ? e.message : "Falha ao aplicar schemas";
+      pushFetchError("Schemas", detail);
+      setMessage(detail);
     } finally {
       setSchemaLoading(false);
     }
-  }, [runValidation]);
+  }, [pushFetchError, runValidation]);
 
   const startRuntime = useCallback(async () => {
     setRuntimeLoading(true);
     setMessage(null);
     try {
       const res = await fetch("/api/runtime/start", { cache: "no-store" });
-      const body = await res.json();
-      setMessage(body.ok ? "Runtime iniciado." : body.message ?? "Runtime");
+      let body: unknown = null;
+      try {
+        body = await res.json();
+      } catch {
+        pushFetchError("Runtime", "Resposta inválida do servidor.");
+        return;
+      }
+
+      if (!res.ok) {
+        pushFetchError("Runtime", parseApiErrorMessage(body, `HTTP ${res.status}`));
+        return;
+      }
+
+      const record = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+      const ok = record.ok === true;
+      const msg =
+        typeof record.message === "string"
+          ? record.message
+          : ok
+            ? "Runtime iniciado."
+            : "Runtime";
+      setMessage(msg);
+      if (!ok) {
+        pushFetchError("Runtime", msg);
+      }
       await runValidation();
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Falha ao iniciar runtime");
+      const detail = e instanceof Error ? e.message : "Falha ao iniciar runtime";
+      pushFetchError("Runtime", detail);
+      setMessage(detail);
     } finally {
       setRuntimeLoading(false);
     }
-  }, [runValidation]);
+  }, [pushFetchError, runValidation]);
+
+  const checks = report?.checks ?? [];
+  const tables = report?.tables ?? [];
+  const pendingErrors = report?.pendingErrors ?? [];
+  const inPlayCount = report?.sportmonks?.inPlayCount ?? 0;
+  const activeDataSource = report?.activeDataSource ?? "—";
+  const generatedAt = report?.generatedAt
+    ? new Date(report.generatedAt).toLocaleString("pt-BR")
+    : "—";
 
   return (
     <AdminShell>
@@ -115,33 +225,53 @@ export default function AdminValidacaoPage() {
         </a>
       </div>
 
-      {message && <p className="gp-val-message">{message}</p>}
+      {loading && (
+        <p className="gp-val-message" aria-live="polite">
+          Carregando validação…
+        </p>
+      )}
+
+      {message && !loading && <p className="gp-val-message">{message}</p>}
+
+      {fetchErrors.map((err, i) => (
+        <ApiErrorCard key={`${i}-${err.slice(0, 24)}`} title="Falha na operação" detail={err} />
+      ))}
+
+      {!loading && !report && fetchErrors.length === 0 && (
+        <p className="gp-val-empty">
+          Nenhuma validação executada ainda. Use &quot;Rodar validação agora&quot; para gerar o
+          relatório.
+        </p>
+      )}
 
       {report && (
         <>
           <p className="gp-val-summary">
             {report.ok ? "Sistema validado" : "Pendências detectadas"} · Fonte{" "}
-            <strong>{report.activeDataSource}</strong> · {report.sportmonks.inPlayCount} jogos
-            in-play · {new Date(report.generatedAt).toLocaleString("pt-BR")}
+            <strong>{activeDataSource}</strong> · {inPlayCount} jogos in-play · {generatedAt}
           </p>
 
-          <ul className="gp-val-checklist">
-            {report.checks.map((c) => (
-              <li key={c.id} className="gp-val-checklist__item">
-                <StatusDot status={c.status} />
-                <div>
-                  <strong>{c.label}</strong>
-                  <p>{c.detail}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+          {checks.length > 0 ? (
+            <ul className="gp-val-checklist">
+              {checks.map((c) => (
+                <li key={c.id} className="gp-val-checklist__item">
+                  <StatusDot status={c.status} />
+                  <div>
+                    <strong>{c.label}</strong>
+                    <p>{c.detail}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="gp-val-empty">Nenhum item no checklist.</p>
+          )}
 
-          {report.pendingErrors.length > 0 && (
+          {pendingErrors.length > 0 && (
             <div className="gp-val-errors">
               <h2 className="gp-type-title">Erros pendentes</h2>
               <ul>
-                {report.pendingErrors.map((e, i) => (
+                {pendingErrors.map((e, i) => (
                   <li key={i}>{e}</li>
                 ))}
               </ul>
@@ -150,26 +280,32 @@ export default function AdminValidacaoPage() {
 
           <div className="gp-val-tables">
             <h2 className="gp-type-title">Tabelas engine</h2>
-            <table className="gp-val-table">
-              <thead>
-                <tr>
-                  <th>Tabela</th>
-                  <th>OK</th>
-                  <th>Registros</th>
-                  <th>Último</th>
-                </tr>
-              </thead>
-              <tbody>
-                {report.tables.map((t) => (
-                  <tr key={t.name}>
-                    <td>{t.name}</td>
-                    <td>{t.reachable ? "sim" : "não"}</td>
-                    <td className="tabular-nums">{t.rowCountEstimate ?? "—"}</td>
-                    <td>{t.lastRowAt ? new Date(t.lastRowAt).toLocaleString("pt-BR") : "—"}</td>
+            {tables.length > 0 ? (
+              <table className="gp-val-table">
+                <thead>
+                  <tr>
+                    <th>Tabela</th>
+                    <th>OK</th>
+                    <th>Registros</th>
+                    <th>Último</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {tables.map((t) => (
+                    <tr key={t.name}>
+                      <td>{t.name}</td>
+                      <td>{t.reachable ? "sim" : "não"}</td>
+                      <td className="tabular-nums">{t.rowCountEstimate ?? "—"}</td>
+                      <td>
+                        {t.lastRowAt ? new Date(t.lastRowAt).toLocaleString("pt-BR") : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="gp-val-empty">Nenhuma tabela no relatório.</p>
+            )}
           </div>
         </>
       )}
