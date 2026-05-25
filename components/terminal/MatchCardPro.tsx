@@ -209,6 +209,15 @@ function MatchCardProInner({
                   DISPATCH
                 </span>
               )}
+              {isLive &&
+                match.autonomousSensitivity === "CONSERVATIVE" && (
+                  <span className="gp-auto-badge">AUTO·CONS</span>
+                )}
+              {isLive &&
+                (match.autonomousSensitivity === "AGGRESSIVE" ||
+                  match.autonomousSensitivity === "HYPER_AGGRESSIVE") && (
+                  <span className="gp-auto-badge">AUTO·AGG</span>
+                )}
               {isLive && (
                 <DataSourceBadge source="sportmonks" className="gp-sport-card__source-badge" />
               )}

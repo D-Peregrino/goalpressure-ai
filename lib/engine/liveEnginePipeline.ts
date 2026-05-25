@@ -8,6 +8,7 @@ import {
   setLiveEngineSnapshot,
 } from "@/lib/engine/engineSnapshotStore";
 import { runExecutionDispatcher } from "@/lib/execution/signalDispatcher";
+import { buildAutonomousSnapshotFromMatches } from "@/lib/autonomous/runAutonomousDecision";
 import { logInfo } from "@/lib/utils/logger";
 
 const LOG_SCOPE = "live-engine-pipeline";
@@ -61,6 +62,7 @@ export async function processLiveEngineBatch(
   maybePruneMemory();
 
   const workerResult = await runLivePressureWorker(matches);
+  const autonomousSnapshot = buildAutonomousSnapshotFromMatches(workerResult.matches);
   const { signals: extraSignals, insights, enrichedMatches } =
     generateLiveSignals(workerResult.matches);
 
@@ -84,6 +86,7 @@ export async function processLiveEngineBatch(
     ...snapshot,
     queueSize: dispatchResult.snapshot.queueSize,
     dispatch: dispatchResult.snapshot,
+    autonomous: autonomousSnapshot,
   };
 
   setLiveEngineSnapshot(snapshot);

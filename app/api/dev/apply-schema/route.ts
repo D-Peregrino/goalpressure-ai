@@ -30,6 +30,7 @@ const SCHEMA_FILES = [
   "operational-insights-schema.sql",
   "learning-layer-schema.sql",
   "live-signal-dispatches-schema.sql",
+  "autonomous-decisions-schema.sql",
   "commercial-schema.sql",
 ];
 

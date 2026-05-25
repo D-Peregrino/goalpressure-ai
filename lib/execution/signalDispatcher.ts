@@ -51,12 +51,20 @@ function candidateFromMatch(
   const ev = match.evEngine?.expectedValue.best;
   const ops = match.opsIntelligence;
 
-  if (source === "EV_ENGINE" && (ev?.evPercent ?? 0) < 3) return null;
+  const auto = match.autonomousProfile;
+  const th = auto?.adaptiveThresholds;
+
+  if (auto && !auto.dispatchApproved) return null;
+  if (source === "EV_ENGINE" && (ev?.evPercent ?? 0) < (th?.minEvPercent ?? 3)) return null;
   if (source === "OPS_LAYER" && !ops) return null;
-  if (source === "PRESSURE_ENGINE" && p < 62) return null;
-  if (source === "LEARNING_LAYER" && (match.learningContext?.historicalEdge.score ?? 0) < 55) {
+  if (source === "PRESSURE_ENGINE" && p < (th?.minPressureScore ?? 62)) return null;
+  if (
+    source === "LEARNING_LAYER" &&
+    (match.learningContext?.historicalEdge.score ?? 0) < 55
+  ) {
     return null;
   }
+  if ((auto?.falsePositiveRisk ?? 0) >= 78 && source !== "DOMAIN_SIGNAL") return null;
 
   const id = `${fixtureId(match)}-${signalType}-${Date.now()}`;
 

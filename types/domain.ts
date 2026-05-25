@@ -218,6 +218,8 @@ export interface Match {
   chaosIndex?: number;
   /** Memory & Learning — edge histórico, perfis, padrões */
   learningContext?: import("@/lib/engine/learning/learning.types").MatchLearningContext;
+  /** Autonomous Decision Layer — regime, thresholds, dispatch */
+  autonomousProfile?: import("@/lib/autonomous/autonomous.types").MatchAutonomousProfile;
 }
 
 // ─── Signal ──────────────────────────────────────────────────────────────────

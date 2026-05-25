@@ -232,6 +232,7 @@ async function buildSuccessFromCache(
     signals: engineResult.signals,
     engine: engineResult.snapshot,
     dispatch: engineResult.snapshot.dispatch,
+    autonomous: engineResult.snapshot.autonomous,
     meta: buildSuccessMeta(
       entry,
       activeSource,
@@ -318,6 +319,7 @@ async function fetchAndCacheMatches(
     signals: engineResult.signals,
     engine: engineResult.snapshot,
     dispatch: engineResult.snapshot.dispatch,
+    autonomous: engineResult.snapshot.autonomous,
     meta: buildSuccessMeta(
       entry,
       "sportmonks",
@@ -374,6 +376,7 @@ async function buildSeedLiveResponse(
     signals: engineResult.signals,
     engine: engineResult.snapshot,
     dispatch: engineResult.snapshot.dispatch,
+    autonomous: engineResult.snapshot.autonomous,
     meta: buildSuccessMeta(
       entry,
       "seed",

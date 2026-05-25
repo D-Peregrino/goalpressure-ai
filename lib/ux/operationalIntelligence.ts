@@ -112,7 +112,13 @@ function dispatchBoost(m: EnrichedLiveMatch): number {
   if (u === "CRITICAL") return 28;
   if (u === "HIGH") return 16;
   if (u === "MEDIUM") return 8;
-  return (m.dispatchPriority ?? 0) * 0.12;
+  let s = (m.dispatchPriority ?? 0) * 0.12;
+  if (m.autonomousDispatchApproved === false) return -20;
+  if ((m.autonomousFalsePositiveRisk ?? 0) >= 70) s -= 15;
+  if ((m.autonomousConfidence ?? 0) >= 65) s += 10;
+  if (m.autonomousRegime === "AGGRESSIVE_MARKET") s += 6;
+  if (m.autonomousDispatchIntensity === "HERO_PRIMARY") s += 32;
+  return s;
 }
 
 function scoreMatch(m: EnrichedLiveMatch): number {

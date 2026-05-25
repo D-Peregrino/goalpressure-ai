@@ -39,6 +39,7 @@ export interface LiveMatchesSuccessResponse {
   signals?: Signal[];
   engine?: LiveEngineSnapshot;
   dispatch?: import("@/lib/execution/execution.types").DispatchEngineSnapshot;
+  autonomous?: import("@/lib/autonomous/autonomous.types").AutonomousCoreSnapshot;
   meta: LiveMatchesApiMeta;
 }
 

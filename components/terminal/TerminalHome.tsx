@@ -28,6 +28,7 @@ import LiveCommandCenterPanel from "@/components/terminal/LiveCommandCenterPanel
 import LiveDispatchFeed from "@/components/terminal/LiveDispatchFeed";
 import OperatorModePanel from "@/components/terminal/OperatorModePanel";
 import DispatchPushSubscriber from "@/components/terminal/DispatchPushSubscriber";
+import AutonomousCorePanel from "@/components/terminal/AutonomousCorePanel";
 import { useTerminalAuditMode } from "@/hooks/useTerminalAuditMode";
 import PaywallGate from "@/components/subscription/PaywallGate";
 import UpgradeBanner from "@/components/subscription/UpgradeBanner";
@@ -63,6 +64,7 @@ export default function TerminalHome() {
     isEmpty,
     lastUpdated,
     responseTime,
+    autonomousSnapshot,
   } = useLiveMatchCenter();
   const { auditMode, setAuditMode } = useTerminalAuditMode();
   const { can, limits } = useSubscription();
@@ -74,10 +76,21 @@ export default function TerminalHome() {
 
   const hero = useMemo(() => pickHeroOpportunity(pool), [pool]);
 
-  const operationalAlerts = useMemo(
-    () => buildOperationalAlerts(liveSignals, pool),
-    [liveSignals, pool]
-  );
+  const operationalAlerts = useMemo(() => {
+    const base = buildOperationalAlerts(liveSignals, pool);
+    const autoAlerts = (autonomousSnapshot?.alerts ?? []).map((a, i) => ({
+      id: `auto-${a.type}-${i}`,
+      timestamp: autonomousSnapshot?.generatedAt ?? new Date().toISOString(),
+      type: "EDGE_ALERT" as const,
+      fixtureId: a.fixtureId ?? "",
+      matchLabel: a.fixtureId ? `Fixture ${a.fixtureId}` : "Sistema",
+      headline: a.headline,
+      narrative: a.narrative,
+      momentLevel: "warm" as const,
+      edgePercent: 0,
+    }));
+    return [...autoAlerts, ...base].slice(0, 48);
+  }, [liveSignals, pool, autonomousSnapshot]);
 
   const alertsPreview = operationalAlerts.slice(0, limits.alertPreview);
   const alertsDisplay = can("advanced_alerts")
@@ -204,6 +217,7 @@ export default function TerminalHome() {
           <EVEnginePanel matches={pool} />
           <OperationalIntelligencePanel matches={pool} />
           <LearningEnginePanel />
+          <AutonomousCorePanel />
           <LiveCommandCenterPanel />
           <OperatorModePanel />
           <LiveDispatchFeed className="hidden xl:block" />

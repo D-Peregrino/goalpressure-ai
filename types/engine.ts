@@ -64,6 +64,8 @@ export interface LiveEngineSnapshot {
   queueSize: number;
   /** Execution & Distribution Layer snapshot */
   dispatch?: import("@/lib/execution/execution.types").DispatchEngineSnapshot;
+  /** Autonomous Decision Layer snapshot */
+  autonomous?: import("@/lib/autonomous/autonomous.types").AutonomousCoreSnapshot;
 }
 
 export interface LiveEngineProcessResult {

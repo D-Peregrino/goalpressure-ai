@@ -168,6 +168,12 @@ export interface EnrichedLiveMatch {
   learningBadges?: string[];
   dispatchUrgency?: string;
   dispatchPriority?: number;
+  autonomousRegime?: string;
+  autonomousSensitivity?: string;
+  autonomousFalsePositiveRisk?: number;
+  autonomousConfidence?: number;
+  autonomousDispatchApproved?: boolean;
+  autonomousDispatchIntensity?: string;
 }
 
 const SUPPLEMENTARY_PATHS = [
@@ -705,6 +711,12 @@ export function useLiveMatchCenter() {
         learningBadges: match.learningContext?.historicalEdge.badges,
         dispatchUrgency: dispatchByFixture.get(row.fixtureId)?.urgency,
         dispatchPriority: dispatchByFixture.get(row.fixtureId)?.priority,
+        autonomousRegime: match.autonomousProfile?.marketRegime,
+        autonomousSensitivity: match.autonomousProfile?.sensitivity,
+        autonomousFalsePositiveRisk: match.autonomousProfile?.falsePositiveRisk,
+        autonomousConfidence: match.autonomousProfile?.autonomousConfidence,
+        autonomousDispatchApproved: match.autonomousProfile?.dispatchApproved,
+        autonomousDispatchIntensity: match.autonomousProfile?.dispatchIntensity,
       };
     });
 
@@ -788,6 +800,7 @@ export function useLiveMatchCenter() {
     isEmpty: live.isEmpty,
     responseTime: live.responseTime,
     isLoading: live.isInitialLoad && ops.isInitialLoad,
+    autonomousSnapshot: live.autonomousSnapshot,
     normalizeFixtureId,
   };
 }

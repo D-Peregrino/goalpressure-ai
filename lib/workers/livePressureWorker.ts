@@ -16,6 +16,10 @@ import { runOperationalIntelligence } from "@/lib/engine/ops/runOperationalIntel
 import { persistOperationalInsight } from "@/lib/engine/ops/operationalInsightsPersistence";
 import { applyLearningFromSnapshot } from "@/lib/engine/learning/applyLearningToMatch";
 import {
+  applyAutonomousProfileToMatch,
+  runAutonomousDecisionForMatch,
+} from "@/lib/autonomous/runAutonomousDecision";
+import {
   markSignalEmitted,
   validateSignalAntiSpam,
 } from "@/lib/engine/signals/signalAntiSpam";
@@ -157,6 +161,9 @@ export async function runLivePressureWorker(
     if (await persistOperationalInsight(opsResult.insight)) opsSnapshots += 1;
 
     updated = applyLearningFromSnapshot(updated);
+
+    const autonomousProfile = runAutonomousDecisionForMatch(updated);
+    updated = applyAutonomousProfileToMatch(updated, autonomousProfile);
 
     enriched.push(updated);
 
