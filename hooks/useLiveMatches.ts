@@ -5,6 +5,7 @@ import type { ActiveDataSource } from "@/lib/data-source/config";
 import { generateLiveSignals } from "@/lib/engine/signals/liveSignalGenerator";
 import { applyPressureToMatch } from "@/lib/pressureScore";
 import type { LiveMatchesApiResponse } from "@/types/api";
+import type { DispatchEngineSnapshot } from "@/lib/execution/execution.types";
 import type { Match, Signal } from "@/types/domain";
 
 const API_PATH = "/api/live-matches";
@@ -32,6 +33,7 @@ export interface UseLiveMatchesResult {
   isInitialLoad: boolean;
   isEmpty: boolean;
   sportmonksError: { httpStatus?: number; message: string; endpoint?: string } | null;
+  dispatchSnapshot: DispatchEngineSnapshot | null;
 }
 
 function enrichMatchesWithPressure(
@@ -67,6 +69,8 @@ export function useLiveMatches(
   const abortRef = useRef<AbortController | null>(null);
   const pressureHistoryRef = useRef<Map<string, number>>(new Map());
   const [apiSignals, setApiSignals] = useState<Signal[] | null>(null);
+  const [dispatchSnapshot, setDispatchSnapshot] =
+    useState<DispatchEngineSnapshot | null>(null);
   const hasLiveDataRef = useRef(false);
   const sourceRef = useRef<LiveMatchSource>("none");
 
@@ -142,6 +146,9 @@ export function useLiveMatches(
 
       setMatches(enriched);
       setApiSignals(body.signals ?? null);
+      setDispatchSnapshot(
+        body.dispatch ?? body.engine?.dispatch ?? null
+      );
       setSource(resolvedSource);
       sourceRef.current = resolvedSource;
       hasLiveDataRef.current = true;
@@ -216,5 +223,6 @@ export function useLiveMatches(
     isInitialLoad,
     isEmpty,
     sportmonksError,
+    dispatchSnapshot,
   };
 }

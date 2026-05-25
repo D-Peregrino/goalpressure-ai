@@ -8146,6 +8146,123 @@ body {
   color: #f9a8d4;
 }
 
+/* Execution & Distribution */
+.gp-command-center,
+.gp-dispatch-feed,
+.gp-operator-mode {
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 12px;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.55);
+  margin-bottom: 0.75rem;
+}
+
+.gp-command-center__head,
+.gp-dispatch-feed__head,
+.gp-operator-mode__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+}
+
+.gp-command-center__kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.gp-command-center__value {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.gp-command-center__value--critical {
+  color: #f87171;
+}
+
+.gp-command-center__feed,
+.gp-dispatch-feed__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.gp-command-center__item,
+.gp-dispatch-feed__item {
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  margin-bottom: 0.35rem;
+  border-left: 3px solid rgba(148, 163, 184, 0.4);
+  font-size: 0.72rem;
+}
+
+.gp-command-center__item--critical,
+.gp-dispatch-feed__item--critical {
+  border-left-color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.gp-command-center__item--high,
+.gp-dispatch-feed__item--high {
+  border-left-color: #f97316;
+}
+
+.gp-dispatch-feed__urgency,
+.gp-command-center__urgency {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.gp-operator-mode__focus-value {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.gp-operator-mode__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.gp-operator-mode__critical {
+  color: #f87171;
+}
+
+.gp-operator-mode__critical-list,
+.gp-operator-mode__queue ul {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  font-size: 0.7rem;
+}
+
+.gp-terminal-v2--operator .gp-terminal-v2__rail {
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.gp-dispatch-badge {
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 0.12rem 0.35rem;
+  border-radius: 4px;
+}
+
+.gp-dispatch-badge--critical {
+  background: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  animation: gp-ops-ignite-pulse 2s ease-in-out infinite;
+}
+
+.gp-dispatch-badge--high {
+  background: rgba(249, 115, 22, 0.25);
+  color: #fdba74;
+}
+
 .gp-ev-glow--trap {
   box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.4),
     0 0 12px rgba(239, 68, 68, 0.1);

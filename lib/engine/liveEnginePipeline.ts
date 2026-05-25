@@ -7,8 +7,7 @@ import {
   pruneEngineMemory,
   setLiveEngineSnapshot,
 } from "@/lib/engine/engineSnapshotStore";
-import { dispatchLiveSignalsToTelegram } from "@/lib/engine/telegram/liveDispatchBridge";
-import { getActiveModelId } from "@/lib/signalEngine";
+import { runExecutionDispatcher } from "@/lib/execution/signalDispatcher";
 import { logInfo } from "@/lib/utils/logger";
 
 const LOG_SCOPE = "live-engine-pipeline";
@@ -74,15 +73,18 @@ export async function processLiveEngineBatch(
 
   let snapshot = buildSnapshot(enrichedMatches, signals, insights);
 
-  if (options.dispatchTelegram !== false && signals.length > 0) {
-    const modelId = options.modelId ?? getActiveModelId();
-    void dispatchLiveSignalsToTelegram(signals, modelId, insights, {
-      matches: enrichedMatches,
-    }).then((sent) => {
-      snapshot = { ...snapshot, queueSize: sent };
-      setLiveEngineSnapshot(snapshot);
-    });
-  }
+  const dispatchResult = await runExecutionDispatcher({
+    matches: enrichedMatches,
+    signals,
+    enableTelegram: options.dispatchTelegram !== false,
+    enablePush: true,
+  });
+
+  snapshot = {
+    ...snapshot,
+    queueSize: dispatchResult.snapshot.queueSize,
+    dispatch: dispatchResult.snapshot,
+  };
 
   setLiveEngineSnapshot(snapshot);
 

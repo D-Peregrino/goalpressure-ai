@@ -107,16 +107,26 @@ function momentFromScore(score: number): MomentLevel {
   return "calm";
 }
 
+function dispatchBoost(m: EnrichedLiveMatch): number {
+  const u = m.dispatchUrgency;
+  if (u === "CRITICAL") return 28;
+  if (u === "HIGH") return 16;
+  if (u === "MEDIUM") return 8;
+  return (m.dispatchPriority ?? 0) * 0.12;
+}
+
 function scoreMatch(m: EnrichedLiveMatch): number {
+  let dispatchExtra = dispatchBoost(m);
   if (m.opsFocusScore != null && m.opsFocusScore > 0) {
     let s = m.opsFocusScore;
     if (m.operationalState === "EXECUTE") s += 12;
     if (m.evPlus) s += 10;
     if (m.opsRiskContext === "DANGEROUS") s *= 0.78;
+    s += dispatchExtra;
     s *= m.trustVisualWeight ?? computeMatchTrust(m).visualWeight;
     return Math.round(s);
   }
-  let s = 0;
+  let s = dispatchExtra;
   if (m.operationalState === "EXECUTE") s += 95;
   else if (m.operationalState === "MONITOR") s += 48;
   else if (m.operationalState === "WAIT") s += 12;

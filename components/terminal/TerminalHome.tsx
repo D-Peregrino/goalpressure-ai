@@ -24,6 +24,10 @@ import PressureEnginePanel from "@/components/terminal/PressureEnginePanel";
 import EVEnginePanel from "@/components/terminal/EVEnginePanel";
 import OperationalIntelligencePanel from "@/components/terminal/OperationalIntelligencePanel";
 import LearningEnginePanel from "@/components/terminal/LearningEnginePanel";
+import LiveCommandCenterPanel from "@/components/terminal/LiveCommandCenterPanel";
+import LiveDispatchFeed from "@/components/terminal/LiveDispatchFeed";
+import OperatorModePanel from "@/components/terminal/OperatorModePanel";
+import DispatchPushSubscriber from "@/components/terminal/DispatchPushSubscriber";
 import { useTerminalAuditMode } from "@/hooks/useTerminalAuditMode";
 import PaywallGate from "@/components/subscription/PaywallGate";
 import UpgradeBanner from "@/components/subscription/UpgradeBanner";
@@ -107,9 +111,10 @@ export default function TerminalHome() {
       variants={polishStagger}
       initial="hidden"
       animate="show"
-      className="gp-terminal-v2 gp-terminal-v2--premium gp-terminal-v2--living gp-terminal-v2--flow gp-terminal-v2--polish gp-terminal-v2--commercial"
+      className="gp-terminal-v2 gp-terminal-v2--premium gp-terminal-v2--living gp-terminal-v2--flow gp-terminal-v2--polish gp-terminal-v2--commercial gp-terminal-v2--operator"
     >
       <TerminalPremiumAmbient />
+      <DispatchPushSubscriber />
       <OnboardingModal
         open={onboarding.open}
         step={onboarding.step}
@@ -199,6 +204,9 @@ export default function TerminalHome() {
           <EVEnginePanel matches={pool} />
           <OperationalIntelligencePanel matches={pool} />
           <LearningEnginePanel />
+          <LiveCommandCenterPanel />
+          <OperatorModePanel />
+          <LiveDispatchFeed className="hidden xl:block" />
           <HeatRanking matches={pool} />
           <PaywallGate
             feature="timeline"

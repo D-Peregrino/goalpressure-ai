@@ -166,6 +166,8 @@ export interface EnrichedLiveMatch {
   historicalEdgeScore?: number;
   historicalEdgeLabel?: string;
   learningBadges?: string[];
+  dispatchUrgency?: string;
+  dispatchPriority?: number;
 }
 
 const SUPPLEMENTARY_PATHS = [
@@ -265,6 +267,31 @@ export function useLiveMatchCenter() {
       window.clearInterval(id);
     };
   }, []);
+
+  const dispatchByFixture = useMemo(() => {
+    const snap = live.dispatchSnapshot;
+    const map = new Map<
+      string,
+      { urgency: string; priority: number }
+    >();
+    if (!snap) return map;
+    for (const item of [...snap.feed, ...snap.queue]) {
+      map.set(item.fixtureId, {
+        urgency: item.urgency,
+        priority: item.priorityScore,
+      });
+    }
+    if (snap.primaryFixtureId && !map.has(snap.primaryFixtureId)) {
+      const primary = snap.feed.find((f) => f.fixtureId === snap.primaryFixtureId);
+      if (primary) {
+        map.set(primary.fixtureId, {
+          urgency: primary.urgency,
+          priority: primary.priorityScore + 10,
+        });
+      }
+    }
+    return map;
+  }, [live.dispatchSnapshot]);
 
   const enriched = useMemo((): EnrichedLiveMatch[] => {
     const mapped = live.matches.map((match) => {
@@ -676,6 +703,8 @@ export function useLiveMatchCenter() {
         historicalEdgeScore: match.learningContext?.historicalEdge.score,
         historicalEdgeLabel: match.learningContext?.historicalEdge.label,
         learningBadges: match.learningContext?.historicalEdge.badges,
+        dispatchUrgency: dispatchByFixture.get(row.fixtureId)?.urgency,
+        dispatchPriority: dispatchByFixture.get(row.fixtureId)?.priority,
       };
     });
 
@@ -686,7 +715,7 @@ export function useLiveMatchCenter() {
     });
 
     return applyTrustLayer(sorted);
-  }, [live.matches, ops]);
+  }, [live.matches, ops, dispatchByFixture]);
 
   const liveSignals = useMemo(
     (): LiveSignalEntry[] =>

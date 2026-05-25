@@ -62,6 +62,8 @@ export interface LiveEngineSnapshot {
   insights: MatchEngineInsight[];
   signals: Signal[];
   queueSize: number;
+  /** Execution & Distribution Layer snapshot */
+  dispatch?: import("@/lib/execution/execution.types").DispatchEngineSnapshot;
 }
 
 export interface LiveEngineProcessResult {

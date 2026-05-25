@@ -199,6 +199,16 @@ function MatchCardProInner({
                     PADRÃO
                   </span>
                 )}
+              {isLive && match.dispatchUrgency === "CRITICAL" && (
+                <span className="gp-dispatch-badge gp-dispatch-badge--critical">
+                  CRÍTICO
+                </span>
+              )}
+              {isLive && match.dispatchUrgency === "HIGH" && (
+                <span className="gp-dispatch-badge gp-dispatch-badge--high">
+                  DISPATCH
+                </span>
+              )}
               {isLive && (
                 <DataSourceBadge source="sportmonks" className="gp-sport-card__source-badge" />
               )}
