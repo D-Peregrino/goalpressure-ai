@@ -10705,6 +10705,40 @@ body {
   margin: 1rem 0;
 }
 
+.gp-admin-error-fallback {
+  margin: 2rem auto;
+  max-width: 520px;
+  padding: 1.25rem 1.5rem;
+  border-radius: 10px;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.gp-admin-error-fallback h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  color: #b91c1c;
+}
+
+.gp-admin-error-fallback__detail {
+  margin: 0 0 0.75rem;
+  font-size: 0.88rem;
+  color: var(--gp-gray);
+  word-break: break-word;
+}
+
+.gp-admin-error-fallback__hint {
+  margin: 0 0 1rem;
+  font-size: 0.82rem;
+  color: var(--gp-gray);
+}
+
+.gp-admin-error-fallback__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .gp-val-summary {
   font-size: 0.9rem;
   margin-bottom: 1rem;

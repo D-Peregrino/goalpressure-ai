@@ -1,8 +1,10 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AdminShell from "@/components/admin/AdminShell";
+import AdminErrorBoundary from "@/components/admin/AdminErrorBoundary";
 import { fetchWithAuth } from "@/lib/auth/fetchWithAuth";
+import { logAdminValidationError } from "@/lib/admin/adminValidationLog";
 import {
   isOperationalValidationReport,
   parseApiErrorMessage,
@@ -28,7 +30,7 @@ function ApiErrorCard({ title, detail }: { title: string; detail: string }) {
   );
 }
 
-export default function AdminValidacaoPage() {
+function AdminValidacaoPageInner() {
   const [report, setReport] = useState<OperationalValidationReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [schemaLoading, setSchemaLoading] = useState(false);
@@ -36,7 +38,37 @@ export default function AdminValidacaoPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [fetchErrors, setFetchErrors] = useState<string[]>([]);
 
-  const pushFetchError = useCallback((label: string, detail: string) => {
+  useEffect(() => {
+    const onWindowError = (event: ErrorEvent): void => {
+      logAdminValidationError(event.error ?? event.message, {
+        scope: "admin_validacao_window_error",
+        component: "AdminValidacaoPage",
+        route: "/admin/validacao",
+        extra: { filename: event.filename, lineno: event.lineno },
+      });
+    };
+    const onUnhandled = (event: PromiseRejectionEvent): void => {
+      logAdminValidationError(event.reason, {
+        scope: "admin_validacao_unhandled_rejection",
+        component: "AdminValidacaoPage",
+        route: "/admin/validacao",
+      });
+    };
+    window.addEventListener("error", onWindowError);
+    window.addEventListener("unhandledrejection", onUnhandled);
+    return () => {
+      window.removeEventListener("error", onWindowError);
+      window.removeEventListener("unhandledrejection", onUnhandled);
+    };
+  }, []);
+
+  const pushFetchError = useCallback((label: string, detail: string, cause?: unknown) => {
+    logAdminValidationError(cause ?? new Error(detail), {
+      scope: "admin_validacao_fetch",
+      component: "AdminValidacaoPage",
+      route: "/admin/validacao",
+      extra: { label, detail },
+    });
     setFetchErrors((prev) => [...prev, `${label}: ${detail}`]);
   }, []);
 
@@ -85,7 +117,7 @@ export default function AdminValidacaoPage() {
       );
     } catch (e) {
       const detail = e instanceof Error ? e.message : "Falha na validação";
-      pushFetchError("Validação", detail);
+      pushFetchError("Validação", detail, e);
       setMessage(detail);
       setReport(null);
     } finally {
@@ -127,7 +159,7 @@ export default function AdminValidacaoPage() {
       await runValidation();
     } catch (e) {
       const detail = e instanceof Error ? e.message : "Falha ao aplicar schemas";
-      pushFetchError("Schemas", detail);
+      pushFetchError("Schemas", detail, e);
       setMessage(detail);
     } finally {
       setSchemaLoading(false);
@@ -167,7 +199,7 @@ export default function AdminValidacaoPage() {
       await runValidation();
     } catch (e) {
       const detail = e instanceof Error ? e.message : "Falha ao iniciar runtime";
-      pushFetchError("Runtime", detail);
+      pushFetchError("Runtime", detail, e);
       setMessage(detail);
     } finally {
       setRuntimeLoading(false);
@@ -310,5 +342,16 @@ export default function AdminValidacaoPage() {
         </>
       )}
     </AdminShell>
+  );
+}
+
+export default function AdminValidacaoPage() {
+  return (
+    <AdminErrorBoundary
+      title="Erro ao carregar painel de validação"
+      scope="admin_validacao_page"
+    >
+      <AdminValidacaoPageInner />
+    </AdminErrorBoundary>
   );
 }
