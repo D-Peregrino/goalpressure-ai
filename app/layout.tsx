@@ -6,6 +6,7 @@ import "./styles/saas-stabilization.css";
 import { BRAND } from "@/lib/design/brand";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
+import { UserWorkspaceProvider } from "@/contexts/UserWorkspaceContext";
 import SupabasePublicConfig from "@/components/supabase/SupabasePublicConfig";
 
 const inter = Inter({
@@ -43,7 +44,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-body bg-[var(--gp-white)] text-[var(--text)]">
         <SupabasePublicConfig />
         <AuthProvider>
-          <SubscriptionProvider>{children}</SubscriptionProvider>
+          <UserWorkspaceProvider>
+            <SubscriptionProvider>{children}</SubscriptionProvider>
+          </UserWorkspaceProvider>
         </AuthProvider>
       </body>
     </html>

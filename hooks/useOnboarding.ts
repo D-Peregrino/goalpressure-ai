@@ -1,39 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useUserWorkspace } from "@/hooks/useUserWorkspace";
 
-const KEY = "gp_onboarding_v1";
-
+/** Onboarding guiado — sincronizado com workspace do usuário. */
 export function useOnboarding() {
-  const [open, setOpen] = useState(false);
-  const [step, setStep] = useState(0);
-
-  useEffect(() => {
-    try {
-      const done = localStorage.getItem(KEY);
-      if (!done) setOpen(true);
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  const complete = useCallback(() => {
-    try {
-      localStorage.setItem(KEY, "1");
-    } catch {
-      /* ignore */
-    }
-    setOpen(false);
-  }, []);
-
-  const skip = complete;
-
+  const ws = useUserWorkspace();
   return {
-    open,
-    step,
-    setStep,
-    complete,
-    skip,
-    setOpen,
+    open: ws.onboardingOpen,
+    step: ws.onboardingStep,
+    setStep: ws.setOnboardingStep,
+    complete: ws.completeOnboarding,
+    skip: ws.skipOnboarding,
+    setOpen: ws.setOnboardingOpen,
   };
 }

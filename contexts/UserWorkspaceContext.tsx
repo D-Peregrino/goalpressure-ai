@@ -1,0 +1,286 @@
+"use client";
+
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { fetchWithAuth } from "@/lib/auth/fetchWithAuth";
+import {
+  loadLocalWorkspace,
+  mergeWorkspaces,
+  saveLocalWorkspace,
+} from "@/lib/workspace/localStore";
+import {
+  EMPTY_WORKSPACE,
+  WORKSPACE_LIMITS,
+  type ReadingHistoryEntry,
+  type RecentOpportunity,
+  type UserWorkspaceData,
+} from "@/lib/workspace/types";
+
+type SyncState = "idle" | "loading" | "synced" | "local" | "error";
+
+interface UserWorkspaceContextValue {
+  ready: boolean;
+  syncState: SyncState;
+  favorites: Set<string>;
+  watched: string[];
+  recent: RecentOpportunity[];
+  readingHistory: ReadingHistoryEntry[];
+  onboardingCompleted: boolean;
+  onboardingOpen: boolean;
+  setOnboardingOpen: (open: boolean) => void;
+  onboardingStep: number;
+  setOnboardingStep: (step: number) => void;
+  toggleFavorite: (fixtureId: string) => void;
+  markWatched: (fixtureId: string) => void;
+  recordOpportunity: (entry: Omit<RecentOpportunity, "ts"> & { ts?: number }) => void;
+  recordReading: (entry: Omit<ReadingHistoryEntry, "ts"> & { ts?: number }) => void;
+  completeOnboarding: () => void;
+  skipOnboarding: () => void;
+  persistRoute: (path: string) => void;
+  flushSync: () => Promise<void>;
+}
+
+const UserWorkspaceContext = createContext<UserWorkspaceContextValue | null>(null);
+
+function toSet(ids: string[]): Set<string> {
+  return new Set(ids);
+}
+
+export function UserWorkspaceProvider({ children }: { children: React.ReactNode }) {
+  const { user, loading: authLoading } = useAuth();
+  const [data, setData] = useState<UserWorkspaceData>(EMPTY_WORKSPACE);
+  const [ready, setReady] = useState(false);
+  const [syncState, setSyncState] = useState<SyncState>("idle");
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(0);
+  const dataRef = useRef(data);
+  const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  dataRef.current = data;
+
+  const scheduleRemoteSync = useCallback(() => {
+    if (!user) return;
+    if (syncTimer.current) clearTimeout(syncTimer.current);
+    syncTimer.current = setTimeout(() => {
+      void fetchWithAuth("/api/user/workspace", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dataRef.current),
+      })
+        .then((r) => {
+          if (r.ok) setSyncState("synced");
+          else setSyncState("error");
+        })
+        .catch(() => setSyncState("error"));
+    }, 600);
+  }, [user]);
+
+  const applyWorkspace = useCallback(
+    (next: UserWorkspaceData, options?: { sync?: boolean }) => {
+      setData(next);
+      saveLocalWorkspace(next);
+      if (options?.sync !== false) scheduleRemoteSync();
+    },
+    [scheduleRemoteSync]
+  );
+
+  const hydrate = useCallback(async () => {
+    const local = loadLocalWorkspace();
+    if (!user) {
+      setData(local);
+      setSyncState("local");
+      setReady(true);
+      if (!local.onboardingCompleted) setOnboardingOpen(false);
+      return;
+    }
+
+    setSyncState("loading");
+    try {
+      const res = await fetchWithAuth("/api/user/workspace");
+      if (res.ok) {
+        const json = (await res.json()) as { workspace?: UserWorkspaceData | null };
+        const remote = json.workspace ?? EMPTY_WORKSPACE;
+        const merged = mergeWorkspaces(local, remote);
+        setData(merged);
+        saveLocalWorkspace(merged);
+        setSyncState("synced");
+        if (!merged.onboardingCompleted) {
+          setOnboardingOpen(true);
+        }
+        if (JSON.stringify(merged) !== JSON.stringify(remote)) {
+          scheduleRemoteSync();
+        }
+      } else {
+        setData(local);
+        setSyncState("local");
+      }
+    } catch {
+      setData(local);
+      setSyncState("local");
+    } finally {
+      setReady(true);
+    }
+  }, [user, scheduleRemoteSync]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    setReady(false);
+    void hydrate();
+  }, [authLoading, user?.id, hydrate]);
+
+  const toggleFavorite = useCallback(
+    (fixtureId: string) => {
+      const ids = [...dataRef.current.favorites];
+      const idx = ids.indexOf(fixtureId);
+      if (idx >= 0) ids.splice(idx, 1);
+      else ids.unshift(fixtureId);
+      applyWorkspace({
+        ...dataRef.current,
+        favorites: ids.slice(0, WORKSPACE_LIMITS.favorites),
+      });
+    },
+    [applyWorkspace]
+  );
+
+  const markWatched = useCallback(
+    (fixtureId: string) => {
+      const ids = [
+        fixtureId,
+        ...dataRef.current.watched.filter((id) => id !== fixtureId),
+      ].slice(0, WORKSPACE_LIMITS.watched);
+      applyWorkspace({ ...dataRef.current, watched: ids });
+    },
+    [applyWorkspace]
+  );
+
+  const recordOpportunity = useCallback(
+    (entry: Omit<RecentOpportunity, "ts"> & { ts?: number }) => {
+      const item: RecentOpportunity = { ...entry, ts: entry.ts ?? Date.now() };
+      const list = [
+        item,
+        ...dataRef.current.recentOpportunities.filter((p) => p.fixtureId !== item.fixtureId),
+      ].slice(0, WORKSPACE_LIMITS.recentOpportunities);
+      applyWorkspace({ ...dataRef.current, recentOpportunities: list });
+    },
+    [applyWorkspace]
+  );
+
+  const recordReading = useCallback(
+    (entry: Omit<ReadingHistoryEntry, "ts"> & { ts?: number }) => {
+      const item: ReadingHistoryEntry = { ...entry, ts: entry.ts ?? Date.now() };
+      const readingHistory = [
+        item,
+        ...dataRef.current.readingHistory.filter((p) => p.fixtureId !== item.fixtureId),
+      ].slice(0, WORKSPACE_LIMITS.readingHistory);
+      const watched = [
+        item.fixtureId,
+        ...dataRef.current.watched.filter((id) => id !== item.fixtureId),
+      ].slice(0, WORKSPACE_LIMITS.watched);
+      applyWorkspace({ ...dataRef.current, readingHistory, watched });
+    },
+    [applyWorkspace]
+  );
+
+  const completeOnboarding = useCallback(() => {
+    applyWorkspace({ ...dataRef.current, onboardingCompleted: true });
+    setOnboardingOpen(false);
+    setOnboardingStep(0);
+  }, [applyWorkspace]);
+
+  const skipOnboarding = completeOnboarding;
+
+  const persistRoute = useCallback(
+    (path: string) => {
+      applyWorkspace({ ...dataRef.current, lastRoute: path }, { sync: true });
+    },
+    [applyWorkspace]
+  );
+
+  const flushSync = useCallback(async () => {
+    if (!user) return;
+    await fetchWithAuth("/api/user/workspace", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(dataRef.current),
+    });
+  }, [user]);
+
+  const value = useMemo<UserWorkspaceContextValue>(
+    () => ({
+      ready,
+      syncState,
+      favorites: toSet(data.favorites),
+      watched: data.watched,
+      recent: data.recentOpportunities,
+      readingHistory: data.readingHistory,
+      onboardingCompleted: data.onboardingCompleted,
+      onboardingOpen,
+      setOnboardingOpen,
+      onboardingStep,
+      setOnboardingStep,
+      toggleFavorite,
+      markWatched,
+      recordOpportunity,
+      recordReading,
+      completeOnboarding,
+      skipOnboarding,
+      persistRoute,
+      flushSync,
+    }),
+    [
+      ready,
+      syncState,
+      data,
+      onboardingOpen,
+      onboardingStep,
+      toggleFavorite,
+      markWatched,
+      recordOpportunity,
+      recordReading,
+      completeOnboarding,
+      skipOnboarding,
+      persistRoute,
+      flushSync,
+    ]
+  );
+
+  return (
+    <UserWorkspaceContext.Provider value={value}>{children}</UserWorkspaceContext.Provider>
+  );
+}
+
+export function useUserWorkspace(): UserWorkspaceContextValue {
+  const ctx = useContext(UserWorkspaceContext);
+  if (!ctx) {
+    return {
+      ready: true,
+      syncState: "local",
+      favorites: new Set(),
+      watched: [],
+      recent: [],
+      readingHistory: [],
+      onboardingCompleted: false,
+      onboardingOpen: false,
+      setOnboardingOpen: () => {},
+      onboardingStep: 0,
+      setOnboardingStep: () => {},
+      toggleFavorite: () => {},
+      markWatched: () => {},
+      recordOpportunity: () => {},
+      recordReading: () => {},
+      completeOnboarding: () => {},
+      skipOnboarding: () => {},
+      persistRoute: () => {},
+      flushSync: async () => {},
+    };
+  }
+  return ctx;
+}

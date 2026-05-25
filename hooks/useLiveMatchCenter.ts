@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLiveMatches } from "@/hooks/useLiveMatches";
 import { useOps } from "@/hooks/useOps";
+import { useUserWorkspace } from "@/hooks/useUserWorkspace";
 import {
   fixtureIdFromMatch,
   formatKickoffLabel,
@@ -149,8 +150,6 @@ const SUPPLEMENTARY_PATHS = [
   "/api/player/runtime",
 ] as const;
 
-const FAVORITES_KEY = "gp-match-favorites";
-
 async function fetchOptional(path: string): Promise<unknown | null> {
   try {
     const res = await fetch(path, { cache: "no-store", headers: { Accept: "application/json" } });
@@ -220,39 +219,11 @@ function buildRecentEvents(parts: {
 export function useLiveMatchCenter() {
   const live = useLiveMatches({ pollIntervalMs: 20_000 });
   const ops = useOps({ pollIntervalMs: 15_000 });
-  const [favorites, setFavorites] = useState<Set<string>>(() => new Set());
+  const { favorites, toggleFavorite, ready: workspaceReady } = useUserWorkspace();
   const [filter, setFilter] = useState<MatchCenterFilter>("all");
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const supplementaryOk = useRef(true);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(FAVORITES_KEY);
-      if (raw) setFavorites(new Set(JSON.parse(raw) as string[]));
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  const persistFavorites = useCallback((next: Set<string>) => {
-    setFavorites(next);
-    try {
-      localStorage.setItem(FAVORITES_KEY, JSON.stringify([...next]));
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  const toggleFavorite = useCallback(
-    (fixtureId: string) => {
-      const next = new Set(favorites);
-      if (next.has(fixtureId)) next.delete(fixtureId);
-      else next.add(fixtureId);
-      persistFavorites(next);
-    },
-    [favorites, persistFavorites]
-  );
 
   useEffect(() => {
     let cancelled = false;
@@ -704,6 +675,7 @@ export function useLiveMatchCenter() {
     setViewMode,
     favorites,
     toggleFavorite,
+    workspaceReady,
     feedStatus: live.status,
     opsStatus: ops.status,
     lastUpdated: live.lastUpdated,

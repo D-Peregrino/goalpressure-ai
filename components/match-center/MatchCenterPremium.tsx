@@ -21,6 +21,7 @@ import MatchCenterTips from "@/components/match-center/MatchCenterTips";
 import MatchCenterMobileShell, {
   type MatchCenterTab,
 } from "@/components/match-center/MatchCenterMobileShell";
+import MatchReadingTracker from "@/components/match/MatchReadingTracker";
 import { resolveOddPair } from "@/lib/signals/executionWindow";
 import {
   buildMatchStories,
@@ -266,6 +267,11 @@ function MatchCenterPremiumInner({ fixtureId }: { fixtureId: string }) {
   return (
     <div className={`gp-mc gp-mc--story gp-mc--story-viz ${tacticalClass}`}>
       <div className="gp-mc__ambient" aria-hidden />
+      <MatchReadingTracker
+        fixtureId={fixtureId}
+        label={`${mc.match.homeTeam} x ${mc.match.awayTeam}`}
+        narrative={headline}
+      />
 
       {header}
       {storyLiveHeader}

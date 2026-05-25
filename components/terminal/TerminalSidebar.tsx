@@ -6,7 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FlaskConical,
-  LayoutDashboard,
+  Home,
   Radio,
   Settings2,
   SlidersHorizontal,
@@ -23,7 +23,8 @@ import type { LucideIcon } from "lucide-react";
 const STORAGE_KEY = "gp-sidebar-collapsed";
 
 const NAV_ICONS: Record<string, LucideIcon> = {
-  "/terminal": LayoutDashboard,
+  "/inicio": Home,
+  "/terminal": Radio,
   "/feed": Radio,
   "/analytics": BarChart3,
   "/validation": TestTube2,
@@ -93,7 +94,7 @@ export default function TerminalSidebar({
 
       <nav className="gp-sidebar__nav">
         {nav.map(({ href, label, short }) => {
-          const Icon = NAV_ICONS[href] ?? LayoutDashboard;
+          const Icon = NAV_ICONS[href] ?? Home;
           const active = isActive(href);
           const displayLabel = collapsed ? short : label;
           return (
@@ -146,7 +147,7 @@ export function TerminalSidebarMobile({
   return (
     <nav className="gp-sidebar gp-sidebar--mobile">
       {nav.map(({ href, label, short }) => {
-        const Icon = NAV_ICONS[href] ?? LayoutDashboard;
+        const Icon = NAV_ICONS[href] ?? Home;
         return (
           <Link
             key={href}
@@ -165,6 +166,9 @@ export function TerminalSidebarMobile({
 
 export function useTerminalNavActive(pathname: string) {
   return (href: string) => {
+    if (href === "/inicio") {
+      return pathname === "/inicio";
+    }
     if (href === "/terminal") {
       return pathname === "/terminal" || pathname === "/ops";
     }

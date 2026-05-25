@@ -461,3 +461,202 @@
   gap: 0.35rem;
   align-items: center;
 }
+
+/* Personal dashboard (/inicio) */
+.gp-dash-hero {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--gp-space-6);
+  margin-bottom: var(--gp-space-8);
+}
+
+.gp-dash-eyebrow {
+  font-size: 0.78rem;
+  color: rgba(148, 163, 184, 0.9);
+  margin: 0 0 var(--gp-space-2);
+}
+
+.gp-dash-hero__title {
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.gp-dash-hero__sub {
+  margin: var(--gp-space-3) 0 0;
+  max-width: 36rem;
+  color: rgba(148, 163, 184, 0.95);
+  line-height: 1.5;
+}
+
+.gp-dash-hero__aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--gp-space-2);
+}
+
+.gp-dash-sync {
+  font-size: 0.72rem;
+  color: rgba(148, 163, 184, 0.8);
+}
+
+.gp-dash-quick {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--gp-space-4);
+  margin-bottom: var(--gp-space-8);
+}
+
+.gp-dash-quick-card {
+  display: flex;
+  align-items: center;
+  gap: var(--gp-space-3);
+  padding: var(--gp-space-4) var(--gp-space-5);
+  border-radius: var(--gp-radius-lg);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.gp-dash-quick-card:hover {
+  border-color: rgba(255, 43, 43, 0.35);
+  background: rgba(255, 43, 43, 0.08);
+}
+
+.gp-dash-quick-card--primary {
+  border-color: rgba(255, 43, 43, 0.4);
+  background: linear-gradient(135deg, rgba(255, 43, 43, 0.15), rgba(255, 255, 255, 0.03));
+}
+
+.gp-dash-quick-card span {
+  flex: 1;
+}
+
+.gp-dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--gp-space-5);
+}
+
+.gp-dash-panel {
+  padding: var(--gp-space-5);
+  border-radius: var(--gp-radius-lg);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.gp-dash-panel--wide {
+  grid-column: 1 / -1;
+}
+
+.gp-dash-panel h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--gp-space-2);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #f8fafc;
+  margin: 0 0 var(--gp-space-4);
+}
+
+.gp-dash-muted {
+  font-size: 0.85rem;
+  color: rgba(148, 163, 184, 0.9);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.gp-dash-link {
+  display: inline-block;
+  margin-top: var(--gp-space-3);
+  font-size: 0.82rem;
+  color: var(--gp-red-soft);
+  font-weight: 600;
+}
+
+.gp-dash-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.gp-dash-list li {
+  padding: var(--gp-space-2) 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.88rem;
+}
+
+.gp-dash-list a {
+  color: #e8edf2;
+}
+
+.gp-dash-readings {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--gp-space-3);
+}
+
+@media (min-width: 768px) {
+  .gp-dash-readings {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.gp-dash-reading {
+  display: block;
+  padding: var(--gp-space-3) var(--gp-space-4);
+  border-radius: var(--gp-radius-md);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.gp-dash-reading__label {
+  display: block;
+  font-weight: 600;
+  color: #f8fafc;
+  font-size: 0.88rem;
+}
+
+.gp-dash-reading__sub {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.gp-dash-plan-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0 0 var(--gp-space-2);
+}
+
+.gp-dash-guest {
+  max-width: 28rem;
+  padding: var(--gp-space-8);
+  border-radius: var(--gp-radius-xl);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+}
+
+.gp-dash-guest h2 {
+  color: #f8fafc;
+  margin: 0 0 var(--gp-space-3);
+}
+
+.gp-dash-guest__cta {
+  display: flex;
+  gap: var(--gp-space-3);
+  justify-content: center;
+  margin: var(--gp-space-6) 0;
+}

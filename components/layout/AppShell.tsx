@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import TerminalSidebar, {
@@ -11,6 +11,7 @@ import TerminalSidebar, {
 } from "@/components/terminal/TerminalSidebar";
 import AppTopbar from "@/components/layout/AppTopbar";
 import AuthGuard from "@/components/layout/AuthGuard";
+import { useUserWorkspace } from "@/hooks/useUserWorkspace";
 
 export default function AppShell({
   children,
@@ -31,6 +32,12 @@ export default function AppShell({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const isActive = useTerminalNavActive(pathname);
+  const { persistRoute } = useUserWorkspace();
+
+  useEffect(() => {
+    if (pathname.startsWith("/admin")) return;
+    persistRoute(pathname);
+  }, [pathname, persistRoute]);
 
   const inner = (
     <>

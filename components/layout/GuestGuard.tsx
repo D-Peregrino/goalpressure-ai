@@ -13,7 +13,7 @@ export default function GuestGuard({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     if (!loading && user) {
-      const redirect = params.get("redirect") ?? "/terminal";
+      const redirect = params.get("redirect") ?? "/inicio";
       router.replace(redirect);
     }
   }, [loading, user, params, router]);

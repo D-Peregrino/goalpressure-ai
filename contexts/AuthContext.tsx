@@ -64,10 +64,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async function init() {
       const supabase = getSupabaseBrowser();
       if (supabase) {
-        await supabase.auth.getSession();
-        if (!cancelled) await refreshAccount();
-        const { data: sub } = supabase.auth.onAuthStateChange(() => {
-          if (!cancelled) void refreshAccount();
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!cancelled && sessionData.session) {
+          await refreshAccount();
+        }
+        const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+          if (cancelled) return;
+          if (event === "SIGNED_OUT") {
+            setAccount(null);
+            return;
+          }
+          if (
+            session &&
+            (event === "SIGNED_IN" ||
+              event === "TOKEN_REFRESHED" ||
+              event === "INITIAL_SESSION")
+          ) {
+            void refreshAccount();
+          }
         });
         unsubscribe = () => sub.subscription.unsubscribe();
       } else if (!cancelled) {
