@@ -1,10 +1,10 @@
 "use client";
 
 import AdminShell from "@/components/admin/AdminShell";
-import { adminAreaEnabled } from "@/lib/auth/admin";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function AdminConfiguracoesPage() {
-  const enabled = adminAreaEnabled();
+  const { user, isAdmin } = useAuth();
 
   return (
     <AdminShell>
@@ -13,9 +13,9 @@ export default function AdminConfiguracoesPage() {
         <section>
           <h2>Acesso admin</h2>
           <p>
-            {enabled
-              ? "Painel ativo via ADMIN_EMAILS no servidor."
-              : "Defina ADMIN_EMAILS (e-mails separados por vírgula) para habilitar o painel."}
+            {isAdmin
+              ? `Administrador ativo: ${user?.email ?? "—"} (via ADMIN_EMAILS no servidor).`
+              : "Sem permissão admin na sessão atual."}
           </p>
         </section>
         <section>
@@ -37,6 +37,12 @@ export default function AdminConfiguracoesPage() {
         <section>
           <h2>E-mail transacional</h2>
           <p>EMAIL_PROVIDER=resend e RESEND_API_KEY — sem provider, logs em desenvolvimento.</p>
+        </section>
+        <section>
+          <h2>Variável admin</h2>
+          <p>
+            ADMIN_EMAILS — lista de e-mails com acesso ao painel (somente servidor Railway/Vercel).
+          </p>
         </section>
       </div>
     </AdminShell>

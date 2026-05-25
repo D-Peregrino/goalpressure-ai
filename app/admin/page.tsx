@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import AdminKpiCard from "@/components/admin/AdminKpiCard";
-import { adminAreaEnabled } from "@/lib/auth/admin";
-import Link from "next/link";
 import { formatarPreco } from "@/lib/subscription/plans";
 import { fetchWithAuth } from "@/lib/auth/fetchWithAuth";
 
@@ -25,15 +23,6 @@ export default function AdminPage() {
       .then((r) => r.json())
       .then(setStats);
   }, []);
-
-  if (!adminAreaEnabled()) {
-    return (
-      <div className="gp-admin-denied">
-        <p>Painel admin não configurado. Defina ADMIN_EMAILS no servidor.</p>
-        <Link href="/">Início</Link>
-      </div>
-    );
-  }
 
   return (
     <AdminShell>

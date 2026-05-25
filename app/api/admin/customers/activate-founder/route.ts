@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/requireUser";
-import { adminAreaEnabled } from "@/lib/auth/admin";
 import { activateFundadorManualAdmin } from "@/lib/commercial/db";
 import { devAuthEnabled, findDevUserById, updateDevUserPlan } from "@/lib/auth/devStore";
 import { logInfo, logWarn } from "@/lib/utils/logger";
@@ -10,13 +9,6 @@ export const dynamic = "force-dynamic";
 const LOG_SCOPE = "api-admin-activate-founder";
 
 export async function POST(request: Request) {
-  if (!adminAreaEnabled()) {
-    return NextResponse.json(
-      { ok: false, error: "Painel admin desabilitado (defina ADMIN_EMAILS)." },
-      { status: 503 }
-    );
-  }
-
   const admin = await requireAdmin(request);
   if (!admin) {
     return NextResponse.json({ ok: false, error: "Acesso negado." }, { status: 403 });

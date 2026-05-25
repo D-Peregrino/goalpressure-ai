@@ -59,6 +59,11 @@ export function getPostLoginRedirect(input: {
   return "/minha-central";
 }
 
+/** Mesma regra que /api/debug/session e requireAdmin (role derivado de ADMIN_EMAILS). */
+export function hasAdminAccess(role: SessionUser["role"]): boolean {
+  return role === "admin";
+}
+
 export function sessionDebugReason(input: {
   role: SessionUser["role"];
   plan: DbPlan;

@@ -1,5 +1,10 @@
+/**
+ * Admin — somente variável de servidor ADMIN_EMAILS (nunca NEXT_PUBLIC_*).
+ * Usar isAdminEmail / requireAdmin no servidor; no client usar useAuth().isAdmin.
+ */
+
 export function getAdminEmails(): string[] {
-  const raw = process.env.ADMIN_EMAILS ?? process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "";
+  const raw = process.env.ADMIN_EMAILS ?? "";
   return raw
     .split(",")
     .map((e) => e.trim().toLowerCase())
@@ -13,6 +18,7 @@ export function isAdminEmail(email: string | null | undefined): boolean {
   return admins.includes(email.trim().toLowerCase());
 }
 
+/** Apenas servidor — indica se ADMIN_EMAILS está definida (não usar em Client Components). */
 export function adminAreaEnabled(): boolean {
   return getAdminEmails().length > 0;
 }
