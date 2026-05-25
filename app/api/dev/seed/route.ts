@@ -5,20 +5,35 @@ import { runOperationalSeed } from "@/lib/seed/runSeed";
 
 export const dynamic = "force-dynamic";
 
+function isSportmonksBootstrap(request: Request): boolean {
+  const bootstrap = request.headers.get("x-gp-sportmonks-bootstrap")?.trim();
+  const expected = process.env.SPORTMONKS_API_TOKEN?.trim();
+  return Boolean(expected && bootstrap === expected);
+}
+
+function canRunSeed(request: Request): boolean {
+  if (isSeedEnabled()) return true;
+  return isSportmonksBootstrap(request);
+}
+
+async function authorizeSeed(request: Request): Promise<boolean> {
+  if (isSportmonksBootstrap(request)) return true;
+  return Boolean(await requireAdmin(request));
+}
+
 /**
- * POST /api/dev/seed — popula dados operacionais (admin + GP_ALLOW_SEED).
+ * POST /api/dev/seed — popula dados operacionais (admin + GP_ALLOW_SEED ou bootstrap SportMonks).
  * Body opcional: { "clear": true }
  */
 export async function POST(request: Request) {
-  if (!isSeedEnabled()) {
+  if (!canRunSeed(request)) {
     return NextResponse.json(
       { ok: false, error: "Seed desabilitado em produção (use GP_ALLOW_SEED=true)." },
       { status: 403 }
     );
   }
 
-  const admin = await requireAdmin(request);
-  if (!admin) {
+  if (!(await authorizeSeed(request))) {
     return NextResponse.json({ ok: false, error: "Acesso negado." }, { status: 403 });
   }
 
@@ -47,12 +62,11 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  if (!isSeedEnabled()) {
+  if (!canRunSeed(request)) {
     return NextResponse.json({ ok: false, error: "Seed desabilitado." }, { status: 403 });
   }
 
-  const admin = await requireAdmin(request);
-  if (!admin) {
+  if (!(await authorizeSeed(request))) {
     return NextResponse.json({ ok: false, error: "Acesso negado." }, { status: 403 });
   }
 
