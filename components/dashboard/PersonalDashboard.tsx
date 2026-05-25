@@ -47,6 +47,7 @@ const EMPTY_FEED: GlobalFeedPayload = {
   dispatches: [],
   metrics: [],
   edges: [],
+  operational: [],
   source: "empty",
 };
 
@@ -275,7 +276,7 @@ export default function PersonalDashboard() {
       {globalFeed.source === "supabase" && (
         <p className="gp-dash-feed-hint">
           Feed global do sistema ({globalFeed.matches.length} jogos · {globalFeed.signals.length}{" "}
-          sinais · {globalFeed.dispatches.length} disparos)
+          sinais · {globalFeed.dispatches.length} disparos · {globalFeed.operational.length} eventos)
         </p>
       )}
 
@@ -387,6 +388,43 @@ export default function PersonalDashboard() {
             </ul>
           )}
         </section>
+
+        {globalFeed.operational.length > 0 && (
+          <section className="gp-dash-panel gp-dash-panel--wide">
+            <h2>
+              <Flame className="h-4 w-4" /> Eventos operacionais
+              <span className="gp-dash-tag">global</span>
+            </h2>
+            <ul className="gp-dash-readings">
+              {globalFeed.operational.slice(0, 8).map((e) => (
+                <li key={e.id}>
+                  {e.fixtureId ? (
+                    <Link
+                      href={`/match/${encodeURIComponent(e.fixtureId)}`}
+                      className="gp-dash-reading"
+                    >
+                      <span className="gp-dash-reading__label">
+                        {e.headline} · {e.label}
+                      </span>
+                      {e.narrative && (
+                        <span className="gp-dash-reading__sub">{e.narrative}</span>
+                      )}
+                      <span className="gp-dash-reading__time">{formatRelative(e.createdAt)}</span>
+                    </Link>
+                  ) : (
+                    <div className="gp-dash-reading">
+                      <span className="gp-dash-reading__label">{e.headline}</span>
+                      {e.narrative && (
+                        <span className="gp-dash-reading__sub">{e.narrative}</span>
+                      )}
+                      <span className="gp-dash-reading__time">{formatRelative(e.createdAt)}</span>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section className="gp-dash-panel">
           <h2>

@@ -47,12 +47,23 @@ export interface GlobalFeedEdge {
   createdAt: string;
 }
 
+export interface GlobalFeedOperational {
+  id: string;
+  fixtureId: string | null;
+  label: string;
+  headline: string;
+  narrative: string | null;
+  severity: string;
+  createdAt: string;
+}
+
 export interface GlobalFeedPayload {
   matches: GlobalFeedMatch[];
   signals: GlobalFeedSignal[];
   dispatches: GlobalFeedDispatch[];
   metrics: GlobalFeedMetric[];
   edges: GlobalFeedEdge[];
+  operational: GlobalFeedOperational[];
   source: "supabase" | "empty";
 }
 
@@ -62,6 +73,7 @@ const EMPTY: GlobalFeedPayload = {
   dispatches: [],
   metrics: [],
   edges: [],
+  operational: [],
   source: "empty",
 };
 
@@ -69,7 +81,7 @@ export async function fetchGlobalFeed(limit = 8): Promise<GlobalFeedPayload> {
   const admin = getSupabaseAdmin();
   if (!admin || !isSupabaseConfigured()) return EMPTY;
 
-  const [matchesRes, signalsRes, dispatchesRes, metricsRes, edgesRes] = await Promise.all([
+  const [matchesRes, signalsRes, dispatchesRes, metricsRes, edgesRes, opRes] = await Promise.all([
     admin
       .from("matches")
       .select("external_id, home_team, away_team, league, minute, pressure_score, updated_at")
@@ -93,6 +105,11 @@ export async function fetchGlobalFeed(limit = 8): Promise<GlobalFeedPayload> {
     admin
       .from("market_edges")
       .select("id, fixture_id, market, edge_percent, classification, created_at")
+      .order("created_at", { ascending: false })
+      .limit(limit),
+    admin
+      .from("operational_events")
+      .select("id, fixture_id, home_team, away_team, headline, narrative, severity, created_at")
       .order("created_at", { ascending: false })
       .limit(limit),
   ]);
@@ -142,6 +159,16 @@ export async function fetchGlobalFeed(limit = 8): Promise<GlobalFeedPayload> {
       market: r.market,
       edgePercent: Number(r.edge_percent ?? 0),
       classification: r.classification,
+      createdAt: r.created_at,
+    })),
+    operational: (opRes.error ? [] : (opRes.data ?? [])).map((r) => ({
+      id: String(r.id),
+      fixtureId: r.fixture_id ?? null,
+      label:
+        r.home_team && r.away_team ? `${r.home_team} x ${r.away_team}` : "Sistema",
+      headline: r.headline,
+      narrative: r.narrative ?? null,
+      severity: r.severity ?? "info",
       createdAt: r.created_at,
     })),
   };

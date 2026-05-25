@@ -11,6 +11,8 @@
     "start": "next start -H 0.0.0.0",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "seed": "tsx scripts/seed.ts",
+    "seed:clear": "tsx scripts/seed.ts --clear",
     "postinstall": "node -e \"console.log('GoalPressure AI deps ready')\""
   },
   "dependencies": {
@@ -30,6 +32,8 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "tsx": "^4.19.4",
+    "dotenv": "^16.4.7"
   }
 }

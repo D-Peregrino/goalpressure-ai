@@ -28,6 +28,7 @@ import type {
   LiveMatchesErrorResponse,
   LiveMatchesSuccessResponse,
 } from "@/types/api";
+import { isSeedLiveModeEnabled, loadSeedLiveMatches } from "@/lib/seed/loadLiveMatches";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -243,12 +244,52 @@ async function fetchAndCacheMatches(routeStartedAt: number): Promise<
  * Sportmonks API → service → mapper → live engine → Match[] + signals
  * In-memory cache (TTL 20s) reduces external API calls.
  */
+async function buildSeedLiveResponse(
+  routeStartedAt: number
+): Promise<NextResponse<LiveMatchesSuccessResponse>> {
+  const matches = await loadSeedLiveMatches();
+  const engineResult = processLiveEngineBatch(matches, { dispatchTelegram: false });
+  const totalMs = Date.now() - routeStartedAt;
+  const fetchedAt = Date.now();
+
+  const entry = setLiveMatchesCacheEntry({
+    matches: engineResult.matches,
+    fetchedAt,
+  });
+
+  const body: LiveMatchesSuccessResponse = {
+    ok: true,
+    matches: engineResult.matches,
+    signals: engineResult.signals,
+    engine: engineResult.snapshot,
+    meta: {
+      count: engineResult.matches.length,
+      responseTimeMs: totalMs,
+      fetchedAt: new Date(fetchedAt).toISOString(),
+      source: "sportmonks",
+      cache: "MISS",
+      cacheAgeMs: 0,
+      cacheExpiresInMs: getCacheExpiresInMs(entry, Date.now()),
+      warning: "GP_SEED_LIVE: dados do Supabase (seed operacional)",
+    },
+  };
+
+  scheduleHistoricalPersistence(body.matches, body.meta, engineResult.signals);
+
+  return NextResponse.json(body, { headers: { "Cache-Control": "no-store" } });
+}
+
 export async function GET(): Promise<NextResponse<LiveMatchesApiResponse>> {
   const routeStartedAt = Date.now();
 
   logInfo(ROUTE_SCOPE, "Request started", {
     ttlMs: LIVE_MATCHES_CACHE_TTL_MS,
+    seedLive: isSeedLiveModeEnabled(),
   });
+
+  if (isSeedLiveModeEnabled()) {
+    return buildSeedLiveResponse(routeStartedAt);
+  }
 
   const cached = getLiveMatchesCacheEntry();
 
