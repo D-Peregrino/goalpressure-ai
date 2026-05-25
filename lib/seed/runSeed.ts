@@ -19,6 +19,31 @@ export type SeedResult = {
 
 const MARKETS = ["OVER_1_5", "OVER_2_5", "BTTS", "OVER_0_5"] as const;
 
+function isMissingTableError(message: string): boolean {
+  return (
+    message.includes("does not exist") ||
+    message.includes("schema cache") ||
+    message.includes("Could not find the table")
+  );
+}
+
+async function tryInsert(
+  admin: SupabaseClient,
+  table: string,
+  rows: Record<string, unknown>[],
+  counts: Record<string, number>,
+  countKey: string
+): Promise<boolean> {
+  if (!rows.length) return true;
+  const { error } = await admin.from(table).insert(rows);
+  if (!error) {
+    counts[countKey] = rows.length;
+    return true;
+  }
+  if (isMissingTableError(error.message)) return false;
+  throw new Error(`${table}: ${error.message}`);
+}
+
 export async function clearSeedData(admin: SupabaseClient): Promise<SeedResult> {
   const counts: Record<string, number> = {};
 
@@ -177,9 +202,9 @@ export async function runOperationalSeed(options?: { clear?: boolean }): Promise
     };
   });
 
-  const { error: dispErr } = await admin.from("signal_dispatches").insert(dispatchRows);
-  if (dispErr) return { ok: false, error: dispErr.message, counts };
-  counts.signal_dispatches = dispatchRows.length;
+  if (!(await tryInsert(admin, "signal_dispatches", dispatchRows, counts, "signal_dispatches"))) {
+    counts.signal_dispatches_skipped = 1;
+  }
 
   const metricRows = liveFixtures.flatMap((m) =>
     Array.from({ length: 4 }, () => ({
@@ -194,9 +219,9 @@ export async function runOperationalSeed(options?: { clear?: boolean }): Promise
     }))
   );
 
-  const { error: metErr } = await admin.from("live_metrics").insert(metricRows);
-  if (metErr) return { ok: false, error: metErr.message, counts };
-  counts.live_metrics = metricRows.length;
+  if (!(await tryInsert(admin, "live_metrics", metricRows, counts, "live_metrics"))) {
+    counts.live_metrics_skipped = 1;
+  }
 
   const edgeRows = liveFixtures.flatMap((m) =>
     ["OVER_1_5", "OVER_2_5"].map((market) => {
@@ -224,9 +249,9 @@ export async function runOperationalSeed(options?: { clear?: boolean }): Promise
     })
   );
 
-  const { error: edgeErr } = await admin.from("market_edges").insert(edgeRows);
-  if (edgeErr) return { ok: false, error: edgeErr.message, counts };
-  counts.market_edges = edgeRows.length;
+  if (!(await tryInsert(admin, "market_edges", edgeRows, counts, "market_edges"))) {
+    counts.market_edges_skipped = 1;
+  }
 
   const opEvents = Array.from({ length: 24 }, (_, i) => {
     const tpl = OPERATIONAL_EVENT_TEMPLATES[i % OPERATIONAL_EVENT_TEMPLATES.length];
@@ -258,8 +283,9 @@ export async function runOperationalSeed(options?: { clear?: boolean }): Promise
     metadata: { fixture_id: e.fixture_id, severity: e.severity, seed: SEED_TAG },
     created_at: e.created_at,
   }));
-  await admin.from("ops_logs").insert(opsLogs);
-  counts.ops_logs = opsLogs.length;
+  if (!(await tryInsert(admin, "ops_logs", opsLogs, counts, "ops_logs"))) {
+    counts.ops_logs_skipped = 1;
+  }
 
   const backtestRows = [
     {
@@ -289,8 +315,9 @@ export async function runOperationalSeed(options?: { clear?: boolean }): Promise
       metadata: { seed: SEED_TAG },
     },
   ];
-  await admin.from("backtest_results").insert(backtestRows);
-  counts.backtest_results = backtestRows.length;
+  if (!(await tryInsert(admin, "backtest_results", backtestRows, counts, "backtest_results"))) {
+    counts.backtest_results_skipped = 1;
+  }
 
   const hitRate =
     signalRows.filter((s) => s.outcome === "HIT").length /
@@ -330,8 +357,9 @@ export async function runOperationalSeed(options?: { clear?: boolean }): Promise
     { name: "Julia R.", email: "julia.r@exemplo.com", source: "ads", status: "qualified" },
   ].map((l) => ({ ...l, created_at: minutesAgo(randInt(60, 1440 * 14)) }));
 
-  await admin.from("leads").insert(leadRows);
-  counts.leads = leadRows.length;
+  if (!(await tryInsert(admin, "leads", leadRows, counts, "leads"))) {
+    counts.leads_skipped = 1;
+  }
 
   const userSpecs = [
     { email: SEED_USERS.admin, name: "Admin Seed", plan: "fundador" as const, role: "admin" as const },

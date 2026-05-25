@@ -57,6 +57,11 @@ export async function GET(request: Request) {
     url,
     serviceRoleKey,
     projectRef: url.replace("https://", "").split(".")[0] ?? null,
-    databaseUrl: process.env.DATABASE_URL?.trim() || null,
+    databaseUrl:
+      process.env.DATABASE_URL?.trim() ||
+      process.env.POSTGRES_URL?.trim() ||
+      process.env.SUPABASE_DB_URL?.trim() ||
+      process.env.DIRECT_URL?.trim() ||
+      null,
   });
 }

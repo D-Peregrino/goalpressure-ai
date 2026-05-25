@@ -37,7 +37,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Bootstrap inválido." }, { status: 403 });
   }
 
-  const dbUrl = process.env.DATABASE_URL?.trim();
+  const dbUrl =
+    process.env.DATABASE_URL?.trim() ||
+    process.env.POSTGRES_URL?.trim() ||
+    process.env.SUPABASE_DB_URL?.trim() ||
+    process.env.DIRECT_URL?.trim();
   if (!dbUrl) {
     return NextResponse.json(
       { ok: false, error: "DATABASE_URL não configurada no servidor." },

@@ -162,6 +162,7 @@ function buildEnvContent(existing, vars) {
     vars.ADMIN_EMAILS || existing.ADMIN_EMAILS || "admin@goalpressure.seed"
   );
   push("SEED_ADMIN_EMAIL", vars.SEED_ADMIN_EMAIL || "admin@goalpressure.seed");
+  push("DATABASE_URL", vars.DATABASE_URL || existing.DATABASE_URL);
 
   lines.push("");
   lines.push("# Optional overrides");
@@ -207,12 +208,15 @@ async function main() {
   const sportmonks =
     fromFiles.SPORTMONKS_API_TOKEN || process.env.SPORTMONKS_API_TOKEN;
 
+  let databaseUrl = fromFiles.DATABASE_URL || process.env.DATABASE_URL;
+
   if (!isValidServiceRole(serviceRole) && url) {
     console.log("   Buscando credenciais via API de setup (produção)…");
     const remote = await fetchSetupEnvFromProduction(productionBase, sportmonks, url);
     if (remote?.ok && isValidServiceRole(remote.serviceRoleKey)) {
       serviceRole = remote.serviceRoleKey;
       if (!url && remote.url) url = remote.url;
+      if (remote.databaseUrl) databaseUrl = remote.databaseUrl;
       console.log("   ✓ setup-env (produção)");
     }
   }
@@ -222,6 +226,7 @@ async function main() {
     NEXT_PUBLIC_SUPABASE_URL: url,
     SUPABASE_URL: url,
     SUPABASE_SERVICE_ROLE_KEY: serviceRole,
+    DATABASE_URL: databaseUrl,
     GP_ALLOW_SEED: "true",
     GP_SEED_LIVE: "true",
   };
