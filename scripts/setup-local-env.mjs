@@ -1,13 +1,13 @@
 /**
  * Configura .env.local para seed operacional Supabase.
- * Fontes: .env.local existente, .env, produção (JWT + setup-env), Railway CLI.
+ * Fontes: .env.local existente, .env, produção (JWT + /api/dev/setup-env).
+ * Não usa Railway CLI.
  */
 
 import { config } from "dotenv";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
-import { execSync } from "child_process";
 import { createHash } from "crypto";
 
 const SETUP_SALT = "goalpressure-setup-v1";
@@ -28,7 +28,6 @@ const ENV_FILES = [
   ENV_LOCAL,
   resolve(ROOT, ".env"),
   resolve(ROOT, ".env.supabase.secrets"),
-  resolve(ROOT, ".env.railway"),
 ];
 
 function parseEnvFile(path) {
@@ -81,31 +80,6 @@ async function fetchSetupEnvFromProduction(base, sportmonksToken, projectUrl) {
     return await res.json();
   } catch {
     return null;
-  }
-}
-
-function tryRailwayVariables() {
-  const token = process.env.RAILWAY_API_TOKEN?.trim() || process.env.RAILWAY_TOKEN?.trim();
-  if (!token) return {};
-  try {
-    const raw = execSync("npx --yes @railway/cli variables --json", {
-      cwd: ROOT,
-      encoding: "utf8",
-      env: { ...process.env, RAILWAY_API_TOKEN: token },
-      stdio: ["pipe", "pipe", "pipe"],
-    });
-    const data = JSON.parse(raw);
-    const flat = {};
-    if (Array.isArray(data)) {
-      for (const item of data) {
-        if (item?.name) flat[item.name] = item.value ?? "";
-      }
-    } else if (data && typeof data === "object") {
-      Object.assign(flat, data);
-    }
-    return flat;
-  } catch {
-    return {};
   }
 }
 
@@ -194,16 +168,6 @@ async function main() {
 
   let serviceRole =
     fromFiles.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!isValidServiceRole(serviceRole)) {
-    console.log("   Buscando SERVICE_ROLE na Railway CLI…");
-    const railway = tryRailwayVariables();
-    if (isValidServiceRole(railway.SUPABASE_SERVICE_ROLE_KEY)) {
-      serviceRole = railway.SUPABASE_SERVICE_ROLE_KEY;
-      console.log("   ✓ Railway CLI");
-    }
-    if (!url && railway.NEXT_PUBLIC_SUPABASE_URL) url = railway.NEXT_PUBLIC_SUPABASE_URL;
-  }
 
   const sportmonks =
     fromFiles.SPORTMONKS_API_TOKEN || process.env.SPORTMONKS_API_TOKEN;

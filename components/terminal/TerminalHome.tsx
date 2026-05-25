@@ -47,6 +47,8 @@ export default function TerminalHome() {
     feedStatus,
     opsStatus,
     source,
+    dataSourceBadge,
+    feedError,
     isLoading,
   } = useLiveMatchCenter();
   const { auditMode, setAuditMode } = useTerminalAuditMode();
@@ -110,7 +112,13 @@ export default function TerminalHome() {
       <UpgradeBanner />
 
       <div className="gp-terminal-v2__top-main gp-terminal-v2__top-main--stack">
-        <TerminalHeader feedStatus={feedStatus} opsStatus={opsStatus} source={source} />
+        <TerminalHeader
+          feedStatus={feedStatus}
+          opsStatus={opsStatus}
+          source={source}
+          dataSourceBadge={dataSourceBadge}
+          feedError={feedError}
+        />
         <PaywallGate
           feature="hero_premium"
           title="Decisão principal do momento"
@@ -208,6 +216,8 @@ export default function TerminalHome() {
             upcomingCount={kpis.upcoming}
             auditMode={auditMode && can("audit_mode")}
             highlightFixtureId={hero?.match.fixtureId ?? null}
+            dataSource={source}
+            feedError={feedError}
           />
         </section>
       </div>

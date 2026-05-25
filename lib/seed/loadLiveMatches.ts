@@ -22,6 +22,9 @@ export async function loadSeedLiveMatches(): Promise<Match[]> {
   return (data as DbMatchRow[]).map(mapDbRowToMatch);
 }
 
+import { isSeedAllowed } from "@/lib/data-source/config";
+
+/** Seed só quando GP_SEED_LIVE=true E não há token SportMonks. */
 export function isSeedLiveModeEnabled(): boolean {
-  return process.env.GP_SEED_LIVE === "true";
+  return isSeedAllowed();
 }

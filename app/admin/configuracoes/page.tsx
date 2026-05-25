@@ -1,6 +1,7 @@
 "use client";
 
 import AdminShell from "@/components/admin/AdminShell";
+import DataSourceDiagnostics from "@/components/ops/DataSourceDiagnostics";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function AdminConfiguracoesPage() {
@@ -38,6 +39,7 @@ export default function AdminConfiguracoesPage() {
           <h2>E-mail transacional</h2>
           <p>EMAIL_PROVIDER=resend e RESEND_API_KEY — sem provider, logs em desenvolvimento.</p>
         </section>
+        <DataSourceDiagnostics />
         <section>
           <h2>Variável admin</h2>
           <p>

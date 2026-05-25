@@ -1,13 +1,25 @@
 import type { LiveMatchesCacheStatus } from "@/lib/cache/liveMatchesCache";
+import type { ActiveDataSource } from "@/lib/data-source/config";
 import type { Match, Signal } from "@/types/domain";
 import type { LiveEngineSnapshot } from "@/types/engine";
 import type { SportmonksErrorCode } from "@/lib/utils/sportmonksErrors";
+
+export interface SportmonksFetchErrorDetail {
+  httpStatus?: number;
+  message: string;
+  endpoint?: string;
+}
 
 export interface LiveMatchesApiMeta {
   count: number;
   responseTimeMs: number;
   fetchedAt: string;
-  source: "sportmonks";
+  /** Fonte persistida no payload (legado: sempre sportmonks em cache antigo). */
+  source: ActiveDataSource;
+  /** Fonte efetiva desta resposta. */
+  activeSource: ActiveDataSource;
+  dataSourceBadge?: string;
+  sportmonksError?: SportmonksFetchErrorDetail;
   rateLimitRemaining?: number;
   rateLimitResetsInSeconds?: number;
   cache?: LiveMatchesCacheStatus;
@@ -37,6 +49,9 @@ export interface LiveMatchesErrorResponse {
   meta: {
     responseTimeMs: number;
     fetchedAt: string;
+    activeSource: ActiveDataSource;
+    sportmonksTokenConfigured?: boolean;
+    sportmonksError?: SportmonksFetchErrorDetail;
   };
 }
 

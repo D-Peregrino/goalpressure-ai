@@ -28,6 +28,7 @@ export interface SignalRow {
 export interface MatchRow {
   external_id: string;
   fixture_id?: string | null;
+  source?: string | null;
   home_team: string;
   away_team: string;
   league?: string | null;

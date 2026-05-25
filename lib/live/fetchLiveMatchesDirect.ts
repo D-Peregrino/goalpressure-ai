@@ -2,9 +2,10 @@
  * Direct SportMonks ingest for runtime polling (no HTTP loopback).
  */
 
+import { isSportmonksTokenConfigured } from "@/lib/data-source/config";
 import { mapSportmonksFixturesToMatches } from "@/lib/mappers/sportmonks";
 import { processLiveEngineBatch } from "@/lib/engine/liveEnginePipeline";
-import { fetchInplayFixtures } from "@/lib/services/sportmonks";
+import { fetchLiveFixtures } from "@/lib/sportmonks/client";
 import {
   getLiveMatchesCacheEntry,
   isLiveMatchesCacheValid,
@@ -60,6 +61,7 @@ export async function fetchLiveMatchesDirect(options?: {
           responseTimeMs: Date.now() - startedAt,
           fetchedAt: new Date(cached.fetchedAt).toISOString(),
           source: "sportmonks",
+          activeSource: "sportmonks",
           cache: "HIT",
           rateLimitRemaining: cached.rateLimitRemaining,
           rateLimitResetsInSeconds: cached.rateLimitResetsInSeconds,
@@ -70,7 +72,7 @@ export async function fetchLiveMatchesDirect(options?: {
   }
 
   try {
-    const { fixtures, responseTimeMs, rateLimit } = await fetchInplayFixtures();
+    const { fixtures, responseTimeMs, rateLimit } = await fetchLiveFixtures();
     const mapped = mapSportmonksFixturesToMatches(fixtures);
     const fetchedAt = Date.now();
 
@@ -105,6 +107,7 @@ export async function fetchLiveMatchesDirect(options?: {
         responseTimeMs: Date.now() - startedAt,
         fetchedAt: new Date(fetchedAt).toISOString(),
         source: "sportmonks",
+        activeSource: "sportmonks",
         cache: "MISS",
         rateLimitRemaining: rateLimit?.remaining,
         rateLimitResetsInSeconds: rateLimit?.resetsInSeconds,
@@ -123,7 +126,7 @@ export async function fetchLiveMatchesDirect(options?: {
     });
 
     const cached = getLiveMatchesCacheEntry();
-    if (cached) {
+    if (cached && !isSportmonksTokenConfigured()) {
       const engineResult = processLiveEngineBatch(cached.matches, {
         dispatchTelegram: false,
         modelId: options?.modelId,
@@ -141,6 +144,7 @@ export async function fetchLiveMatchesDirect(options?: {
           responseTimeMs: Date.now() - startedAt,
           fetchedAt: new Date(cached.fetchedAt).toISOString(),
           source: "sportmonks",
+          activeSource: "sportmonks",
           cache: "STALE",
           warning: message,
         },
@@ -160,6 +164,7 @@ export async function fetchLiveMatchesDirect(options?: {
         responseTimeMs: Date.now() - startedAt,
         fetchedAt: new Date().toISOString(),
         source: "sportmonks",
+        activeSource: "sportmonks",
         warning: message,
       },
     };

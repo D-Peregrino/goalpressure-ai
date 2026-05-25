@@ -11,7 +11,7 @@ import { UPGRADE_PATH } from "@/lib/subscription/commercialCopy";
 const MAX_HISTORY = 24;
 
 const FILTER_HINT: Partial<Record<MatchCenterFilter, string>> = {
-  live: "Não há jogos ao vivo agora.",
+  live: "Nenhum jogo ao vivo disponível na SportMonks agora.",
   upcoming: "Não há partidas pré-jogo no feed.",
   high_pressure: "Nenhum jogo ao vivo com pressão alta no momento.",
   execute: "Nenhuma oportunidade ativa neste instante.",
@@ -31,6 +31,8 @@ export default function LiveOperationsGrid({
   upcomingCount,
   auditMode = false,
   highlightFixtureId,
+  dataSource,
+  feedError,
 }: {
   matches: EnrichedLiveMatch[];
   allMatches: EnrichedLiveMatch[];
@@ -43,6 +45,8 @@ export default function LiveOperationsGrid({
   upcomingCount: number;
   auditMode?: boolean;
   highlightFixtureId?: string | null;
+  dataSource?: string;
+  feedError?: string | null;
 }) {
   const { limits, can } = useSubscription();
   const historyRef = useRef<Map<string, number[]>>(new Map());
@@ -64,9 +68,17 @@ export default function LiveOperationsGrid({
     const hasPre = upcomingCount > 0;
     const hasAny = allMatches.length > 0;
 
+    const emptyMsg =
+      dataSource === "sportmonks" && filter === "live" && allMatches.length === 0
+        ? "Nenhum jogo ao vivo disponível na SportMonks agora."
+        : FILTER_HINT[filter] ?? "Nenhum jogo neste filtro.";
+
     return (
       <div className="gp-empty-state">
-        <p>{FILTER_HINT[filter] ?? "Nenhum jogo neste filtro."}</p>
+        <p>{emptyMsg}</p>
+        {feedError && (
+          <p className="gp-empty-state__sub text-amber-400/90">{feedError}</p>
+        )}
         {filter === "live" && hasPre && (
           <p className="gp-empty-state__sub">
             Há {upcomingCount} partida{upcomingCount !== 1 ? "s" : ""} pré-jogo no feed — use o

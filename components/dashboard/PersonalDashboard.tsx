@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useUserWorkspace } from "@/hooks/useUserWorkspace";
 import { useLiveMatches } from "@/hooks/useLiveMatches";
+import DataSourceBadge from "@/components/ui/DataSourceBadge";
 import { hasTerminalAccess } from "@/lib/auth/entitlements";
 import type { GlobalFeedPayload } from "@/lib/dashboard/globalFeed";
 import PlanBadge from "@/components/billing/PlanBadge";
@@ -56,7 +57,10 @@ export default function PersonalDashboard() {
   const { isAdmin } = useSubscription();
   const ws = useUserWorkspace();
   const onboarding = useOnboarding();
-  const { matches } = useLiveMatches({ pollIntervalMs: 30_000, staleAfterMs: 60_000 });
+  const { matches, source, dataSourceBadge, error: liveError } = useLiveMatches({
+    pollIntervalMs: 30_000,
+    staleAfterMs: 60_000,
+  });
   const [globalFeed, setGlobalFeed] = useState<GlobalFeedPayload>(EMPTY_FEED);
 
   const terminalAccess = user
@@ -190,6 +194,10 @@ export default function PersonalDashboard() {
         </div>
         <div className="gp-dash-hero__aside">
           <PlanBadge plan={plan} isAdmin={isAdmin || user.role === "admin"} />
+          <DataSourceBadge source={source} error={liveError} />
+          {dataSourceBadge && source === "sportmonks" && (
+            <span className="gp-type-caption text-muted">{dataSourceBadge}</span>
+          )}
           <span className="gp-dash-sync" data-state={ws.syncState}>
             {ws.syncState === "synced"
               ? "Sincronizado"

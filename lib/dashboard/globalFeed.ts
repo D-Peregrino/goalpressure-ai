@@ -1,3 +1,7 @@
+import {
+  isGpSeedExternalId,
+  isSportmonksTokenConfigured,
+} from "@/lib/data-source/config";
 import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/client";
 
 export interface GlobalFeedMatch {
@@ -114,9 +118,14 @@ export async function fetchGlobalFeed(limit = 8): Promise<GlobalFeedPayload> {
       .limit(limit),
   ]);
 
+  const excludeSeed = isSportmonksTokenConfigured();
+  const rawMatches = matchesRes.data ?? [];
+
   return {
     source: "supabase",
-    matches: (matchesRes.data ?? []).map((r) => ({
+    matches: rawMatches
+      .filter((r) => !excludeSeed || !isGpSeedExternalId(String(r.external_id)))
+      .map((r) => ({
       fixtureId: String(r.external_id),
       label: `${r.home_team} x ${r.away_team}`,
       minute: Number(r.minute ?? 0),

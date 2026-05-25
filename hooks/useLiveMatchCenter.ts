@@ -680,6 +680,9 @@ export function useLiveMatchCenter() {
     opsStatus: ops.status,
     lastUpdated: live.lastUpdated,
     source: live.source,
+    dataSourceBadge: live.dataSourceBadge,
+    feedError: live.error,
+    sportmonksError: live.sportmonksError,
     isLoading: live.isInitialLoad && ops.isInitialLoad,
     normalizeFixtureId,
   };

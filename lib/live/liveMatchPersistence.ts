@@ -3,6 +3,7 @@
  */
 
 import type { Match } from "@/types/domain";
+import { isGpSeedExternalId } from "@/lib/data-source/config";
 import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/client";
 import type { MatchRow } from "@/lib/supabase/types";
 import { logInfo, logWarn } from "@/lib/utils/logger";
@@ -20,13 +21,16 @@ export interface PersistLiveMatchesResult {
 function mapMatchToRow(match: Match): MatchRow & {
   fixture_id: string;
   last_seen_at: string;
+  source: string;
 } {
   const externalId = match.externalId ?? match.id.replace(/^sm-/, "") ?? match.id;
   const now = new Date().toISOString();
+  const source = isGpSeedExternalId(externalId) ? "seed" : "sportmonks";
 
   return {
     external_id: externalId,
     fixture_id: externalId,
+    source,
     home_team: match.homeTeam,
     away_team: match.awayTeam,
     league: match.league,
@@ -42,7 +46,7 @@ function mapMatchToRow(match: Match): MatchRow & {
 }
 
 async function upsertMatchCloud(
-  row: MatchRow & { fixture_id: string; last_seen_at: string }
+  row: MatchRow & { fixture_id: string; last_seen_at: string; source: string }
 ): Promise<void> {
   const client = getSupabaseAdmin();
   if (!client) throw new Error("Supabase unavailable");

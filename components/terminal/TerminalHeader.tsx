@@ -3,17 +3,23 @@
 import { motion } from "framer-motion";
 import { BRAND } from "@/lib/design/brand";
 import { TERMINAL_COPY } from "@/lib/ux/sportsLanguage";
+import DataSourceBadge from "@/components/ui/DataSourceBadge";
 import StatusBadge from "@/components/ui/terminal/StatusBadge";
+import type { ActiveDataSource } from "@/lib/data-source/config";
 import { terminalFadeUp } from "@/components/ui/terminal/motion";
 
 export default function TerminalHeader({
   feedStatus,
   opsStatus,
   source,
+  dataSourceBadge,
+  feedError,
 }: {
-  feedStatus: "live" | "loading" | "stale" | "error";
+  feedStatus: "live" | "loading" | "stale" | "error" | "empty";
   opsStatus: "live" | "loading" | "error";
-  source: string;
+  source: ActiveDataSource | string;
+  dataSourceBadge?: string | null;
+  feedError?: string | null;
 }) {
   return (
     <motion.header
@@ -50,9 +56,15 @@ export default function TerminalHeader({
                 : "DEGRADED"
           }
         />
-        <span className="gp-type-caption gp-status-chip gp-status-chip--quiet">
-          {source === "sportmonks" ? "Ao vivo" : source}
-        </span>
+        <DataSourceBadge
+          source={(source as ActiveDataSource) || "none"}
+          error={feedError}
+        />
+        {dataSourceBadge && source === "sportmonks" && (
+          <span className="gp-type-caption gp-status-chip gp-status-chip--quiet">
+            {dataSourceBadge}
+          </span>
+        )}
       </div>
     </motion.header>
   );

@@ -29,13 +29,16 @@ function formatLastUpdate(ts?: number): string {
 }
 
 function dataSourceLabel(source: LiveMatchSource): string {
-  return source === "sportmonks" ? "LIVE DATA" : "MOCK FALLBACK";
+  if (source === "sportmonks") return "DADOS REAIS · SPORTMONKS";
+  if (source === "seed") return "SEED DEV";
+  return "SEM DADOS";
 }
 
 function feedStatusSuffix(status: LiveMatchFeedStatus): string {
   if (status === "stale") return " · STALE";
   if (status === "loading") return " · SYNC";
   if (status === "error") return " · ERR";
+  if (status === "empty") return " · VAZIO";
   return "";
 }
 
@@ -56,7 +59,7 @@ export default function OperationalBar({
   }, []);
 
   const lastUpdateLabel = formatLastUpdate(lastUpdated);
-  const isLiveSource = dataSource === "sportmonks";
+  const isLiveSource = dataSource === "sportmonks" || dataSource === "seed";
   const latencyLabel =
     apiLatencyMs !== undefined ? `${apiLatencyMs}ms` : "—";
 

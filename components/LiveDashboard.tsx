@@ -15,20 +15,24 @@ import SignalCard, { SignalEmptyState } from "@/components/SignalCard";
 import SystemStatus from "@/components/SystemStatus";
 
 function buildInfrastructureServices(
-  source: "sportmonks" | "mock",
+  source: "sportmonks" | "seed" | "none",
   apiOnline: boolean
 ): ServiceStatus[] {
   const sportmonksState: ServiceState = apiOnline ? "ONLINE" : "OFFLINE";
   const dataSourceState: ServiceState =
-    source === "sportmonks" ? "ONLINE" : "STANDBY";
+    source === "sportmonks" ? "ONLINE" : source === "seed" ? "STANDBY" : "OFFLINE";
+
+  const dataLabel =
+    source === "sportmonks"
+      ? "Data Source · REAL"
+      : source === "seed"
+        ? "Data Source · SEED"
+        : "Data Source · NONE";
 
   return [
     { name: "Sportmonks API", state: sportmonksState },
     { name: "Signal Engine", state: "ACTIVE" },
-    {
-      name: source === "sportmonks" ? "Data Source · REAL" : "Data Source · MOCK",
-      state: dataSourceState,
-    },
+    { name: dataLabel, state: dataSourceState },
   ];
 }
 
@@ -98,7 +102,11 @@ export default function LiveDashboard() {
                   source === "sportmonks" ? "bg-pressure" : "bg-amber-400"
                 }`}
               />
-              {source === "sportmonks" ? "Live Feed" : "Mock Feed"}
+              {source === "sportmonks"
+                ? "Dados reais · SportMonks"
+                : source === "seed"
+                  ? "Seed dev"
+                  : "Sem feed"}
             </span>
           </div>
           {showGrid ? (
@@ -130,7 +138,9 @@ export default function LiveDashboard() {
               <p className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-muted">
                 {status === "loading"
                   ? "Syncing live matches…"
-                  : "No in-play matches available"}
+                  : source === "sportmonks"
+                    ? "Nenhum jogo ao vivo disponível na SportMonks agora"
+                    : "Nenhum jogo no feed"}
               </p>
               {error && (
                 <p className="mt-2 font-mono text-[10px] text-amber-400/80">
