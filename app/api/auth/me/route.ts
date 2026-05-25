@@ -6,43 +6,11 @@ import { DEV_USER_COOKIE } from "@/lib/auth/session";
 import { findDevUserById, devAuthEnabled } from "@/lib/auth/devStore";
 import { getEffectivePlan } from "@/lib/auth/entitlements";
 import type { DbPlan } from "@/lib/subscription/permissions";
+import { getAccessTokenFromRequest } from "@/lib/supabase/session-cookies";
 import { getUserFromAccessToken } from "@/lib/supabase/server-auth";
 import { getSupabaseAdmin } from "@/lib/supabase/client";
-import { getSupabaseProjectRef } from "@/lib/supabase/env";
 
 export const dynamic = "force-dynamic";
-
-function extractBearer(request: NextRequest): string | null {
-  const authHeader = request.headers.get("authorization");
-  const fromHeader = authHeader?.replace(/^Bearer\s+/i, "").trim();
-  if (fromHeader) return fromHeader;
-
-  return null;
-}
-
-async function extractTokenFromCookies(): Promise<string | null> {
-  const cookieStore = await cookies();
-  const direct = cookieStore.get("sb-access-token")?.value;
-  if (direct) return direct;
-
-  const ref = getSupabaseProjectRef();
-  if (ref) {
-    const chunked = cookieStore.get(`sb-${ref}-auth-token`)?.value;
-    if (chunked) {
-      try {
-        const parsed = JSON.parse(chunked) as {
-          access_token?: string;
-          currentSession?: { access_token?: string };
-        };
-        return parsed.access_token ?? parsed.currentSession?.access_token ?? null;
-      } catch {
-        return chunked;
-      }
-    }
-  }
-
-  return null;
-}
 
 export async function GET(request: NextRequest) {
   if (devAuthEnabled()) {
@@ -67,7 +35,7 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const token = extractBearer(request) ?? (await extractTokenFromCookies());
+  const token = await getAccessTokenFromRequest(request);
   if (!token) {
     return NextResponse.json({ error: "nao_autenticado" }, { status: 401 });
   }

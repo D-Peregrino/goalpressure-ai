@@ -10,7 +10,9 @@ import {
 } from "react";
 import { getSupabaseBrowser, isSupabaseAuthConfigured } from "@/lib/supabase/browser";
 import type { AccountPayload } from "@/lib/auth/session";
+import { syncSessionCookies } from "@/lib/auth/syncSessionCookies";
 import { getPostLoginRedirect } from "@/lib/auth/entitlements";
+import type { Session } from "@supabase/supabase-js";
 import type { DbPlan } from "@/lib/subscription/permissions";
 
 interface AuthContextValue {
@@ -32,6 +34,11 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+async function persistServerSession(session: Session | null): Promise<void> {
+  if (!session?.access_token || !session.refresh_token) return;
+  await syncSessionCookies(session.access_token, session.refresh_token);
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [account, setAccount] = useState<AccountPayload | null>(null);
@@ -56,6 +63,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await new Promise((r) => setTimeout(r, 400));
         res = await fetchMe();
       }
+      if (res.status === 401 && supabase) {
+        const { data: sess } = await supabase.auth.getSession();
+        if (sess.session) {
+          await persistServerSession(sess.session);
+          res = await fetchMe();
+        }
+      }
       if (res.ok) {
         const data = (await res.json()) as AccountPayload;
         setAccount(data);
@@ -79,6 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (supabase) {
         const { data: sessionData } = await supabase.auth.getSession();
         if (!cancelled && sessionData.session) {
+          await persistServerSession(sessionData.session);
           await refreshAccount();
         }
         const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
@@ -93,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               event === "TOKEN_REFRESHED" ||
               event === "INITIAL_SESSION")
           ) {
-            void refreshAccount();
+            void persistServerSession(session).then(() => refreshAccount());
           }
         });
         unsubscribe = () => sub.subscription.unsubscribe();
@@ -149,7 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const supabase = getSupabaseBrowser();
         if (supabase && data.accessToken && data.refreshToken) {
-          const { error: sessionError } = await supabase.auth.setSession({
+          const { data: sessData, error: sessionError } = await supabase.auth.setSession({
             access_token: data.accessToken,
             refresh_token: data.refreshToken,
           });
@@ -159,6 +174,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               password,
             });
             if (loginError) return { error: loginError.message };
+          } else if (sessData.session) {
+            await persistServerSession(sessData.session);
           }
         } else if (supabase) {
           const { error: loginError } = await supabase.auth.signInWithPassword({
@@ -166,6 +183,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             password,
           });
           if (loginError) return { error: loginError.message };
+          const { data: sess } = await supabase.auth.getSession();
+          await persistServerSession(sess.session);
         }
 
         const acc = await refreshAccount();
@@ -217,16 +236,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const supabase = getSupabaseBrowser();
         if (supabase && data.accessToken && data.refreshToken) {
-          await supabase.auth.setSession({
+          const { data: sessData } = await supabase.auth.setSession({
             access_token: data.accessToken,
             refresh_token: data.refreshToken,
           });
+          if (sessData.session) {
+            await persistServerSession(sessData.session);
+          }
         } else if (supabase) {
           const { error } = await supabase.auth.signInWithPassword({
             email: email.trim(),
             password,
           });
           if (error) return { error: error.message };
+          const { data: sess } = await supabase.auth.getSession();
+          await persistServerSession(sess.session);
         }
 
         const acc = await refreshAccount();

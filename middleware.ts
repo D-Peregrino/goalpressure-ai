@@ -6,13 +6,15 @@ import {
   rateLimitResponse,
 } from "@/lib/api/rateLimit";
 import { isAuthPage, isProtectedPath } from "@/lib/auth/routes";
+import { SB_ACCESS_COOKIE, SB_REFRESH_COOKIE } from "@/lib/supabase/session-cookie-names";
 
 function hasSessionCookie(request: NextRequest): boolean {
   if (request.cookies.get("gp_dev_user_id")?.value) return true;
+  if (request.cookies.get(SB_ACCESS_COOKIE)?.value) return true;
+  if (request.cookies.get(SB_REFRESH_COOKIE)?.value) return true;
 
   for (const cookie of request.cookies.getAll()) {
     const name = cookie.name.toLowerCase();
-    if (name === "sb-access-token") return true;
     if (name.includes("auth-token") && name.startsWith("sb-")) return true;
   }
   return false;

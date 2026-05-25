@@ -3,30 +3,8 @@ import { isAdminEmail } from "@/lib/auth/admin";
 import { DEV_USER_COOKIE, type SessionUser } from "@/lib/auth/session";
 import { findDevUserById, devAuthEnabled } from "@/lib/auth/devStore";
 import { getSupabaseAdmin } from "@/lib/supabase/client";
-import { getSupabaseProjectRef } from "@/lib/supabase/env";
+import { getAccessTokenFromRequest } from "@/lib/supabase/session-cookies";
 import { getUserFromAccessToken } from "@/lib/supabase/server-auth";
-
-async function tokenFromCookies(): Promise<string | null> {
-  const cookieStore = await cookies();
-  const direct = cookieStore.get("sb-access-token")?.value;
-  if (direct) return direct;
-
-  const ref = getSupabaseProjectRef();
-  if (!ref) return null;
-
-  const raw = cookieStore.get(`sb-${ref}-auth-token`)?.value;
-  if (!raw) return null;
-
-  try {
-    const parsed = JSON.parse(raw) as {
-      access_token?: string;
-      currentSession?: { access_token?: string };
-    };
-    return parsed.access_token ?? parsed.currentSession?.access_token ?? null;
-  } catch {
-    return raw;
-  }
-}
 
 export async function requireUser(request?: Request): Promise<SessionUser | null> {
   if (devAuthEnabled()) {
@@ -43,8 +21,7 @@ export async function requireUser(request?: Request): Promise<SessionUser | null
     };
   }
 
-  const bearer = request?.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
-  const token = bearer || (await tokenFromCookies());
+  const token = await getAccessTokenFromRequest(request);
   if (!token) return null;
 
   const { user, error } = await getUserFromAccessToken(token);

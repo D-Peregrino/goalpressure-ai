@@ -58,6 +58,7 @@ export function getSupabaseBrowser(): SupabaseClient | null {
         autoRefreshToken: true,
         detectSessionInUrl: true,
         flowType: "pkce",
+        storage: typeof window !== "undefined" ? window.localStorage : undefined,
       },
     });
     lastConfigKey = configKey;

@@ -15,6 +15,7 @@ export type LoginResult =
       userId: string;
       accessToken?: string;
       refreshToken?: string;
+      expiresIn?: number;
       mode: "supabase" | "dev";
     }
   | { ok: false; error: string; status: number };
@@ -82,6 +83,7 @@ export async function loginUser(
     userId: data.user.id,
     accessToken: data.session.access_token,
     refreshToken: data.session.refresh_token,
+    expiresIn: data.session.expires_in ?? 3600,
     mode: "supabase",
   };
 }

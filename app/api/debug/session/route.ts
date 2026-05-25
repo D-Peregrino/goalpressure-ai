@@ -13,10 +13,19 @@ import { getSupabaseAdmin } from "@/lib/supabase/client";
 import { devAuthEnabled, findDevUserById } from "@/lib/auth/devStore";
 import { cookies } from "next/headers";
 import { DEV_USER_COOKIE } from "@/lib/auth/session";
+import { getAccessTokenFromRequest } from "@/lib/supabase/session-cookies";
+import { SB_ACCESS_COOKIE } from "@/lib/supabase/session-cookie-names";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
+  const cookieStore = await cookies();
+  const hasAccessCookie = Boolean(cookieStore.get(SB_ACCESS_COOKIE)?.value);
+  const hasBearer = Boolean(
+    request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim()
+  );
+  const tokenPreview = await getAccessTokenFromRequest(request);
+
   const user = await requireUser(request);
 
   if (!user) {
@@ -30,11 +39,15 @@ export async function GET(request: NextRequest) {
       hasTerminalAccess: false,
       redirectTarget: "/entrar",
       reason: "nao_autenticado",
+      debug: {
+        hasAccessCookie,
+        hasBearer,
+        hasToken: Boolean(tokenPreview),
+      },
     });
   }
 
   if (devAuthEnabled()) {
-    const cookieStore = await cookies();
     const dev = findDevUserById(cookieStore.get(DEV_USER_COOKIE)?.value ?? "");
     const role = user.role;
     const plan = role === "admin" ? "fundador" : (dev?.plan ?? "free");
@@ -79,7 +92,7 @@ export async function GET(request: NextRequest) {
 
   const rawSub = await fetchSubscriptionForUser(user.id);
 
-  return NextResponse.json({
+    return NextResponse.json({
     loggedIn: true,
     userEmail: user.email,
     userId: user.id,
@@ -103,5 +116,6 @@ export async function GET(request: NextRequest) {
       plan: account.plan,
       subscriptionStatus: account.subscriptionStatus,
     }),
+    debug: { hasAccessCookie, hasBearer, hasToken: Boolean(tokenPreview) },
   });
 }
