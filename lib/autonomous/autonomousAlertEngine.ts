@@ -36,6 +36,7 @@ import {
   matchToContextMatch,
 } from "@/lib/autonomous/matchContextBridge";
 import { buildPredictiveAutonomousAlerts } from "@/lib/predictive/predictiveAutonomousBridge";
+import { applyAdaptiveAlertPriority } from "@/lib/learning/adaptiveLearningBridge";
 
 const MAX_RECENT = 40;
 const recentAlerts: AutonomousOperationalAlert[] = [];
@@ -200,7 +201,10 @@ export async function runAutonomousAlertCycle(matches: Match[]): Promise<{
     const alerts = [
       ...evaluateAutonomousAlerts(match, watch, prevPriority),
       ...buildPredictiveAutonomousAlerts(match),
-    ];
+    ].map((a) => ({
+      ...a,
+      priority: applyAdaptiveAlertPriority(a.priority, match),
+    }));
     for (const alert of alerts) {
       const processed = await processOneAlert(match, alert, config.sandbox);
       if (processed === "sent") {

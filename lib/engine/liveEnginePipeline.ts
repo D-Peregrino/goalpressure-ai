@@ -17,6 +17,10 @@ import {
   isPredictiveEngineEnabled,
   runPredictiveMomentumCycle,
 } from "@/lib/predictive/predictiveMomentumEngine";
+import {
+  isAdaptiveLearningEnabled,
+  runAdaptiveLearningCycle,
+} from "@/lib/learning/adaptiveLearningEngine";
 import { logInfo } from "@/lib/utils/logger";
 
 const LOG_SCOPE = "live-engine-pipeline";
@@ -105,6 +109,10 @@ export async function processLiveEngineBatch(
 
   if (isAutonomousAlertsEnabled()) {
     void runAutonomousAlertCycle(enrichedMatches);
+  }
+
+  if (isAdaptiveLearningEnabled()) {
+    void runAdaptiveLearningCycle(enrichedMatches);
   }
 
   logInfo(LOG_SCOPE, "Live engine batch processed", {

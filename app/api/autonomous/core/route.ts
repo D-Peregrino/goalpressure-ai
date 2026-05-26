@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAutonomousCoreSnapshot } from "@/lib/autonomous/autonomousSnapshotStore";
 import { getAutonomousAlertSnapshot } from "@/lib/autonomous/autonomousAlertSnapshotStore";
 import { getPredictiveSnapshot } from "@/lib/predictive/predictiveSnapshotStore";
+import { getAdaptiveLearningSnapshot } from "@/lib/learning/adaptiveLearningSnapshotStore";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -14,11 +15,13 @@ export async function GET() {
 
   const alertEngine = getAutonomousAlertSnapshot();
   const predictiveEngine = getPredictiveSnapshot();
+  const adaptiveLearning = getAdaptiveLearningSnapshot();
 
   return NextResponse.json({
     ok: true,
     alertEngine,
     predictiveEngine,
+    adaptiveLearning,
     snapshot: snapshot ?? {
       generatedAt: new Date().toISOString(),
       dominantRegime: "CALM_MARKET",

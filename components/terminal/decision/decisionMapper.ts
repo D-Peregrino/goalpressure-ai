@@ -1,6 +1,7 @@
 import type { EnrichedLiveMatch } from "@/hooks/useLiveMatchCenter";
 import type { MatchContextResult } from "@/components/terminal/intelligence/ContextEngine";
 import { getContextSignals } from "@/components/terminal/intelligence/contextRules";
+import { getAdaptiveConfidenceCap } from "@/lib/learning/adaptiveLearningBridge";
 
 export type DecisionSeal =
   | "NEUTRO"
@@ -214,7 +215,7 @@ export function mapOperationalDecision(
   context: MatchContextResult
 ): OperationalDecision {
   const signals = getContextSignals(match);
-  const confianca = computeConfidence(match, context);
+  const confianca = Math.min(computeConfidence(match, context), getAdaptiveConfidenceCap());
   const risco = computeRisk(match, context, signals);
   const situacaoAtual = buildSituacao(match, context, signals);
   const { selo, tone } = mapSelo(match, context, signals, confianca, risco);
