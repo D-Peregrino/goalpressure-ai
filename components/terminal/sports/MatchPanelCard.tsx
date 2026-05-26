@@ -33,6 +33,7 @@ import LiveTacticalField from "@/components/terminal/field/LiveTacticalField";
 import OperationalDecisionPanel from "@/components/terminal/decision/OperationalDecisionPanel";
 import SmartPressureTimeline from "@/components/terminal/timeline/SmartPressureTimeline";
 import { mapOperationalDecision } from "@/components/terminal/decision/decisionMapper";
+import PredictivePanel from "@/components/terminal/predictive/PredictivePanel";
 
 const METRIC_ICONS = {
   shots: Target,
@@ -199,6 +200,7 @@ export default function MatchPanelCard({
       {!compact && (
         <>
           <OperationalDecisionPanel match={match} context={context} />
+          <PredictivePanel match={match} context={context} />
           <LiveTacticalField match={match} context={context} />
 
           <section className="gp-sports__context-read">

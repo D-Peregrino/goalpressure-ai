@@ -13,6 +13,10 @@ import {
   isAutonomousAlertsEnabled,
   runAutonomousAlertCycle,
 } from "@/lib/autonomous/autonomousAlertEngine";
+import {
+  isPredictiveEngineEnabled,
+  runPredictiveMomentumCycle,
+} from "@/lib/predictive/predictiveMomentumEngine";
 import { logInfo } from "@/lib/utils/logger";
 
 const LOG_SCOPE = "live-engine-pipeline";
@@ -94,6 +98,10 @@ export async function processLiveEngineBatch(
   };
 
   setLiveEngineSnapshot(snapshot);
+
+  if (isPredictiveEngineEnabled()) {
+    void runPredictiveMomentumCycle(enrichedMatches);
+  }
 
   if (isAutonomousAlertsEnabled()) {
     void runAutonomousAlertCycle(enrichedMatches);

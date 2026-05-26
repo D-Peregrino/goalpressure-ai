@@ -1597,6 +1597,218 @@
   background: linear-gradient(90deg, #2563eb, #ff7a45);
 }
 
+/* Leitura preditiva */
+.gp-predictive {
+  margin: 0.5rem 1rem 0.65rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--gp-border);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.gp-predictive--pre {
+  border-color: rgba(37, 99, 235, 0.35);
+}
+
+.gp-predictive--ruptura {
+  border-color: rgba(190, 18, 60, 0.35);
+  background: linear-gradient(180deg, #fff 0%, #fff5f7 100%);
+}
+
+.gp-predictive--aceleracao {
+  border-color: rgba(34, 168, 107, 0.3);
+}
+
+.gp-predictive--exaustao {
+  border-color: rgba(148, 163, 184, 0.45);
+}
+
+.gp-predictive__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.gp-predictive__title {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.gp-predictive__sub {
+  margin: 0.12rem 0 0;
+  font-size: 0.65rem;
+  color: var(--gp-muted);
+}
+
+.gp-predictive__level {
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  background: #eff6ff;
+  color: #1e40af;
+  white-space: nowrap;
+}
+
+.gp-predictive--ruptura .gp-predictive__level {
+  background: #fef2f2;
+  color: #be123c;
+}
+
+.gp-predictive__narrative {
+  margin: 0.5rem 0 0.55rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #334155;
+}
+
+.gp-predictive__grid {
+  display: grid;
+  gap: 0.4rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 720px) {
+  .gp-predictive__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.gp-predictive__metric {
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+  background: var(--gp-card-muted);
+  border: 1px solid var(--gp-border);
+}
+
+.gp-predictive__metric span {
+  display: block;
+  font-size: 0.58rem;
+  color: var(--gp-muted);
+}
+
+.gp-predictive__metric strong {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.8rem;
+  color: var(--gp-text);
+}
+
+.gp-predictive__flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.gp-predictive__flag {
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  background: #ecfdf5;
+  color: #15803d;
+}
+
+.gp-predictive__flag--lag {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.gp-predictive__trend {
+  margin-top: 0.55rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--gp-border);
+}
+
+.gp-predictive__trend span {
+  display: block;
+  font-size: 0.6rem;
+  color: var(--gp-muted);
+}
+
+.gp-predictive__trend strong {
+  font-size: 0.76rem;
+  color: var(--gp-text);
+}
+
+.gp-predictive__timeline {
+  margin-top: 0.55rem;
+}
+
+.gp-predictive__timeline h5 {
+  margin: 0 0 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--gp-text);
+}
+
+.gp-predictive__timeline-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  height: 72px;
+  padding: 0.25rem 0;
+}
+
+.gp-predictive__timeline-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.gp-predictive__timeline-bar {
+  width: 100%;
+  max-width: 36px;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, #2563eb, #93c5fd);
+  min-height: 8px;
+}
+
+.gp-predictive__timeline-col span {
+  font-size: 0.58rem;
+  color: var(--gp-muted);
+}
+
+.gp-predictive__timeline-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.6rem;
+  color: var(--gp-muted);
+}
+
+.gp-predictive-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  padding: 0.45rem 0.85rem;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  background: #f0f7ff;
+  border: 1px solid #dbeafe;
+  font-size: 0.65rem;
+  color: #475569;
+}
+
+.gp-predictive-strip__label {
+  font-weight: 700;
+  color: #1e40af;
+}
+
+.gp-predictive-strip__sandbox {
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 700;
+}
+
 /* Alertas autônomos */
 .gp-auto-alerts {
   margin: 0;

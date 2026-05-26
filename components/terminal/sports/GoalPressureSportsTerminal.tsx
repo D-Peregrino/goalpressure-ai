@@ -22,6 +22,7 @@ import { feedStatusLabel } from "@/lib/terminal/formatDisplay";
 import { cn } from "@/lib/utils";
 import MatchDetailModal from "./MatchDetailModal";
 import AutonomousAlertsPanel from "./AutonomousAlertsPanel";
+import PredictiveMetricsStrip from "@/components/terminal/predictive/PredictiveMetricsStrip";
 import MatchListRow from "./MatchListRow";
 import MatchPanelCard from "./MatchPanelCard";
 import SportsToast from "./SportsToast";
@@ -482,6 +483,7 @@ export default function GoalPressureSportsTerminal() {
                   />
                 ) : null}
 
+                <PredictiveMetricsStrip />
                 <AutonomousAlertsPanel />
 
                 <div className="gp-sports__panel-card overflow-hidden">
