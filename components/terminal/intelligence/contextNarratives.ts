@@ -9,6 +9,10 @@ function sideLabel(match: EnrichedLiveMatch): string {
 
 export function buildNarrative(match: EnrichedLiveMatch, s: ContextSignalSet): string {
   const side = sideLabel(match);
+  const latestComment = match.commentarySnippets?.[match.commentarySnippets.length - 1];
+  if (latestComment && s.pressureHigh) {
+    return `${side} em pressão ofensiva — leitura ao vivo: ${latestComment}`;
+  }
   if (s.pressureCritical) {
     return `${side} elevou a pressão ofensiva para zona crítica neste momento da partida.`;
   }

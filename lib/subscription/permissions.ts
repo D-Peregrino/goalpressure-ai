@@ -6,12 +6,13 @@ import type { FeatureKey, SubscriptionTier } from "@/lib/subscription/tiers";
 import { canAccessFeature, TIERS } from "@/lib/subscription/tiers";
 import { getTierLimits } from "@/lib/subscription/access";
 
-export type DbPlan = "free" | "fundador" | "pro" | "elite";
+export type DbPlan = "free" | "fundador" | "pro" | "elite" | "ops";
 
 /** Plano fundador recebe acesso equivalente ao Elite (institutional). */
 export function dbPlanToTier(plan: DbPlan): SubscriptionTier {
   switch (plan) {
     case "fundador":
+    case "ops":
     case "elite":
       return "institutional";
     case "pro":
@@ -40,8 +41,10 @@ export function planLabelPt(dbPlan: DbPlan): string {
       return "Plano Fundador";
     case "pro":
       return "Profissional";
+    case "ops":
+      return "OPS";
     case "elite":
-      return "Elite";
+      return "OPS";
     default:
       return "Gratuito";
   }
@@ -56,7 +59,7 @@ export function limitsForPlan(plan: DbPlan) {
 }
 
 export function isPaidPlan(plan: DbPlan): boolean {
-  return plan === "fundador" || plan === "pro" || plan === "elite";
+  return plan === "fundador" || plan === "pro" || plan === "elite" || plan === "ops";
 }
 
 export function subscriptionActive(status: string): boolean {

@@ -1,5 +1,7 @@
 import { logError, logInfo, logWarn } from "@/lib/utils/logger";
 import type { TelegramConfig, TelegramSendResult } from "@/types/telegram";
+import type { TelegramRouteContext } from "@/lib/telegram/telegramDestination.types";
+import { sendTelegramRouted } from "@/lib/telegram/telegramRouting";
 
 const LOG_SCOPE = "telegram-client";
 const TELEGRAM_API_BASE = "https://api.telegram.org";
@@ -70,21 +72,39 @@ export async function probeTelegramConnection(): Promise<boolean> {
 
 const RETRY_DELAYS_MS = [500, 1500, 3000];
 
+export interface TelegramSendOptions {
+  signalId?: string;
+  source?: string;
+  chatId?: string;
+  route?: TelegramRouteContext;
+}
+
 /**
  * Sends with up to 3 attempts — never throws.
+ * When `route` is set, uses Supabase destinations + segmentation.
  */
 export async function sendTelegramMessageWithRetry(
   text: string,
-  options?: { signalId?: string; source?: string; maxAttempts?: number }
+  options?: TelegramSendOptions & { maxAttempts?: number }
 ): Promise<TelegramSendResult> {
+  if (options?.route) {
+    const routed = await sendTelegramRouted(text, options.route, {
+      signalId: options.signalId,
+      source: options.source,
+    });
+    return {
+      ok: routed.ok,
+      sandbox: routed.sandbox,
+      error: routed.error,
+      messageId: routed.results[0]?.messageId,
+    };
+  }
+
   const maxAttempts = options?.maxAttempts ?? 3;
   let lastResult: TelegramSendResult = { ok: false, sandbox: false, error: "no_attempt" };
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    lastResult = await sendTelegramMessage(text, {
-      signalId: options?.signalId,
-      source: options?.source,
-    });
+    lastResult = await sendTelegramMessage(text, options);
 
     if (lastResult.ok || lastResult.sandbox) return lastResult;
 
@@ -97,20 +117,32 @@ export async function sendTelegramMessageWithRetry(
 }
 
 /**
+ * Sends a message to a specific chat (used by routing layer).
+ */
+export async function sendTelegramMessageToChat(
+  text: string,
+  chatId: string,
+  options?: { signalId?: string; source?: string }
+): Promise<TelegramSendResult> {
+  return sendTelegramMessage(text, { ...options, chatId });
+}
+
+/**
  * Sends a message via Telegram Bot API, or logs payload in sandbox mode.
  */
 export async function sendTelegramMessage(
   text: string,
-  options?: { signalId?: string; source?: string }
+  options?: TelegramSendOptions
 ): Promise<TelegramSendResult> {
   const config = getTelegramConfig();
+  const targetChatId = options?.chatId ?? config.chatId;
 
   if (config.sandboxMode) {
     logInfo(LOG_SCOPE, "Sandbox dispatch", {
       signalId: options?.signalId,
       source: options?.source,
       sandbox: true,
-      chatId: config.chatId ?? "(not set)",
+      chatId: targetChatId ?? "(not set)",
       payloadPreview: text.slice(0, 200),
       payloadLength: text.length,
     });
@@ -122,8 +154,8 @@ export async function sendTelegramMessage(
     };
   }
 
-  if (!config.botToken || !config.chatId) {
-    const error = "Telegram credentials missing (TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID)";
+  if (!config.botToken || !targetChatId) {
+    const error = "Telegram credentials missing (TELEGRAM_BOT_TOKEN / chat_id)";
     logWarn(LOG_SCOPE, "Telegram send failed", { error, signalId: options?.signalId });
     return { ok: false, sandbox: false, error };
   }
@@ -134,7 +166,7 @@ export async function sendTelegramMessage(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        chat_id: config.chatId,
+        chat_id: targetChatId,
         text,
         disable_web_page_preview: true,
       }),
@@ -158,7 +190,7 @@ export async function sendTelegramMessage(
     logInfo(LOG_SCOPE, "Telegram send success", {
       signalId: options?.signalId,
       messageId: body.result?.message_id,
-      chatId: config.chatId,
+      chatId: targetChatId,
     });
 
     return {

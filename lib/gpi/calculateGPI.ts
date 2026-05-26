@@ -67,7 +67,7 @@ export function buildGpiBreakdown(match: EnrichedLiveMatch): GPIBreakdown {
     evaluatePredictiveFromEnriched(match);
 
   const pressure = normPressure(match.pressureScore);
-  const momentum = normMomentum(match.momentum);
+  const momentum = normMomentum(match.sportmonksMomentum ?? match.momentum);
   const contextual = clamp100(context.score);
   const predictiveScore = clamp100(
     predictive.contextualBreakProbability * 0.55 +

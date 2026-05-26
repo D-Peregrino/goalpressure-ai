@@ -41,6 +41,16 @@ function mapMatchToSlot(
   const edge = ctx.edgeByFixture.get(fid);
   const isLive = m.status === "LIVE" || m.status === "HALFTIME";
 
+  const sources = m.premium?.feedSources ?? m.feedMeta?.sportmonksSources;
+  const feedFlags = [
+    sources?.statistics,
+    sources?.momentum,
+    sources?.xg,
+    sources?.commentary,
+    sources?.timeline,
+    sources?.advancedOdds,
+  ].filter(Boolean).length;
+
   const base: OpsMatchSlot = {
     fixtureId: fid,
     matchLabel: matchListLabel(m),
@@ -60,6 +70,9 @@ function mapMatchToSlot(
     ignoredByMarket: edge?.ignored ?? false,
     homeLogoUrl: m.homeLogoUrl ?? null,
     awayLogoUrl: m.awayLogoUrl ?? null,
+    sportmonksFeedScore: feedFlags,
+    commentaryAvailable: Boolean(sources?.commentary),
+    advancedOddsAvailable: Boolean(sources?.advancedOdds || sources?.premiumOdds),
   };
 
   base.priorityScore = computeMatchPriority(base);

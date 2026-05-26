@@ -10,7 +10,7 @@ export type SessionUser = {
 
 export type AccountPayload = {
   user: SessionUser;
-  plan: "free" | "fundador" | "pro" | "elite";
+  plan: "free" | "fundador" | "pro" | "elite" | "ops";
   subscriptionStatus: string;
   couponCode: string | null;
 };

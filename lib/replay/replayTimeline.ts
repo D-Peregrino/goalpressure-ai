@@ -15,7 +15,16 @@ function minuteFromIso(startAt: string, at: string): number {
 export function buildReplayTimeline(input: {
   fixtureId: string;
   kickOffAt: string;
-  snapshots: { minute: number; pressureScore: number; recordedAt: string }[];
+  snapshots: {
+    minute: number;
+    pressureScore: number;
+    recordedAt: string;
+    sportmonksMeta?: {
+      momentumDirection?: string | null;
+      commentaryCount?: number;
+      timelineEventsCount?: number;
+    };
+  }[];
   contexts: { minute: number; contextScore: number; contextLevel: string; recordedAt: string }[];
   predictive: { minute: number; marketLagScore: number; recordedAt: string }[];
   alerts: { minute: number; headline: string | null; recordedAt: string }[];
@@ -32,6 +41,27 @@ export function buildReplayTimeline(input: {
         minute: s.minute,
         kind: "pressure",
         label: `${s.minute}' · pressão ${Math.round(s.pressureScore)}`,
+        at: s.recordedAt,
+      });
+    }
+    const sm = s.sportmonksMeta;
+    if ((sm?.commentaryCount ?? 0) > 0) {
+      events.push({
+        id: `cmt-${fixtureId}-${s.minute}-${s.recordedAt}`,
+        fixtureId,
+        minute: s.minute,
+        kind: "context",
+        label: `${s.minute}' · comentário ao vivo (${sm!.commentaryCount})`,
+        at: s.recordedAt,
+      });
+    }
+    if (sm?.momentumDirection === "RISING" && s.pressureScore >= 55) {
+      events.push({
+        id: `mom-${fixtureId}-${s.minute}-${s.recordedAt}`,
+        fixtureId,
+        minute: s.minute,
+        kind: "gpi",
+        label: `${s.minute}' · momentum SportMonks em alta`,
         at: s.recordedAt,
       });
     }

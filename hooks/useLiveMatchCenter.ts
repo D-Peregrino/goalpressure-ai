@@ -102,6 +102,15 @@ export interface EnrichedLiveMatch {
   pressureIndex: number | null;
   trendMomentum: number;
   timelineEventsCount: number;
+  /** SportMonks `trends` momentum (0–100), when present on feed. */
+  sportmonksMomentum?: number | null;
+  sportmonksMomentumDirection?: string | null;
+  commentarySnippets?: string[];
+  sportmonksTimeline?: import("@/types/domain").TimelineEventSummary[];
+  homeXg?: number;
+  awayXg?: number;
+  advancedOddsCount?: number;
+  sportmonksFeedSources?: import("@/types/domain").SportmonksFeedSources;
   operationalState: OperationalState;
   marketOdd: number | null;
   previousMarketOdd: number | null;
@@ -319,13 +328,24 @@ export function useLiveMatchCenter() {
       const signal = ops.signalDecision?.activeSignals.find((s) => s.fixtureId === fixtureId);
 
       const split = splitPressure(match, pressureOps ?? null);
+      const smMomentum =
+        match.premium?.feedSources?.momentum && (match.premium.momentumScore ?? 0) > 0
+          ? match.premium.momentumScore
+          : null;
+      const opsMomentum = pressureOps?.momentum ?? split.momentum;
       const blendedMomentum = Math.min(
         100,
         Math.round(
-          (pressureOps?.momentum ?? split.momentum) * 0.65 +
-            (match.premium?.momentumScore ?? 0) * 0.35
+          smMomentum != null
+            ? opsMomentum * 0.45 + smMomentum * 0.55
+            : opsMomentum * 0.65 + (match.premium?.momentumScore ?? 0) * 0.35
         )
       );
+      const commentarySnippets =
+        match.premium?.commentary
+          ?.slice(-4)
+          .map((c) => c.text)
+          .filter(Boolean) ?? [];
       const chaosIndex =
         match.opsIntelligence?.chaosLevel ??
         sequence?.sustainedChaosLevel ??
@@ -450,6 +470,14 @@ export function useLiveMatchCenter() {
         matchPhase: temporal?.matchPhase ?? null,
         dominantSide,
         xG: match.stats.xG ?? 0,
+        homeXg: match.premium?.xgHome,
+        awayXg: match.premium?.xgAway,
+        sportmonksMomentum: smMomentum,
+        sportmonksMomentumDirection: match.premium?.momentumDirection ?? null,
+        commentarySnippets,
+        sportmonksTimeline: match.premium?.timelineEvents,
+        advancedOddsCount: match.premium?.advancedOddsCount,
+        sportmonksFeedSources: match.premium?.feedSources ?? match.feedMeta?.sportmonksSources,
         shots: match.stats.shots,
         shotsOnTarget: match.stats.shotsOnTarget,
         dangerousAttacks: match.stats.dangerousAttacks,
@@ -474,7 +502,7 @@ export function useLiveMatchCenter() {
           match.premium?.dangerousSequence ??
           (sequence?.sequenceState?.toUpperCase().includes("CHAOS") ?? false),
         pressureIndex: match.premium?.pressureIndex ?? null,
-        trendMomentum: match.premium?.momentumScore ?? split.momentum,
+        trendMomentum: smMomentum ?? match.premium?.momentumScore ?? split.momentum,
         timelineEventsCount: match.premium?.timelineEventsCount ?? 0,
         marketOdd: topEdge?.marketOdd ?? match.odds.primary ?? null,
         previousMarketOdd: (() => {

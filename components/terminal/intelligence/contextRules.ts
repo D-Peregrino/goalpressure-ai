@@ -36,7 +36,8 @@ export function getContextSignals(match: EnrichedLiveMatch): ContextSignalSet {
   const dangerous = match.dangerousAttacks;
   const acceleration = match.engineAccelerationScore ?? 0;
   const territorial = match.engineTerritorialScore ?? 0;
-  const momentum = match.momentum;
+  const momentum = match.sportmonksMomentum ?? match.momentum;
+  const trendMomentum = match.sportmonksMomentum ?? match.trendMomentum ?? match.momentum;
   const oddDistortion = Math.abs(match.edgePercent ?? 0) >= 4;
   const marketLate =
     (match.edgePercent ?? 0) >= 5 ||
@@ -51,8 +52,14 @@ export function getContextSignals(match: EnrichedLiveMatch): ContextSignalSet {
     territorialDominance: territorial >= 58 || match.dominantSide !== "balanced",
     accelerationHigh: acceleration >= 60,
     accelerationLow: acceleration > 0 && acceleration <= 28,
-    momentumUp: momentum >= 55,
-    momentumDown: momentum <= 35,
+    momentumUp:
+      momentum >= 55 ||
+      trendMomentum >= 58 ||
+      match.sportmonksMomentumDirection === "RISING",
+    momentumDown:
+      momentum <= 35 ||
+      trendMomentum <= 32 ||
+      match.sportmonksMomentumDirection === "FALLING",
     oddDistortion,
     marketLate,
     lowEfficiency,

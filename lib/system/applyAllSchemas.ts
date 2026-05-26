@@ -19,6 +19,8 @@ export const OPERATIONAL_SCHEMA_FILES = [
   "autonomous-decisions-schema.sql",
   "historical-contextual-persistence-schema.sql",
   "commercial-schema.sql",
+  "telegram-destinations-schema.sql",
+  "billing-mercadopago-schema.sql",
 ] as const;
 
 export interface SchemaApplyFailure {

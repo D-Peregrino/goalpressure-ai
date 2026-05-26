@@ -12,6 +12,15 @@ export interface ReplaySnapshotPoint {
   homeScore: number;
   awayScore: number;
   recordedAt: string;
+  /** SportMonks feed metadata persisted with snapshot (optional). */
+  sportmonksMeta?: {
+    momentumDirection?: string | null;
+    commentaryCount?: number;
+    timelineEventsCount?: number;
+    xgHome?: number | null;
+    xgAway?: number | null;
+    advancedOddsCount?: number;
+  };
 }
 
 export interface ReplayContextPoint {

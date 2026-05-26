@@ -19,7 +19,11 @@ function scoreDisplay(match: Match): string {
 export function matchToContextMatch(match: Match): EnrichedLiveMatch {
   const pressure = match.pressure?.score ?? 0;
   const offensive = match.feedMeta?.offensiveEngine;
-  const momentum = offensive?.momentumScore ?? match.premium?.momentumScore ?? 0;
+  const smMomentum =
+    match.premium?.feedSources?.momentum && (match.premium.momentumScore ?? 0) > 0
+      ? match.premium.momentumScore
+      : null;
+  const momentum = smMomentum ?? offensive?.momentumScore ?? match.premium?.momentumScore ?? 0;
   const acceleration = offensive?.accelerationScore ?? 0;
   const territorial = offensive?.territorialScore ?? Math.round(pressure * 0.8);
   const ev = match.evEngine?.expectedValue.best;
@@ -76,8 +80,17 @@ export function matchToContextMatch(match: Match): EnrichedLiveMatch {
       homeDa > awayDa + 2 ? "home" : awayDa > homeDa + 2 ? "away" : "balanced",
     strongestEdgeMarket: ev?.market ? String(ev.market) : null,
     pressureTrend: match.feedMeta?.pressureTrend ?? match.pressure.trend ?? null,
-    trendMomentum: match.premium?.momentumScore ?? momentum,
+    trendMomentum: smMomentum ?? match.premium?.momentumScore ?? momentum,
     dangerousSequence: match.premium?.dangerousSequence ?? false,
+    sportmonksMomentum: smMomentum,
+    sportmonksMomentumDirection: match.premium?.momentumDirection ?? null,
+    commentarySnippets:
+      match.premium?.commentary?.slice(-3).map((c) => c.text).filter(Boolean) ?? [],
+    sportmonksTimeline: match.premium?.timelineEvents,
+    homeXg: match.premium?.xgHome,
+    awayXg: match.premium?.xgAway,
+    advancedOddsCount: match.premium?.advancedOddsCount,
+    sportmonksFeedSources: match.premium?.feedSources ?? match.feedMeta?.sportmonksSources,
     validationScore: match.evEngine?.confidence.score ?? 55,
     lowConfidence: (match.evEngine?.confidence.score ?? 55) < 45,
     dataQuality: (match.evEngine?.confidence.score ?? 55) < 48 ? "sparse" : "partial",

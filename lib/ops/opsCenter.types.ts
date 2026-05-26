@@ -36,6 +36,10 @@ export interface OpsMatchSlot {
   ignoredByMarket: boolean;
   homeLogoUrl?: string | null;
   awayLogoUrl?: string | null;
+  /** SportMonks feed density flags for OPS prioritization. */
+  sportmonksFeedScore?: number;
+  commentaryAvailable?: boolean;
+  advancedOddsAvailable?: boolean;
 }
 
 export interface OpsTimelineEvent {

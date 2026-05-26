@@ -86,6 +86,10 @@ export async function loadReplayRawData(fixtureId: string): Promise<{
 
   const snapshots: ReplaySnapshotPoint[] = (snapRes.data ?? []).map((row) => {
     const score = scoreFromJson(row.score_json);
+    const meta =
+      row.metadata_json && typeof row.metadata_json === "object"
+        ? (row.metadata_json as Record<string, unknown>)
+        : {};
     return {
       fixtureId: String(row.fixture_id),
       minute: Number(row.minute ?? 0),
@@ -98,6 +102,15 @@ export async function loadReplayRawData(fixtureId: string): Promise<{
       homeScore: score.home,
       awayScore: score.away,
       recordedAt: String(row.recorded_at),
+      sportmonksMeta: {
+        momentumDirection:
+          meta.momentumDirection != null ? String(meta.momentumDirection) : null,
+        commentaryCount: Number(meta.commentaryCount ?? 0),
+        timelineEventsCount: Number(meta.timelineEventsCount ?? 0),
+        xgHome: meta.xgHome != null ? Number(meta.xgHome) : null,
+        xgAway: meta.xgAway != null ? Number(meta.xgAway) : null,
+        advancedOddsCount: Number(meta.advancedOddsCount ?? 0),
+      },
     };
   });
 

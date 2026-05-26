@@ -3,6 +3,10 @@
  */
 
 import type { SportmonksFixture } from "@/lib/mappers/sportmonks";
+import {
+  getFixtureComments,
+  inferPressureTrendFromFeed,
+} from "@/lib/mappers/sportmonksFeedExtensions";
 import type { MatchStats, MatchTeamStats, Odds, PressureTrend } from "@/types/domain";
 
 export interface SportmonksEvent {
@@ -32,6 +36,7 @@ export interface PremiumFeedDetection {
   formations: boolean;
   trends: boolean;
   timeline: boolean;
+  commentary: boolean;
   xg: boolean;
   inplayOdds: boolean;
   premiumOdds: boolean;
@@ -198,6 +203,7 @@ export function detectPremiumFeed(fixture: SportmonksFixture): PremiumFeedDetect
     formations: Array.isArray(f.formations) && f.formations.length > 0,
     trends: Array.isArray(f.trends) && f.trends.length > 0,
     timeline: Array.isArray(f.timeline) && f.timeline.length > 0,
+    commentary: getFixtureComments(fixture).length > 0,
     xg: getFixtureXg(fixture).length > 0,
     inplayOdds: (f.inplayOdds?.length ?? 0) > 0,
     premiumOdds: (f.premiumOdds?.length ?? 0) > 0,
@@ -224,8 +230,5 @@ export function auditPremiumFixture(fixture: SportmonksFixture): PremiumFixtureA
 export function inferPressureTrendFromTrends(
   fixture: SportmonksFixture
 ): PressureTrend | undefined {
-  const trends = (fixture as SportmonksFixture & { trends?: { type?: string }[] })
-    .trends;
-  if (!Array.isArray(trends) || trends.length < 2) return undefined;
-  return "RISING";
+  return inferPressureTrendFromFeed(fixture);
 }

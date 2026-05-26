@@ -146,6 +146,8 @@ export interface MatchFeedMeta {
     accelerationScore: number;
     activeSignals: string[];
   };
+  /** SportMonks include availability (Growth feed). */
+  sportmonksSources?: SportmonksFeedSources;
 }
 
 export interface TimelineEventSummary {
@@ -154,21 +156,51 @@ export interface TimelineEventSummary {
   side?: "home" | "away";
 }
 
+/** Live commentary line from SportMonks `comments` include. */
+export interface CommentaryLine {
+  minute: number;
+  text: string;
+  isGoal?: boolean;
+  isImportant?: boolean;
+}
+
+/** Which SportMonks includes are present on the fixture payload. */
+export interface SportmonksFeedSources {
+  statistics: boolean;
+  /** `trends` time-series (momentum proxy). */
+  momentum: boolean;
+  xg: boolean;
+  commentary: boolean;
+  timeline: boolean;
+  advancedOdds: boolean;
+  inplayOdds: boolean;
+  premiumOdds: boolean;
+}
+
 /** Parsed Growth premium payload per fixture (optional). */
 export interface MatchPremiumContext {
   timelineEvents: TimelineEventSummary[];
   timelineEventsCount: number;
   momentumScore: number;
+  /** Direction from real `trends` series when available. */
+  momentumDirection?: PressureTrend;
+  momentumSeries?: { minute: number; value: number }[];
   pressureIndex: number | null;
   dominanceLabel: string;
   dangerousSequence: boolean;
   bookmakersCount: number;
   standingsAvailable: boolean;
   xgAvailable: boolean;
+  xgHome?: number;
+  xgAway?: number;
   oddsAvailable: boolean;
+  advancedOddsCount?: number;
   eventsAvailable: boolean;
   lineupsAvailable: boolean;
   statisticsAvailable: boolean;
+  commentary?: CommentaryLine[];
+  commentaryCount?: number;
+  feedSources?: SportmonksFeedSources;
 }
 
 // ─── Pressure ────────────────────────────────────────────────────────────────

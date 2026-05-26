@@ -81,6 +81,8 @@ async function deliverAlert(
     level: alert.priority === "critica" ? "critico" : alert.priority === "alta" ? "alerta" : "monitoramento",
     fixtureId: alert.fixtureId,
     matchLabel: alert.matchLabel,
+    priority: alert.priority,
+    alertType: alert.kind,
   });
 
   return result.ok;

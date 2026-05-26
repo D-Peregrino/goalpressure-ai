@@ -13,10 +13,11 @@ import {
 } from "@/lib/execution/telegramDispatchGate";
 import { appendTelegramMessageLog } from "@/lib/execution/telegramMessageLog";
 import {
-  isTelegramConfigured,
   isTelegramSandboxMode,
   sendTelegramMessageWithRetry,
 } from "@/lib/telegram/telegramClient";
+import { isTelegramRoutingConfigured } from "@/lib/telegram/telegramRouting";
+import type { TelegramRouteContext } from "@/lib/telegram/telegramDestination.types";
 import { logInfo, logWarn } from "@/lib/utils/logger";
 
 const LOG_SCOPE = "telegram-live-engine";
@@ -36,6 +37,7 @@ async function deliverTelegramText(
     level: string;
     fixtureId: string | null;
     matchLabel: string | null;
+    route?: TelegramRouteContext;
   }
 ): Promise<TelegramLiveSendResult> {
   const sandbox = isTelegramSandboxMode();
@@ -52,7 +54,8 @@ async function deliverTelegramText(
     delivered: false,
   });
 
-  if (!isTelegramConfigured()) {
+  const configured = await isTelegramRoutingConfigured();
+  if (!configured) {
     return { ok: false, skipped: true, reason: "not_configured" };
   }
 
@@ -106,6 +109,14 @@ export async function sendTelegramLiveDispatch(
     level: payload.level,
     fixtureId: payload.fixtureId,
     matchLabel: payload.matchLabel,
+    route: {
+      pipeline: "premium",
+      alertType: "contextual_reading",
+      priority: item.urgency?.toLowerCase(),
+      fixtureId: item.fixtureId,
+      signalId: item.id,
+      tags: ["premium", "dispatch"],
+    },
   });
 
   if (result.ok) {
@@ -168,9 +179,20 @@ export async function sendPremiumTelegramRaw(
     level: string;
     fixtureId: string | null;
     matchLabel: string | null;
+    priority?: string;
+    alertType?: string;
   }
 ): Promise<TelegramLiveSendResult> {
-  return deliverTelegramText(text, meta);
+  return deliverTelegramText(text, {
+    ...meta,
+    route: {
+      pipeline: "autonomous",
+      alertType: meta.alertType ?? meta.kind,
+      priority: meta.priority,
+      fixtureId: meta.fixtureId ?? undefined,
+      tags: ["autonomous", "premium"],
+    },
+  });
 }
 
 export { getTelegramMessageHistory, getTelegramSandboxPreview } from "@/lib/execution/telegramMessageLog";

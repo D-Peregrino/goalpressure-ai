@@ -40,11 +40,15 @@ function clamp100(n: number): number {
 function computeContextScore(match: EnrichedLiveMatch): number {
   const pressure = (match.pressureScore / 100) * 36;
   const dangerous = Math.min(1, match.dangerousAttacks / 55) * 18;
-  const momentum = Math.min(1, Math.abs(match.momentum) / 100) * 14;
+  const momentumVal = match.sportmonksMomentum ?? match.momentum;
+  const momentum = Math.min(1, Math.abs(momentumVal) / 100) * 14;
   const odd = Math.min(1, Math.abs(match.edgePercent ?? 0) / 8) * 12;
   const acceleration = Math.min(1, (match.engineAccelerationScore ?? 0) / 100) * 10;
-  const trend = Math.min(1, Math.abs(match.trendMomentum ?? 0) / 100) * 10;
-  return clamp100(pressure + dangerous + momentum + odd + acceleration + trend);
+  const trendVal = match.sportmonksMomentum ?? match.trendMomentum ?? 0;
+  const trend = Math.min(1, Math.abs(trendVal) / 100) * 10;
+  const commentaryBoost =
+    (match.commentarySnippets?.length ?? 0) > 0 ? 4 : 0;
+  return clamp100(pressure + dangerous + momentum + odd + acceleration + trend + commentaryBoost);
 }
 
 function levelIntensity(level: ContextLevel, score: number): string {

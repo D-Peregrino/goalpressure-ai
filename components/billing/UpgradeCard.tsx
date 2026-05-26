@@ -36,7 +36,7 @@ export default function UpgradeCard({
         window.location.href = `/cadastro?cupom=${encodeURIComponent(cupom)}&redirect=/precos`;
         return;
       }
-      const res = await fetchWithAuth("/api/billing/checkout", {
+      const res = await fetchWithAuth("/api/billing/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ planId: UNICO_PLANO_COMPRAVEL, couponCode: cupom }),
@@ -46,11 +46,7 @@ export default function UpgradeCard({
         setErro(data.error ?? "Não foi possível iniciar o pagamento.");
         return;
       }
-      if (data.mock) {
-        window.location.href = data.url;
-      } else {
-        window.location.href = data.url;
-      }
+      window.location.href = data.url;
     } catch {
       setErro("Erro de conexão. Tente novamente.");
     } finally {

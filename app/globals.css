@@ -11412,3 +11412,270 @@ body {
   font-size: 0.78rem;
 }
 
+/* ─── Admin Telegram Dispatch ───────────────────────────────────────────── */
+.gp-tg-admin {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.gp-tg-admin__hero {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 58, 95, 0.88));
+  color: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.gp-tg-admin__eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.gp-tg-admin__title {
+  color: #fff;
+  margin: 0;
+}
+
+.gp-tg-admin__status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.gp-tg-admin__grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 960px) {
+  .gp-tg-admin__grid {
+    grid-template-columns: 340px 1fr;
+  }
+}
+
+.gp-tg-admin__logs {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 900px) {
+  .gp-tg-admin__logs {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.gp-tg-panel {
+  padding: 1.1rem 1.25rem;
+  border-radius: 10px;
+  border: 1px solid var(--gp-gray-light);
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+}
+
+.gp-tg-panel--wide {
+  min-width: 0;
+}
+
+.gp-tg-panel h2 {
+  margin: 0 0 0.85rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.gp-tg-panel__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.gp-tg-panel__head h2 {
+  margin: 0;
+}
+
+.gp-tg-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.gp-tg-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--gp-gray);
+}
+
+.gp-tg-form input,
+.gp-tg-form select {
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--gp-gray-light);
+  border-radius: 6px;
+  font-size: 0.88rem;
+}
+
+.gp-tg-form__hint {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--gp-gray);
+  line-height: 1.45;
+}
+
+.gp-tg-form__hint code {
+  font-size: 0.68rem;
+}
+
+.gp-tg-form__check {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.45rem !important;
+}
+
+.gp-tg-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.gp-tg-btn {
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--gp-gray-light);
+  background: #fff;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.gp-tg-btn--primary {
+  background: var(--gp-navy);
+  color: #fff;
+  border-color: var(--gp-navy);
+}
+
+.gp-tg-btn--danger {
+  color: #b91c1c;
+  border-color: rgba(239, 68, 68, 0.45);
+}
+
+.gp-tg-btn--sm {
+  padding: 0.28rem 0.5rem;
+  font-size: 0.72rem;
+}
+
+.gp-tg-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.gp-tg-pill {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gp-tg-pill--ok {
+  background: rgba(34, 197, 94, 0.15);
+  color: #15803d;
+}
+
+.gp-tg-pill--warn {
+  background: rgba(234, 179, 8, 0.2);
+  color: #a16207;
+}
+
+.gp-tg-pill--danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+.gp-tg-pill--muted {
+  background: rgba(100, 116, 139, 0.12);
+  color: #64748b;
+}
+
+.gp-tg-table-wrap {
+  overflow-x: auto;
+}
+
+.gp-tg-table code {
+  font-size: 0.72rem;
+}
+
+.gp-tg-tag {
+  display: inline-block;
+  margin: 0 0.2rem 0.2rem 0;
+  padding: 0.12rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(59, 130, 246, 0.1);
+  font-size: 0.68rem;
+}
+
+.gp-tg-tag--all {
+  background: rgba(100, 116, 139, 0.12);
+}
+
+.gp-tg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.gp-tg-row--off {
+  opacity: 0.55;
+}
+
+.gp-tg-log-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.gp-tg-log-item {
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--gp-gray-light);
+  font-size: 0.78rem;
+}
+
+.gp-tg-log-item--fail {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.gp-tg-log-item__top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  margin-bottom: 0.25rem;
+  font-size: 0.72rem;
+  color: var(--gp-gray);
+}
+
+.gp-tg-log-item p {
+  margin: 0;
+  line-height: 1.4;
+}
+

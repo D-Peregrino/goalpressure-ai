@@ -4,12 +4,12 @@
 
 import type { SportmonksFixture } from "@/lib/mappers/sportmonks";
 import {
-  getFixtureEvents,
-  resolveAllFixtureOdds,
-  sumXgFromFixture,
-  type SportmonksEvent,
-} from "@/lib/mappers/sportmonksPremium";
-import type { MatchPremiumContext, MatchStats, MatchTeamStats, TimelineEventSummary } from "@/types/domain";
+  enrichPremiumFromSportmonksFeed,
+  parseMomentumFromTrends,
+  parseTimelineFromProvider,
+} from "@/lib/mappers/sportmonksFeedExtensions";
+import { resolveAllFixtureOdds, sumXgFromFixture } from "@/lib/mappers/sportmonksPremium";
+import type { MatchPremiumContext, MatchStats, MatchTeamStats } from "@/types/domain";
 
 function safeNum(v: unknown, fallback = 0): number {
   if (typeof v === "number" && Number.isFinite(v)) return v;
@@ -20,41 +20,6 @@ function safeNum(v: unknown, fallback = 0): number {
   return fallback;
 }
 
-function resolveSide(
-  participantId: number | undefined,
-  homeId?: number,
-  awayId?: number
-): "home" | "away" | undefined {
-  if (participantId == null) return undefined;
-  if (homeId != null && participantId === homeId) return "home";
-  if (awayId != null && participantId === awayId) return "away";
-  return undefined;
-}
-
-function parseTimelineEvents(
-  fixture: SportmonksFixture,
-  homeId?: number,
-  awayId?: number
-): TimelineEventSummary[] {
-  try {
-    const events = getFixtureEvents(fixture);
-    return events
-      .slice(0, 24)
-      .map((ev) => ({
-        minute: safeNum(ev.minute, 0),
-        type:
-          ev.type?.developer_name ??
-          ev.type?.name ??
-          ev.type?.code ??
-          "EVENT",
-        side: resolveSide(ev.participant_id, homeId, awayId),
-      }))
-      .sort((a, b) => a.minute - b.minute);
-  } catch {
-    return [];
-  }
-}
-
 function countBookmakers(fixture: SportmonksFixture): number {
   try {
     const odds = resolveAllFixtureOdds(fixture);
@@ -63,27 +28,6 @@ function countBookmakers(fixture: SportmonksFixture): number {
       if (o.bookmaker_id != null) ids.add(o.bookmaker_id);
     }
     return ids.size > 0 ? ids.size : odds.length > 0 ? 1 : 0;
-  } catch {
-    return 0;
-  }
-}
-
-function momentumFromTrends(fixture: SportmonksFixture): number {
-  try {
-    const trends = (fixture as SportmonksFixture & { trends?: Record<string, unknown>[] })
-      .trends;
-    if (!Array.isArray(trends) || trends.length === 0) return 0;
-    let sum = 0;
-    let n = 0;
-    for (const t of trends) {
-      const v = safeNum(t.value ?? t.data, NaN);
-      if (Number.isFinite(v)) {
-        sum += v;
-        n += 1;
-      }
-    }
-    if (n === 0) return Math.min(100, trends.length * 8);
-    return Math.min(100, Math.round(sum / n));
   } catch {
     return 0;
   }
@@ -139,7 +83,7 @@ function buildDominanceLabel(
 }
 
 function detectDangerousSequence(
-  events: TimelineEventSummary[],
+  events: { minute: number; type: string }[],
   stats: MatchStats,
   momentum: number
 ): boolean {
@@ -187,30 +131,30 @@ export function buildPremiumContext(
     const homeId = participants.find((p) => p.meta?.location === "home")?.id;
     const awayId = participants.find((p) => p.meta?.location === "away")?.id;
 
-    let timelineEvents = parseTimelineEvents(fixture, homeId, awayId);
-    const timelineRaw = (fixture as SportmonksFixture & { timeline?: SportmonksEvent[] })
-      .timeline;
-    if (Array.isArray(timelineRaw) && timelineRaw.length > timelineEvents.length) {
-      timelineEvents = parseTimelineEvents(
-        { ...fixture, events: timelineRaw },
-        homeId,
-        awayId
-      );
-    }
-    const momentumScore = momentumFromTrends(fixture);
+    const timelineEvents = parseTimelineFromProvider(fixture, homeId, awayId);
+    const momentumParsed = parseMomentumFromTrends(fixture);
+    const momentumScore = momentumParsed.fromProvider ? momentumParsed.score : 0;
     const pressureIndex = pressureIndexFromFixture(fixture, stats);
     const dominanceLabel = buildDominanceLabel(teamStats, stats);
-    const dangerousSequence = detectDangerousSequence(timelineEvents, stats, momentumScore);
+    const dangerousSequence = detectDangerousSequence(
+      timelineEvents,
+      stats,
+      momentumScore
+    );
 
     const f = fixture as SportmonksFixture & {
       lineups?: unknown[];
       standings?: unknown;
     };
 
-    return {
+    const base: MatchPremiumContext = {
       timelineEvents,
       timelineEventsCount: timelineEvents.length,
       momentumScore,
+      momentumDirection: momentumParsed.fromProvider
+        ? momentumParsed.direction
+        : undefined,
+      momentumSeries: momentumParsed.fromProvider ? momentumParsed.series : undefined,
       pressureIndex,
       dominanceLabel,
       dangerousSequence,
@@ -218,10 +162,12 @@ export function buildPremiumContext(
       standingsAvailable: f.standings != null,
       xgAvailable: sumXgFromFixture(fixture) > 0 || (stats.xG ?? 0) > 0,
       oddsAvailable: resolveAllFixtureOdds(fixture).length > 0,
-      eventsAvailable: getFixtureEvents(fixture).length > 0,
+      eventsAvailable: timelineEvents.length > 0,
       lineupsAvailable: Array.isArray(f.lineups) && f.lineups.length > 0,
       statisticsAvailable: (fixture.statistics?.length ?? 0) > 0,
     };
+
+    return enrichPremiumFromSportmonksFeed(fixture, base, homeId, awayId);
   } catch {
     return defaults;
   }

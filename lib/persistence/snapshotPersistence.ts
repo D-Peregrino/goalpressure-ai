@@ -42,6 +42,13 @@ export function buildLiveMatchSnapshotRows(matches: Match[]): Record<string, unk
         chaosIndex: match.chaosIndex ?? null,
         acceleration: offensive?.accelerationScore ?? null,
         territorial: offensive?.territorialScore ?? null,
+        sportmonksSources: match.premium?.feedSources ?? match.feedMeta?.sportmonksSources ?? null,
+        momentumDirection: match.premium?.momentumDirection ?? null,
+        commentaryCount: match.premium?.commentaryCount ?? 0,
+        timelineEventsCount: match.premium?.timelineEventsCount ?? 0,
+        xgHome: match.premium?.xgHome ?? null,
+        xgAway: match.premium?.xgAway ?? null,
+        advancedOddsCount: match.premium?.advancedOddsCount ?? 0,
       },
     });
   }

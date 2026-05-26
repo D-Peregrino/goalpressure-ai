@@ -186,14 +186,20 @@ export class SignalDispatcher {
         const message = this.queue.shift();
         if (!message) continue;
 
+        const fixtureId = message.matchId.replace(/^sm-/, "");
         const startedAt = Date.now();
         const result = await sendTelegramMessageWithRetry(message.text, {
           signalId: message.signalId,
           source: message.source,
+          route: {
+            pipeline: "signal",
+            alertType: message.market,
+            fixtureId,
+            signalId: message.signalId,
+            tags: ["signal", message.source],
+          },
         });
         const latencyMs = Date.now() - startedAt;
-
-        const fixtureId = message.matchId.replace(/^sm-/, "");
 
         if (result.sandbox) {
           recordTelegramDispatchSuccess(message.signalId, latencyMs);

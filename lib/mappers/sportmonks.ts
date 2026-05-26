@@ -8,6 +8,7 @@ import { extractParticipantLogo } from "@/lib/teams/teamLogoResolver";
 import { applyPressureToMatch } from "@/lib/pressureScore";
 import { buildPremiumContext } from "@/lib/mappers/buildPremiumContext";
 import { normalizeFixtureOdds } from "@/lib/mappers/normalizeSportmonksOdds";
+import { detectSportmonksFeedSources } from "@/lib/mappers/sportmonksFeedExtensions";
 import {
   inferStatsFromEvents,
   inferPressureTrendFromTrends,
@@ -157,6 +158,7 @@ export interface SportmonksFixture {
   formations?: unknown[];
   trends?: unknown[];
   timeline?: unknown[];
+  comments?: unknown[];
   xGFixture?: SportmonksXgEntry[];
   xgfixture?: SportmonksXgEntry[];
   venue?: { id?: number; name?: string; city?: string };
@@ -667,16 +669,18 @@ function buildFeedMeta(fixture: SportmonksFixture, stats: MatchStats): MatchFeed
     stats.shotsOnTarget > 0 ||
     (stats.xG ?? 0) > 0;
   const odds = resolveAllFixtureOdds(fixture);
+  const sources = detectSportmonksFeedSources(fixture);
 
   return {
-    hasStatistics: (fixture.statistics?.length ?? 0) > 0,
-    hasInplayOdds: odds.length > 0,
-    hasEvents: events.length > 0,
+    hasStatistics: sources.statistics,
+    hasInplayOdds: sources.inplayOdds || odds.length > 0,
+    hasEvents: events.length > 0 || sources.timeline,
     hasLineups: Array.isArray(fixture.lineups) && fixture.lineups.length > 0,
-    hasXg: sumXgFromFixture(fixture) > 0 || (stats.xG ?? 0) > 0,
+    hasXg: sources.xg || (stats.xG ?? 0) > 0,
     eventCount: events.length,
-    premiumStatsActive: hasStats,
+    premiumStatsActive: hasStats || sources.statistics,
     pressureTrend: undefined,
+    sportmonksSources: sources,
   };
 }
 
@@ -704,7 +708,9 @@ function applyPremiumEnrichment(
     };
   }
 
+  const hasRealStatistics = (fixture.statistics?.length ?? 0) > 0;
   if (
+    !hasRealStatistics &&
     !teamStats &&
     nextStats.shots === 0 &&
     nextStats.dangerousAttacks === 0 &&
@@ -766,12 +772,9 @@ export function buildMatchFromSportmonksFixture(
   const oddsBundle = normalizeFixtureOdds(fixture);
 
   const pressureTrend: PressureTrend | undefined =
+    premium.momentumDirection ??
     inferPressureTrendFromTrends(fixture) ??
-    (premium.momentumScore >= 60
-      ? "RISING"
-      : stats.shotsOnTarget > stats.shots * 0.35
-        ? "RISING"
-        : "STABLE");
+    "STABLE";
 
   const participantLogos = mapParticipantLogos(fixture);
 

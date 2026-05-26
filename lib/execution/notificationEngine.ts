@@ -50,3 +50,31 @@ export function urgencyLabel(u: DispatchUrgency): string {
   };
   return map[u];
 }
+
+/** Telegram institucional via destinos Supabase (segmentação por kind/urgência). */
+export async function dispatchNotificationTelegram(
+  item: QueuedDispatch
+): Promise<{ ok: boolean; sandbox?: boolean }> {
+  const { sendTelegramRouted } = await import("@/lib/telegram/telegramRouting");
+  const push = buildPushNotification(item);
+  const text = `${push.title}\n\n${push.body}`;
+  const priority =
+    item.urgency === "CRITICAL"
+      ? "critica"
+      : item.urgency === "HIGH"
+        ? "alta"
+        : item.urgency === "MEDIUM"
+          ? "moderada"
+          : "baixa";
+
+  const result = await sendTelegramRouted(text, {
+    pipeline: "notification",
+    alertType: push.kind,
+    priority,
+    fixtureId: item.fixtureId,
+    signalId: item.id,
+    tags: ["notification", push.kind],
+  });
+
+  return { ok: result.ok, sandbox: result.sandbox };
+}

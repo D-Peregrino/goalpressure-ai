@@ -100,6 +100,16 @@ export const TIER_ORDER: SubscriptionTier[] = [
 ];
 
 export type FeatureKey =
+  | "landing"
+  | "demo"
+  | "terminal"
+  | "gpi"
+  | "workspace"
+  | "telegram"
+  | "replay"
+  | "ops_center"
+  | "signal_exchange"
+  | "quant_dashboard"
   | "heatmap"
   | "chaos_radar"
   | "edge_full"
@@ -115,6 +125,16 @@ export type FeatureKey =
   | "operator_mode";
 
 const FEATURE_MIN_TIER: Record<FeatureKey, SubscriptionTier> = {
+  landing: "free",
+  demo: "free",
+  terminal: "pro",
+  gpi: "pro",
+  workspace: "pro",
+  telegram: "pro",
+  replay: "pro",
+  ops_center: "institutional",
+  signal_exchange: "institutional",
+  quant_dashboard: "institutional",
   heatmap: "pro",
   chaos_radar: "pro",
   edge_full: "pro",

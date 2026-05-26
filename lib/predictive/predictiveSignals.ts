@@ -153,10 +153,11 @@ export function evaluatePredictiveReading(
   context: MatchContextResult,
   watch?: FixtureWatchState
 ): PredictiveReading {
+  const providerMomentum = match.sportmonksMomentum ?? match.momentum;
   const accelInput: AccelerationInput = {
     matchId: match.matchId,
     pressureScore: match.pressureScore,
-    momentum: match.momentum,
+    momentum: providerMomentum,
     dangerousAttacks: match.dangerousAttacks,
     engineAcceleration: match.engineAccelerationScore,
     territorialScore: match.engineTerritorialScore,
@@ -194,7 +195,7 @@ export function evaluatePredictiveReading(
 
   const defensiveRisk = computeDefensiveRisk({
     pressure: match.pressureScore,
-    momentum: match.momentum,
+    momentum: providerMomentum,
     acceleration: offensiveAcceleration,
     chaosIndex: match.chaosIndex,
     homePressure: match.homePressure,
@@ -206,7 +207,7 @@ export function evaluatePredictiveReading(
   const contextualBreakProbability = computeContextualBreakProbability(
     {
       pressure: match.pressureScore,
-      momentum: match.momentum,
+      momentum: providerMomentum,
       acceleration: offensiveAcceleration,
       chaosIndex: match.chaosIndex,
       homePressure: match.homePressure,
@@ -236,7 +237,7 @@ export function evaluatePredictiveReading(
     momentumFalling: (watch?.momentumFallingStreak ?? 0) >= 3,
   });
 
-  const trendDirection = resolveTrendDirection(match.dominantSide, match.momentum);
+  const trendDirection = resolveTrendDirection(match.dominantSide, providerMomentum);
   const trendLabel = trendDirectionLabel(trendDirection);
 
   return {

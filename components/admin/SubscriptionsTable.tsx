@@ -16,6 +16,13 @@ interface Subscription {
   coupon_code?: string | null;
   final_amount_cents?: number;
   current_period_end?: string;
+  lastPayment?: {
+    status?: string;
+    provider?: string;
+    provider_payment_id?: string;
+    amount_cents?: number;
+    created_at?: string;
+  } | null;
 }
 
 export default function SubscriptionsTable() {
@@ -46,16 +53,26 @@ export default function SubscriptionsTable() {
       <table className="gp-admin-table">
         <thead>
           <tr>
+            <th>Usuário</th>
             <th>Plano</th>
             <th>Status</th>
             <th>Valor</th>
             <th>Provedor</th>
             <th>Vencimento</th>
+            <th>Último pagamento</th>
           </tr>
         </thead>
         <tbody>
           {filtered.map((s) => (
             <tr key={s.id}>
+              <td>
+                <div>
+                  <strong>{s.name ?? "—"}</strong>
+                </div>
+                <div style={{ fontSize: "0.72rem", color: "var(--gp-gray)" }}>
+                  {s.email ?? s.user_id}
+                </div>
+              </td>
               <td>{s.plan}</td>
               <td>
                 <SubscriptionStatusBadge status={s.status} />
@@ -68,6 +85,18 @@ export default function SubscriptionsTable() {
                 {s.current_period_end
                   ? new Date(s.current_period_end).toLocaleDateString("pt-BR")
                   : "—"}
+              </td>
+              <td>
+                {s.lastPayment ? (
+                  <span style={{ fontSize: "0.78rem" }}>
+                    {s.lastPayment.status ?? "—"} ·{" "}
+                    {s.lastPayment.amount_cents != null
+                      ? formatarPreco(Number(s.lastPayment.amount_cents))
+                      : "—"}
+                  </span>
+                ) : (
+                  "—"
+                )}
               </td>
             </tr>
           ))}

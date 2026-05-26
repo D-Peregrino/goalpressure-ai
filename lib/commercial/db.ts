@@ -183,6 +183,54 @@ export async function activateFundadorManualAdmin(input: {
   return { ok: true, subscriptionId: data.id };
 }
 
+export async function updateSubscriptionAdmin(input: {
+  userId: string;
+  plan: DbPlan;
+  status: "trialing" | "active" | "past_due" | "canceled" | "incomplete";
+  provider?: string | null;
+  periodEndMonths?: number;
+  adminId?: string;
+  adminEmail?: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const admin = getSupabaseAdmin();
+  if (!admin || !isSupabaseConfigured()) {
+    return { ok: false, error: "Supabase não configurado no servidor." };
+  }
+
+  const now = new Date();
+  const periodEnd = new Date(now);
+  periodEnd.setMonth(periodEnd.getMonth() + (input.periodEndMonths ?? 1));
+
+  const row = {
+    user_id: input.userId,
+    plan: input.plan,
+    status: input.status,
+    provider: input.provider ?? "manual",
+    current_period_start: now.toISOString(),
+    current_period_end: periodEnd.toISOString(),
+    updated_at: now.toISOString(),
+    canceled_at: input.status === "canceled" ? now.toISOString() : null,
+  };
+
+  const { error } = await admin.from("subscriptions").upsert(row, { onConflict: "user_id" });
+  if (error) return { ok: false, error: error.message };
+
+  await admin.from("customer_events").insert({
+    user_id: input.userId,
+    type: "subscription_admin_update",
+    description: "Assinatura atualizada manualmente pelo admin",
+    metadata: {
+      plan: input.plan,
+      status: input.status,
+      provider: input.provider ?? "manual",
+      admin_id: input.adminId ?? null,
+      admin_email: input.adminEmail ?? null,
+    },
+  });
+
+  return { ok: true };
+}
+
 /** Assinatura automática para e-mails em ADMIN_EMAILS sem plano ativo. */
 export async function ensureAdminAutoSubscription(userId: string): Promise<void> {
   const admin = getSupabaseAdmin();
