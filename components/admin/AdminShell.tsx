@@ -12,6 +12,7 @@ const NAV = [
   { href: "/admin/suporte", label: "Suporte" },
   { href: "/admin/configuracoes", label: "Configurações" },
   { href: "/admin/validacao", label: "Validação" },
+  { href: "/admin/quant", label: "Quant" },
 ];
 
 /** Shell do painel — acesso validado em app/admin/layout (AdminGuard + /api/auth/me). */

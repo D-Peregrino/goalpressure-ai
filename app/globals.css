@@ -11026,3 +11026,368 @@ body {
     opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Quantitative Intelligence Dashboard */
+.gp-quant-page {
+  max-width: 1280px;
+}
+
+.gp-quant-page__hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--gp-gray-light);
+}
+
+.gp-quant-page__kicker {
+  margin: 0 0 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #1e40af;
+}
+
+.gp-quant-refresh {
+  flex-shrink: 0;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid #1e293b;
+  background: #0f172a;
+  color: #f8fafc;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gp-quant-refresh:hover {
+  background: #1e293b;
+}
+
+.gp-quant-generated {
+  margin: 0 0 1rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.gp-quant-loading {
+  padding: 2rem;
+  text-align: center;
+}
+
+.gp-quant-error {
+  padding: 1rem;
+  border-radius: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 0.85rem;
+}
+
+.gp-quant-grid {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 900px) {
+  .gp-quant-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .gp-quant-grid--hero {
+    grid-template-columns: 1.2fr 1fr;
+  }
+}
+
+.gp-quant-panel {
+  background: #fff;
+  border: 1px solid var(--gp-gray-light);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+}
+
+.gp-quant-panel__head {
+  margin-bottom: 0.75rem;
+}
+
+.gp-quant-panel__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gp-navy);
+  letter-spacing: -0.02em;
+}
+
+.gp-quant-panel__sub {
+  margin: 0.2rem 0 0;
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.gp-quant-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.45rem;
+  margin-bottom: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .gp-quant-metrics {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.gp-quant-metrics__cell {
+  padding: 0.5rem 0.55rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.gp-quant-metrics__cell span {
+  display: block;
+  font-size: 0.58rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gp-quant-metrics__cell strong {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--gp-navy);
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-quant-metrics__cell em {
+  display: block;
+  font-size: 0.58rem;
+  color: var(--muted);
+  font-style: normal;
+  margin-top: 0.1rem;
+}
+
+.gp-quant-cols {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .gp-quant-cols {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.gp-quant-section-label {
+  margin: 0 0 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.gp-quant-bars {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gp-quant-bars li {
+  margin-bottom: 0.4rem;
+}
+
+.gp-quant-bars__top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  margin-bottom: 0.12rem;
+}
+
+.gp-quant-bars__track {
+  height: 6px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.gp-quant-bars__track span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #1e3a5f, #3b82f6);
+}
+
+.gp-quant-heatmap {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 0.35rem;
+}
+
+.gp-quant-heatmap__cell {
+  padding: 0.4rem 0.35rem;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.62rem;
+  background: color-mix(in srgb, #1e40af calc(var(--gp-intensity, 30) * 1%), #f1f5f9);
+  border: 1px solid #e2e8f0;
+}
+
+.gp-quant-heatmap__label {
+  display: block;
+  color: var(--gp-navy);
+  font-weight: 600;
+  margin-bottom: 0.1rem;
+}
+
+.gp-quant-heatmap__cell strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-quant-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 0.75rem;
+}
+
+.gp-quant-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+}
+
+.gp-quant-table th {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 2px solid #e2e8f0;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
+}
+
+.gp-quant-table td {
+  padding: 0.38rem 0.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-quant-pattern-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.72rem;
+}
+
+.gp-quant-pattern-list li {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.gp-quant-pattern-list strong {
+  display: block;
+  color: var(--gp-navy);
+}
+
+.gp-quant-pattern-list span {
+  color: var(--muted);
+}
+
+.gp-quant-pattern-list em {
+  display: block;
+  font-size: 0.62rem;
+  color: #1e40af;
+  font-style: normal;
+  margin-top: 0.1rem;
+}
+
+.gp-quant-pattern-block--strong {
+  border-left: 3px solid #15803d;
+  padding-left: 0.5rem;
+}
+
+.gp-quant-pattern-block--weak {
+  border-left: 3px solid #dc2626;
+  padding-left: 0.5rem;
+}
+
+.gp-quant-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.gp-quant-timeline__row {
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.gp-quant-timeline__row time {
+  font-size: 0.62rem;
+  color: var(--muted);
+}
+
+.gp-quant-timeline__bars {
+  margin: 0.35rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.gp-quant-timeline__bar {
+  display: grid;
+  grid-template-columns: 72px 1fr 36px;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.62rem;
+}
+
+.gp-quant-timeline__track {
+  height: 5px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.gp-quant-timeline__track span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.gp-quant-timeline__threshold {
+  font-size: 0.6rem;
+  color: var(--muted);
+}
+
+.gp-quant-heatmaps-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 720px) {
+  .gp-quant-heatmaps-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.gp-quant-disclaimer {
+  margin: 0.65rem 0 0;
+  font-size: 0.62rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.gp-quant-muted {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
