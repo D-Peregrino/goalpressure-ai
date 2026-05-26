@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   BarChart3,
+  Briefcase,
   ChevronLeft,
   ChevronRight,
   FlaskConical,
@@ -25,6 +26,7 @@ const STORAGE_KEY = "gp-sidebar-collapsed";
 const NAV_ICONS: Record<string, LucideIcon> = {
   "/admin": Settings2,
   "/minha-central": Home,
+  "/workspace": Briefcase,
   "/terminal": Radio,
   "/feed": Radio,
   "/analytics": BarChart3,
@@ -172,6 +174,9 @@ export function useTerminalNavActive(pathname: string) {
     }
     if (href === "/minha-central") {
       return pathname === "/minha-central" || pathname === "/inicio";
+    }
+    if (href === "/workspace") {
+      return pathname === "/workspace" || pathname.startsWith("/workspace/");
     }
     if (href === "/terminal") {
       return pathname === "/terminal" || pathname === "/ops";

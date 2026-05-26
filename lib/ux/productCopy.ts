@@ -14,6 +14,7 @@ export const BRAND_PRODUCT = {
 
 export const NAV_ITEMS = [
   { href: "/minha-central", label: "Minha central", short: "Central" },
+  { href: "/workspace", label: "Workspace", short: "Workspace" },
   { href: "/terminal", label: "Central ao vivo", short: "Central" },
   { href: "/feed", label: "Feed ao vivo", short: "Feed" },
   { href: "/analytics", label: "Insights", short: "Insights" },
