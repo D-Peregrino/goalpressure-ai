@@ -115,6 +115,14 @@ export async function processLiveEngineBatch(
     void runAdaptiveLearningCycle(enrichedMatches);
   }
 
+  const { isBacktestingEnabled } = await import("@/lib/backtesting/backtestConfig");
+  if (isBacktestingEnabled()) {
+    const { runContextualBacktestCycle } = await import(
+      "@/lib/backtesting/contextualBacktestEngine"
+    );
+    void runContextualBacktestCycle();
+  }
+
   logInfo(LOG_SCOPE, "Live engine batch processed", {
     matches: enrichedMatches.length,
     signals: signals.length,

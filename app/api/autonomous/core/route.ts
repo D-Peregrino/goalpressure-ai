@@ -3,6 +3,10 @@ import { getAutonomousCoreSnapshot } from "@/lib/autonomous/autonomousSnapshotSt
 import { getAutonomousAlertSnapshot } from "@/lib/autonomous/autonomousAlertSnapshotStore";
 import { getPredictiveSnapshot } from "@/lib/predictive/predictiveSnapshotStore";
 import { getAdaptiveLearningSnapshot } from "@/lib/learning/adaptiveLearningSnapshotStore";
+import {
+  ensureContextualBacktestWarm,
+  getContextualBacktestingSnapshot,
+} from "@/lib/backtesting/contextualBacktestEngine";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -16,12 +20,15 @@ export async function GET() {
   const alertEngine = getAutonomousAlertSnapshot();
   const predictiveEngine = getPredictiveSnapshot();
   const adaptiveLearning = getAdaptiveLearningSnapshot();
+  const contextualBacktesting =
+    (await ensureContextualBacktestWarm()) ?? getContextualBacktestingSnapshot();
 
   return NextResponse.json({
     ok: true,
     alertEngine,
     predictiveEngine,
     adaptiveLearning,
+    contextualBacktesting,
     snapshot: snapshot ?? {
       generatedAt: new Date().toISOString(),
       dominantRegime: "CALM_MARKET",
