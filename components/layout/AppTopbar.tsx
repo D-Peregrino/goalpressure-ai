@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { planLabelPt } from "@/lib/subscription/permissions";
 import PlanBadge from "@/components/billing/PlanBadge";
+import CommandLauncher from "@/components/command/CommandLauncher";
 
 export default function AppTopbar() {
   const { user, signOut, loading } = useAuth();
@@ -25,6 +26,7 @@ export default function AppTopbar() {
   return (
     <header className="gp-app-topbar">
       <div className="gp-app-topbar__spacer" />
+      <CommandLauncher />
       {loading ? (
         <span className="gp-app-topbar__loading">…</span>
       ) : user ? (

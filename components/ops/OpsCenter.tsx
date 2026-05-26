@@ -13,6 +13,7 @@ import LiveConsensusLayer from "@/components/ops/LiveConsensusLayer";
 import MarketDistortionMonitor from "@/components/ops/MarketDistortionMonitor";
 import MultiViewSelector from "@/components/ops/MultiViewSelector";
 import TacticalReplayStrip from "@/components/ops/TacticalReplayStrip";
+import { consumeOpsCommand } from "@/lib/command/readPendingCommand";
 import "@/app/styles/ops-center.css";
 
 export default function OpsCenter() {
@@ -45,6 +46,16 @@ export default function OpsCenter() {
       }
     }
   }, [broadcastMode]);
+
+  useEffect(() => {
+    const pending = consumeOpsCommand();
+    if (!pending) return;
+    if (pending.view) setViewCount(pending.view);
+    if (pending.broadcast) {
+      setBroadcastMode(true);
+      void rootRef.current?.requestFullscreen?.();
+    }
+  }, []);
 
   useEffect(() => {
     const onFs = () => {

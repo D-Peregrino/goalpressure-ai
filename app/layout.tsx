@@ -8,6 +8,7 @@ import { BRAND } from "@/lib/design/brand";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { UserWorkspaceProvider } from "@/contexts/UserWorkspaceContext";
+import { CommandProvider } from "@/contexts/CommandContext";
 import SupabasePublicConfig from "@/components/supabase/SupabasePublicConfig";
 
 const inter = Inter({
@@ -46,7 +47,9 @@ export default function RootLayout({
         <SupabasePublicConfig />
         <AuthProvider>
           <UserWorkspaceProvider>
-            <SubscriptionProvider>{children}</SubscriptionProvider>
+            <SubscriptionProvider>
+              <CommandProvider>{children}</CommandProvider>
+            </SubscriptionProvider>
           </UserWorkspaceProvider>
         </AuthProvider>
       </body>

@@ -1,0 +1,254 @@
+/* GoalPressure Command System */
+
+.gp-cmd-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 12vh 1rem 2rem;
+  background: rgba(2, 6, 23, 0.72);
+  backdrop-filter: blur(12px) saturate(1.2);
+  animation: gp-cmd-fade-in 0.15s ease;
+}
+
+.gp-cmd-palette {
+  --gp-cmd-muted: rgba(148, 163, 184, 0.9);
+  --gp-cmd-border: rgba(255, 255, 255, 0.1);
+  --gp-cmd-accent: #22d3ee;
+  width: min(640px, 100%);
+  max-height: min(70vh, 560px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  border: 1px solid var(--gp-cmd-border);
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.98) 0%,
+    rgba(8, 12, 24, 0.99) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.08),
+    0 32px 80px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  animation: gp-cmd-slide 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes gp-cmd-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes gp-cmd-slide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.gp-cmd-palette__input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid var(--gp-cmd-border);
+}
+
+.gp-cmd-palette__input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  color: #f1f5f9;
+  outline: none;
+}
+
+.gp-cmd-palette__input::placeholder {
+  color: var(--gp-cmd-muted);
+}
+
+.gp-cmd-palette__loading {
+  font-size: 0.75rem;
+  color: var(--gp-cmd-accent);
+  animation: gp-cmd-pulse 1s infinite;
+}
+
+@keyframes gp-cmd-pulse {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.gp-cmd-quick {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--gp-cmd-border);
+}
+
+.gp-cmd-quick__label {
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gp-cmd-muted);
+}
+
+.gp-cmd-quick__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.45rem;
+}
+
+.gp-cmd-quick__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.6875rem;
+  border: 1px solid var(--gp-cmd-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: #e2e8f0;
+  cursor: pointer;
+}
+
+.gp-cmd-quick__btn:hover {
+  border-color: var(--gp-cmd-accent);
+  color: var(--gp-cmd-accent);
+}
+
+.gp-cmd-results {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+}
+
+.gp-cmd-results__group-label {
+  padding: 0.35rem 1.15rem 0.25rem;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gp-cmd-muted);
+}
+
+.gp-cmd-results ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.gp-cmd-result {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  padding: 0.55rem 1.15rem;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: #f1f5f9;
+}
+
+.gp-cmd-result:hover,
+.gp-cmd-result--active {
+  background: rgba(34, 211, 238, 0.1);
+}
+
+.gp-cmd-result--active {
+  box-shadow: inset 2px 0 0 var(--gp-cmd-accent);
+}
+
+.gp-cmd-result__title {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.gp-cmd-result__sub {
+  font-size: 0.6875rem;
+  color: var(--gp-cmd-muted);
+}
+
+.gp-cmd-empty {
+  padding: 1.5rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--gp-cmd-muted);
+}
+
+.gp-cmd-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.65rem 1.15rem;
+  border-top: 1px solid var(--gp-cmd-border);
+  font-size: 0.625rem;
+  color: var(--gp-cmd-muted);
+}
+
+.gp-cmd-shortcuts kbd {
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  border: 1px solid var(--gp-cmd-border);
+  background: rgba(0, 0, 0, 0.35);
+  font-family: inherit;
+  font-size: 0.5625rem;
+  margin-right: 0.15rem;
+}
+
+.gp-cmd-shortcuts__hint {
+  margin-left: auto;
+}
+
+.gp-cmd-launcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.75rem;
+  color: rgba(226, 232, 240, 0.9);
+  cursor: pointer;
+}
+
+.gp-cmd-launcher:hover {
+  border-color: rgba(34, 211, 238, 0.4);
+  color: #67e8f9;
+}
+
+.gp-cmd-launcher__label {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .gp-cmd-launcher__label {
+    display: inline;
+  }
+}
+
+.gp-cmd-launcher__kbd {
+  display: none;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.625rem;
+  opacity: 0.8;
+}
+
+@media (min-width: 1024px) {
+  .gp-cmd-launcher__kbd {
+    display: inline;
+  }
+}

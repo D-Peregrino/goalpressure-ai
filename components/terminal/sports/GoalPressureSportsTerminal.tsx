@@ -35,6 +35,7 @@ import SportsToast from "./SportsToast";
 import type { MatchTabId } from "./LiveMatchTabs";
 import { evaluateMatchContext } from "@/components/terminal/intelligence/ContextEngine";
 import { mapOperationalDecision } from "@/components/terminal/decision/decisionMapper";
+import { consumeTerminalCommand } from "@/lib/command/readPendingCommand";
 
 const FILTER_CHIPS: {
   id: MatchCenterFilter | "scanner";
@@ -84,6 +85,13 @@ export default function GoalPressureSportsTerminal() {
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
 
   const searchTerm = search;
+
+  useEffect(() => {
+    const pending = consumeTerminalCommand();
+    if (!pending) return;
+    if (pending.filter) setFilter(pending.filter as MatchCenterFilter);
+    if (pending.search) setSearch(pending.search);
+  }, [setFilter, setSearch]);
 
   const sectionJogosRef = useRef<HTMLDivElement>(null);
   const sectionLigasRef = useRef<HTMLDivElement>(null);
