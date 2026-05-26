@@ -10,6 +10,9 @@ export default function LandingNav() {
         Goal<span className="gp-accent">Pressure</span> AI
       </Link>
       <nav className="gp-landing-nav__actions">
+        <Link href="/copa" className="gp-landing-nav__link hidden md:inline">
+          Copa 2026
+        </Link>
         <Link href="/precos" className="gp-landing-nav__link hidden md:inline">
           Planos
         </Link>

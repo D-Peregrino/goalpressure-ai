@@ -1,0 +1,369 @@
+/* GoalPressure Copa 2026 — identidade clara, esportiva, separada do terminal escuro */
+
+.gp-copa {
+  --copa-bg: #f2f6f3;
+  --copa-surface: #ffffff;
+  --copa-elevated: #e8f0ea;
+  --copa-green: #0b6b3a;
+  --copa-green-deep: #064d2a;
+  --copa-gold: #c4a035;
+  --copa-gold-soft: #f5ecd4;
+  --copa-text: #0f1f14;
+  --copa-muted: #4a6354;
+  --copa-border: #c5d6cb;
+  --copa-live: #e63946;
+  --copa-radius: 14px;
+  min-height: 100vh;
+  background: var(--copa-bg);
+  color: var(--copa-text);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+.gp-copa__ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(11, 107, 58, 0.12), transparent),
+    radial-gradient(ellipse 40% 30% at 100% 0%, rgba(196, 160, 53, 0.08), transparent);
+  z-index: 0;
+}
+
+.gp-copa__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.25rem 3rem;
+}
+
+.gp-copa-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem 0 1rem;
+  border-bottom: 1px solid var(--copa-border);
+}
+
+.gp-copa-header__brand {
+  text-decoration: none;
+  color: inherit;
+}
+
+.gp-copa-header__eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--copa-green);
+  margin: 0 0 0.25rem;
+}
+
+.gp-copa-header__title {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 800;
+  margin: 0;
+  line-height: 1.15;
+}
+
+.gp-copa-header__title span {
+  color: var(--copa-gold);
+}
+
+.gp-copa-header__sub {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+  color: var(--copa-muted);
+  max-width: 36rem;
+}
+
+.gp-copa-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.gp-copa-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid var(--copa-border);
+  background: var(--copa-surface);
+  color: var(--copa-text);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.gp-copa-btn:hover {
+  border-color: var(--copa-green);
+  background: var(--copa-elevated);
+}
+
+.gp-copa-btn--primary {
+  background: var(--copa-green);
+  border-color: var(--copa-green);
+  color: #fff;
+}
+
+.gp-copa-btn--primary:hover {
+  background: var(--copa-green-deep);
+  border-color: var(--copa-green-deep);
+}
+
+.gp-copa-nav {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding: 1rem 0;
+  scrollbar-width: thin;
+}
+
+.gp-copa-nav__tab {
+  flex-shrink: 0;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--copa-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.gp-copa-nav__tab:hover {
+  color: var(--copa-text);
+  background: var(--copa-elevated);
+}
+
+.gp-copa-nav__tab.is-active {
+  background: var(--copa-surface);
+  border-color: var(--copa-border);
+  color: var(--copa-green-deep);
+  box-shadow: 0 1px 3px rgba(6, 77, 42, 0.08);
+}
+
+.gp-copa-nav__tab--premium::after {
+  content: "★";
+  margin-left: 0.25rem;
+  font-size: 0.65rem;
+  color: var(--copa-gold);
+}
+
+.gp-copa-hero {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+  margin-bottom: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .gp-copa-hero {
+    grid-template-columns: 1.4fr 1fr;
+  }
+}
+
+.gp-copa-card {
+  background: var(--copa-surface);
+  border: 1px solid var(--copa-border);
+  border-radius: var(--copa-radius);
+  padding: 1.1rem 1.25rem;
+}
+
+.gp-copa-card__title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--copa-muted);
+  margin: 0 0 0.75rem;
+}
+
+.gp-copa-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .gp-copa-stat-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.gp-copa-stat {
+  text-align: center;
+  padding: 0.65rem;
+  background: var(--copa-elevated);
+  border-radius: 10px;
+}
+
+.gp-copa-stat__value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--copa-green-deep);
+}
+
+.gp-copa-stat__label {
+  font-size: 0.68rem;
+  color: var(--copa-muted);
+  margin-top: 0.15rem;
+}
+
+.gp-copa-match {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--copa-border);
+}
+
+.gp-copa-match:last-child {
+  border-bottom: none;
+}
+
+.gp-copa-match__team {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.gp-copa-match__team--away {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.gp-copa-match__score {
+  font-size: 1.1rem;
+  font-weight: 800;
+  min-width: 3.5rem;
+  text-align: center;
+}
+
+.gp-copa-match__meta {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  color: var(--copa-muted);
+}
+
+.gp-copa-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.gp-copa-badge--live {
+  background: rgba(230, 57, 70, 0.12);
+  color: var(--copa-live);
+}
+
+.gp-copa-badge--free {
+  background: var(--copa-elevated);
+  color: var(--copa-green);
+}
+
+.gp-copa-badge--premium {
+  background: var(--copa-gold-soft);
+  color: #7a5f10;
+}
+
+.gp-copa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.gp-copa-table th,
+.gp-copa-table td {
+  padding: 0.45rem 0.35rem;
+  text-align: center;
+  border-bottom: 1px solid var(--copa-border);
+}
+
+.gp-copa-table th:first-child,
+.gp-copa-table td:first-child {
+  text-align: left;
+}
+
+.gp-copa-integrations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--copa-border);
+}
+
+.gp-copa-premium-note {
+  font-size: 0.8rem;
+  color: var(--copa-muted);
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--copa-gold-soft);
+  border-radius: 10px;
+  border: 1px solid rgba(196, 160, 53, 0.35);
+}
+
+.gp-copa .gp-paywall {
+  --gp-paywall-bg: var(--copa-surface);
+  border-radius: var(--copa-radius);
+}
+
+.gp-copa-loading {
+  padding: 3rem;
+  text-align: center;
+  color: var(--copa-muted);
+}
+
+.gp-copa-group-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .gp-copa-group-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .gp-copa-group-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.gp-copa-group-card h3 {
+  margin: 0 0 0.65rem;
+  font-size: 1rem;
+  color: var(--copa-green-deep);
+}
+
+.gp-copa-group-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.gp-copa-group-card li {
+  padding: 0.35rem 0;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--copa-border);
+}
