@@ -24,6 +24,11 @@ import { loginUrl } from "@/lib/auth/routes";
 import { LEAGUE_PRESETS, TEAM_PRESETS } from "@/lib/workspace/operationalTypes";
 import { matchHref, matchListLabel } from "@/lib/ux/hotMatches";
 import type { Match } from "@/types/domain";
+import { planLabelPt } from "@/lib/subscription/permissions";
+import { useSmartWorkspace } from "@/hooks/useSmartWorkspace";
+import { useBehaviorTrack } from "@/hooks/useBehaviorTrack";
+import SmartWorkspacePanels from "@/components/workspace/SmartWorkspacePanels";
+import "@/app/styles/workspace.css";
 
 function fixtureLink(id: string, match?: Match): string {
   if (match) return matchHref(match);
@@ -33,8 +38,6 @@ function fixtureLink(id: string, match?: Match): string {
 function isMatchLive(m: Match): boolean {
   return m.status === "LIVE" || m.status === "HALFTIME";
 }
-import { planLabelPt } from "@/lib/subscription/permissions";
-import "@/app/styles/workspace.css";
 
 function formatRelative(isoOrTs: string | number): string {
   const ms = typeof isoOrTs === "string" ? new Date(isoOrTs).getTime() : isoOrTs;
@@ -51,11 +54,26 @@ export default function WorkspacePage() {
   const { user, plan, loading: authLoading } = useAuth();
   const ws = useUserWorkspace();
   const op = useOperationalWorkspace();
+  const smart = useSmartWorkspace();
+  const { track } = useBehaviorTrack();
   const { matches } = useLiveMatches({ pollIntervalMs: 30_000 });
 
   useEffect(() => {
     if (user) ws.persistRoute("/workspace");
-  }, [user, ws.persistRoute]);
+    track("workspace_view");
+  }, [user, ws.persistRoute, track]);
+
+  const refreshSmart = smart.refresh;
+  useEffect(() => {
+    if (!user) return;
+    void refreshSmart();
+  }, [
+    user,
+    refreshSmart,
+    op.operational.watchlist.length,
+    op.operational.favoriteTeams.length,
+    op.operational.favoriteLeagues.length,
+  ]);
 
   const monitored = useMemo(() => {
     const ids = new Set<string>();
@@ -176,6 +194,8 @@ export default function WorkspacePage() {
         </div>
       </header>
 
+      <SmartWorkspacePanels smart={smart.smart} loading={smart.loading} />
+
       <div className="gp-ws-terminal-cta">
         <div>
           <strong>Central ao vivo</strong>
@@ -241,9 +261,14 @@ export default function WorkspacePage() {
                       className="gp-ws-btn gp-ws-btn--ghost"
                       onClick={() => {
                         if (row.inWatchlist) {
+                          track("watchlist_remove", { fixtureId: row.id });
                           void op.removeWatchlist(row.id);
                         } else {
                           ws.markWatched(row.id, row.label);
+                          track("watchlist_add", {
+                            fixtureId: row.id,
+                            payload: { pressure: row.score },
+                          });
                           void op.addWatchlist(row.id, row.label);
                         }
                       }}
@@ -301,15 +326,18 @@ export default function WorkspacePage() {
                   type="button"
                   className={`gp-ws-chip${on ? " gp-ws-chip--on" : ""}`}
                   disabled={!user}
-                  onClick={() =>
-                    on
-                      ? void op.removeLeague(l.leagueId)
-                      : void op.addLeague({
-                          leagueId: l.leagueId,
-                          leagueName: l.leagueName,
-                          country: l.country,
-                        })
-                  }
+                  onClick={() => {
+                    if (on) {
+                      void op.removeLeague(l.leagueId);
+                    } else {
+                      track("league_favorite", { leagueId: l.leagueId });
+                      void op.addLeague({
+                        leagueId: l.leagueId,
+                        leagueName: l.leagueName,
+                        country: l.country,
+                      });
+                    }
+                  }}
                 >
                   {l.leagueName}
                 </button>
@@ -358,16 +386,19 @@ export default function WorkspacePage() {
                   type="button"
                   className={`gp-ws-chip${on ? " gp-ws-chip--on" : ""}`}
                   disabled={!user}
-                  onClick={() =>
-                    on
-                      ? void op.removeTeam(t.teamId)
-                      : void op.addTeam({
-                          teamId: t.teamId,
-                          teamName: t.teamName,
-                          logoPath: t.logoPath,
-                          leagueName: t.leagueName,
-                        })
-                  }
+                  onClick={() => {
+                    if (on) {
+                      void op.removeTeam(t.teamId);
+                    } else {
+                      track("team_favorite", { teamId: t.teamId });
+                      void op.addTeam({
+                        teamId: t.teamId,
+                        teamName: t.teamName,
+                        logoPath: t.logoPath,
+                        leagueName: t.leagueName,
+                      });
+                    }
+                  }}
                 >
                   <DemoCrest logoPath={t.logoPath} teamName={t.teamName} size={18} />
                   {t.teamName}

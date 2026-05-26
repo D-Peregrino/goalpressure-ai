@@ -6,6 +6,7 @@ import TeamBadge from "@/components/matches/TeamBadge";
 import { evaluateGpiFromEnriched } from "@/lib/gpi/gpiEvaluate";
 import type { GPIClassification } from "@/lib/gpi/gpi.types";
 import { resolveTeamLogoFromEnriched } from "@/lib/teams/teamLogoResolver";
+import GpiFocusBeacon from "@/components/personalization/GpiFocusBeacon";
 
 const CLASS_MOD: Record<GPIClassification, string> = {
   neutro: "gp-gpi-hero--neutro",
@@ -24,6 +25,7 @@ export default function GPIHero({ match }: { match: EnrichedLiveMatch }) {
 
   return (
     <section className={`gp-gpi-hero ${CLASS_MOD[gpi.classification]}`}>
+      <GpiFocusBeacon fixtureId={match.fixtureId} gpi={gpi.score} />
       <div className="gp-gpi-hero__brand">
         <span className="gp-gpi-hero__label">GoalPressure Index</span>
         <span className="gp-gpi-hero__fixture">{match.league}</span>

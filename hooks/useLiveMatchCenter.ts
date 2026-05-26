@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLiveMatches } from "@/hooks/useLiveMatches";
 import { useOps } from "@/hooks/useOps";
 import { useUserWorkspace } from "@/hooks/useUserWorkspace";
+import { useSmartWorkspace } from "@/hooks/useSmartWorkspace";
+import { sortEnrichedByPersonalized } from "@/lib/personalization/smartRanking";
 import {
   fixtureIdFromMatch,
   formatKickoffLabel,
@@ -254,7 +256,8 @@ function buildRecentEvents(parts: {
 export function useLiveMatchCenter() {
   const live = useLiveMatches({ pollIntervalMs: 30_000 });
   const ops = useOps({ pollIntervalMs: 15_000 });
-  const { favorites, toggleFavorite, ready: workspaceReady } = useUserWorkspace();
+  const { favorites, watched, toggleFavorite, ready: workspaceReady } = useUserWorkspace();
+  const { smart } = useSmartWorkspace();
   const [filter, setFilter] = useState<MatchCenterFilter>("all");
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -737,7 +740,7 @@ export function useLiveMatchCenter() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return enriched.filter((m) => {
+    const list = enriched.filter((m) => {
       if (q) {
         const hay = `${m.homeTeam} ${m.awayTeam} ${m.league}`.toLowerCase();
         if (!hay.includes(q)) return false;
@@ -763,7 +766,8 @@ export function useLiveMatchCenter() {
           return isTerminalVisibleMatch(m.status, m.displayStatus);
       }
     });
-  }, [enriched, filter, search, favorites]);
+    return sortEnrichedByPersonalized(list, smart, favorites, watched);
+  }, [enriched, filter, search, favorites, watched, smart]);
 
   const kpis = useMemo(
     () => ({

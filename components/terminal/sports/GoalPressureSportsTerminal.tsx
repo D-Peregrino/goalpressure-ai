@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useLiveMatchCenter, type MatchCenterFilter } from "@/hooks/useLiveMatchCenter";
 import DispatchPushSubscriber from "@/components/terminal/DispatchPushSubscriber";
+import TerminalBehaviorTracker from "@/components/personalization/TerminalBehaviorTracker";
 import type { TimelineWindow } from "@/lib/terminal/sportsDisplay";
 import { feedStatusLabel } from "@/lib/terminal/formatDisplay";
 import { cn } from "@/lib/utils";
@@ -264,6 +265,7 @@ export default function GoalPressureSportsTerminal() {
 
   return (
     <div className="gp-sports">
+      <TerminalBehaviorTracker />
       <DispatchPushSubscriber />
       <SportsToast message={toast} onClose={() => setToast(null)} />
 
