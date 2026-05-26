@@ -186,3 +186,19 @@ export function buildMatchEndMessage(item: QueuedDispatch): string {
 export function buildInstitutionalDispatchMessage(item: QueuedDispatch): string {
   return buildPremiumOperationalTelegramMessage(item);
 }
+
+/** Alerta autônomo — cabeçalho institucional + corpo operacional premium. */
+export function buildAutonomousAlertTelegramMessage(
+  alertHeadline: string,
+  item: QueuedDispatch
+): string {
+  const body = buildPremiumOperationalTelegramMessage(item);
+  return [
+    "GoalPressure AI",
+    "Alertas autônomos · monitoramento contínuo",
+    "────────────────────────",
+    alertHeadline,
+    "",
+    body,
+  ].join("\n");
+}

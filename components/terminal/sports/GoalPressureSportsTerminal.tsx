@@ -21,6 +21,7 @@ import type { TimelineWindow } from "@/lib/terminal/sportsDisplay";
 import { feedStatusLabel } from "@/lib/terminal/formatDisplay";
 import { cn } from "@/lib/utils";
 import MatchDetailModal from "./MatchDetailModal";
+import AutonomousAlertsPanel from "./AutonomousAlertsPanel";
 import MatchListRow from "./MatchListRow";
 import MatchPanelCard from "./MatchPanelCard";
 import SportsToast from "./SportsToast";
@@ -480,6 +481,8 @@ export default function GoalPressureSportsTerminal() {
                     contextView={evaluateMatchContext(secondary)}
                   />
                 ) : null}
+
+                <AutonomousAlertsPanel />
 
                 <div className="gp-sports__panel-card overflow-hidden">
                   <div className="gp-sports__panel-top">

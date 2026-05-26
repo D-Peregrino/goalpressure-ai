@@ -9,6 +9,10 @@ import {
 } from "@/lib/engine/engineSnapshotStore";
 import { runExecutionDispatcher } from "@/lib/execution/signalDispatcher";
 import { buildAutonomousSnapshotFromMatches } from "@/lib/autonomous/runAutonomousDecision";
+import {
+  isAutonomousAlertsEnabled,
+  runAutonomousAlertCycle,
+} from "@/lib/autonomous/autonomousAlertEngine";
 import { logInfo } from "@/lib/utils/logger";
 
 const LOG_SCOPE = "live-engine-pipeline";
@@ -90,6 +94,10 @@ export async function processLiveEngineBatch(
   };
 
   setLiveEngineSnapshot(snapshot);
+
+  if (isAutonomousAlertsEnabled()) {
+    void runAutonomousAlertCycle(enrichedMatches);
+  }
 
   logInfo(LOG_SCOPE, "Live engine batch processed", {
     matches: enrichedMatches.length,

@@ -1597,6 +1597,196 @@
   background: linear-gradient(90deg, #2563eb, #ff7a45);
 }
 
+/* Alertas autônomos */
+.gp-auto-alerts {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--gp-border);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(27, 36, 48, 0.04);
+}
+
+.gp-auto-alerts__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.gp-auto-alerts__title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--gp-text);
+}
+
+.gp-auto-alerts__sub {
+  margin: 0.15rem 0 0;
+  font-size: 0.68rem;
+  color: var(--gp-muted);
+}
+
+.gp-auto-alerts__status {
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.gp-auto-alerts__status--on {
+  background: #ecfdf5;
+  color: #15803d;
+}
+
+.gp-auto-alerts__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin-bottom: 0.65rem;
+}
+
+@media (min-width: 720px) {
+  .gp-auto-alerts__metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.gp-auto-alerts__metrics div {
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  background: var(--gp-card-muted);
+  border: 1px solid var(--gp-border);
+}
+
+.gp-auto-alerts__metrics span {
+  display: block;
+  font-size: 0.6rem;
+  color: var(--gp-muted);
+}
+
+.gp-auto-alerts__metrics strong {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.85rem;
+  color: var(--gp-text);
+}
+
+.gp-auto-alerts__lists {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: 1fr;
+  margin-bottom: 0.65rem;
+}
+
+@media (min-width: 720px) {
+  .gp-auto-alerts__lists {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.gp-auto-alerts__lists h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--gp-text);
+}
+
+.gp-auto-alerts__lists ul {
+  margin: 0;
+  padding-left: 1rem;
+  font-size: 0.68rem;
+  color: #334155;
+  line-height: 1.4;
+}
+
+.gp-auto-alerts__feed h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.gp-auto-alerts__feed ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.gp-auto-alerts__row {
+  padding: 0.5rem 0.55rem;
+  border-bottom: 1px solid var(--gp-border);
+}
+
+.gp-auto-alerts__row:last-child {
+  border-bottom: none;
+}
+
+.gp-auto-alerts__row--critica {
+  border-left: 3px solid #be123c;
+  background: #fff5f7;
+}
+
+.gp-auto-alerts__row--alta {
+  border-left: 3px solid #ea580c;
+}
+
+.gp-auto-alerts__row--moderada {
+  border-left: 3px solid #2563eb;
+}
+
+.gp-auto-alerts__row--baixa {
+  border-left: 3px solid #94a3b8;
+}
+
+.gp-auto-alerts__row-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.gp-auto-alerts__kind {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--gp-text);
+}
+
+.gp-auto-alerts__prio {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--gp-muted);
+}
+
+.gp-auto-alerts__match {
+  margin: 0.2rem 0 0;
+  font-size: 0.68rem;
+  color: var(--gp-muted);
+}
+
+.gp-auto-alerts__headline {
+  margin: 0.15rem 0 0;
+  font-size: 0.72rem;
+  color: #334155;
+}
+
+.gp-auto-alerts__status-line {
+  margin: 0.1rem 0 0;
+  font-size: 0.65rem;
+  color: #64748b;
+}
+
+.gp-auto-alerts__empty,
+.gp-auto-alerts__muted {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--gp-muted);
+}
+
 @media (max-width: 768px) {
   .gp-sports__topbar {
     flex-wrap: wrap;

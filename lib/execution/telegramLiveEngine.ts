@@ -160,6 +160,19 @@ export async function sendTelegramMatchEnd(item: QueuedDispatch): Promise<boolea
   return result.ok;
 }
 
+/** Envio direto de texto operacional (alertas autônomos). */
+export async function sendPremiumTelegramRaw(
+  text: string,
+  meta: {
+    kind: "contextual_reading" | "round_summary" | "top_monitored" | "match_end";
+    level: string;
+    fixtureId: string | null;
+    matchLabel: string | null;
+  }
+): Promise<TelegramLiveSendResult> {
+  return deliverTelegramText(text, meta);
+}
+
 export { getTelegramMessageHistory, getTelegramSandboxPreview } from "@/lib/execution/telegramMessageLog";
 export {
   buildPremiumOperationalTelegramMessage,
