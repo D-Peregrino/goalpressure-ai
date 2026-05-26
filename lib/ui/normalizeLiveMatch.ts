@@ -8,6 +8,10 @@ import {
   toDisplayStatus,
   type DisplayMatchStatus,
 } from "@/lib/ui/matchFormatting";
+import {
+  extractLogosFromRaw,
+  resolveTeamLogoFromMatch,
+} from "@/lib/teams/teamLogoResolver";
 import type { Match, MatchScore, MatchStatus } from "@/types/domain";
 
 export interface NormalizedLiveMatchCore {
@@ -149,36 +153,6 @@ export function extractScoreFromRaw(raw: unknown): {
   return { home: null, away: null, known: false };
 }
 
-function extractLogosFromRaw(raw: unknown): {
-  homeLogo: string | null;
-  awayLogo: string | null;
-} {
-  if (!raw || typeof raw !== "object") {
-    return { homeLogo: null, awayLogo: null };
-  }
-  const participants = (raw as Record<string, unknown>).participants;
-  if (!Array.isArray(participants)) return { homeLogo: null, awayLogo: null };
-
-  let homeLogo: string | null = null;
-  let awayLogo: string | null = null;
-
-  for (const p of participants) {
-    if (!p || typeof p !== "object") continue;
-    const part = p as Record<string, unknown>;
-    const meta = part.meta as Record<string, unknown> | undefined;
-    const img =
-      (part.image_path as string) ??
-      (part.logo_path as string) ??
-      (part.logo as string) ??
-      null;
-    if (!img || typeof img !== "string") continue;
-    if (meta?.location === "home") homeLogo = img;
-    if (meta?.location === "away") awayLogo = img;
-  }
-
-  return { homeLogo, awayLogo };
-}
-
 function scoreFromMatch(match: Match): {
   home: number | null;
   away: number | null;
@@ -276,8 +250,8 @@ export function normalizeLiveMatch(
       minuteLabel: formatMinuteLabel(minute, match.status),
       status: match.status,
       displayStatus,
-      homeLogo: null,
-      awayLogo: null,
+      homeLogo: resolveTeamLogoFromMatch(match, "home"),
+      awayLogo: resolveTeamLogoFromMatch(match, "away"),
       debug: isDev
         ? {
             scoreMissing: !score.known,

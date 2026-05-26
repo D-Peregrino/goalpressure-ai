@@ -132,6 +132,11 @@ export interface MatchFeedMeta {
   pressureTrend?: PressureTrend;
   steamMove?: boolean;
   oddsDrift?: number;
+  /** Escudos oficiais (SportMonks participants). */
+  participantLogos?: {
+    home: string | null;
+    away: string | null;
+  };
   /** Métricas da engine de pressão ofensiva (live worker). */
   offensiveEngine?: {
     classification: string;
@@ -196,6 +201,10 @@ export interface Match {
   score?: MatchScore;
   /** Sportmonks (or other provider) fixture id */
   externalId?: string;
+  /** URL do escudo do mandante (CDN SportMonks). */
+  homeLogoUrl?: string | null;
+  /** URL do escudo do visitante (CDN SportMonks). */
+  awayLogoUrl?: string | null;
   /** Horário de início (ISO) — pré-jogo */
   startingAt?: string | null;
   /** Unix seconds — pré-jogo */

@@ -1,7 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
+import TeamBadge from "@/components/matches/TeamBadge";
 import type { OperationalDecision } from "@/components/terminal/decision/decisionMapper";
 import type { EnrichedLiveMatch } from "@/hooks/useLiveMatchCenter";
+import { resolveTeamLogoFromEnriched } from "@/lib/teams/teamLogoResolver";
 import { cn } from "@/lib/utils";
 
 export default function MatchListRow({
@@ -24,6 +27,9 @@ export default function MatchListRow({
       ? `${match.homeScore} × ${match.awayScore}`
       : "—";
 
+  const homeLogo = useMemo(() => resolveTeamLogoFromEnriched(match, "home"), [match]);
+  const awayLogo = useMemo(() => resolveTeamLogoFromEnriched(match, "away"), [match]);
+
   return (
     <button
       type="button"
@@ -37,8 +43,16 @@ export default function MatchListRow({
           </span>
           <span className="text-xs text-[#6B7280]">{match.league}</span>
         </div>
-        <div className="text-sm font-semibold text-[#1B2430]">
-          {match.homeTeam} × {match.awayTeam}
+        <div className="gp-sports__list-teams">
+          <span className="gp-sports__list-team">
+            <TeamBadge teamName={match.homeTeam} logoUrl={homeLogo} size="sm" />
+            <span className="gp-sports__list-team-name">{match.homeTeam}</span>
+          </span>
+          <span className="gp-sports__list-vs">×</span>
+          <span className="gp-sports__list-team">
+            <TeamBadge teamName={match.awayTeam} logoUrl={awayLogo} size="sm" />
+            <span className="gp-sports__list-team-name">{match.awayTeam}</span>
+          </span>
         </div>
         <div className="gp-sports__list-situacao">{decision.situacaoAtual}</div>
       </div>

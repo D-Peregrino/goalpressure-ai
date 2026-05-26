@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import TeamBadge from "@/components/matches/TeamBadge";
 import type { GPIEngineSnapshot } from "@/lib/gpi/gpi.types";
+
+function splitMatchLabel(label: string): { home: string; away: string } {
+  const parts = label.split(/\s+x\s+/i);
+  return {
+    home: parts[0]?.trim() || label,
+    away: parts[1]?.trim() || "Visitante",
+  };
+}
 
 export default function GPIPanel() {
   const [data, setData] = useState<GPIEngineSnapshot | null>(null);
@@ -68,17 +77,26 @@ export default function GPIPanel() {
         {data.readings.length === 0 ? (
           <li className="gp-gpi-panel__muted">Aguardando jogos ao vivo</li>
         ) : (
-          data.readings.slice(0, 8).map((r) => (
-            <li key={r.fixtureId}>
-              <span className="gp-gpi-panel__score">{r.score}</span>
-              <div>
-                <strong>{r.matchLabel}</strong>
-                <span>
-                  {r.classificationLabel} · {r.minute}&apos;
-                </span>
-              </div>
-            </li>
-          ))
+          data.readings.slice(0, 8).map((r) => {
+            const teams = splitMatchLabel(r.matchLabel);
+            return (
+              <li key={r.fixtureId}>
+                <span className="gp-gpi-panel__score">{r.score}</span>
+                <div className="gp-gpi-panel__match">
+                  <span className="gp-gpi-panel__logos">
+                    <TeamBadge teamName={teams.home} size="sm" />
+                    <TeamBadge teamName={teams.away} size="sm" />
+                  </span>
+                  <div>
+                    <strong>{r.matchLabel}</strong>
+                    <span>
+                      {r.classificationLabel} · {r.minute}&apos;
+                    </span>
+                  </div>
+                </div>
+              </li>
+            );
+          })
         )}
       </ul>
     </section>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import TeamBadge from "@/components/matches/TeamBadge";
 import type { EnrichedLiveMatch } from "@/hooks/useLiveMatchCenter";
@@ -10,6 +11,7 @@ import {
   roundDisplay,
   translateRegimeLabel,
 } from "@/lib/terminal/formatDisplay";
+import { resolveTeamLogoFromEnriched } from "@/lib/teams/teamLogoResolver";
 import { cn } from "@/lib/utils";
 
 type LiveMatchTerminalCardProps = {
@@ -25,6 +27,8 @@ export default function LiveMatchTerminalCard({
   const scoreHome = match.scoreKnown ? String(match.homeScore ?? 0) : "—";
   const scoreAway = match.scoreKnown ? String(match.awayScore ?? 0) : "—";
   const sourceLabel = dataSourceLabel?.trim() || null;
+  const homeLogo = useMemo(() => resolveTeamLogoFromEnriched(match, "home"), [match]);
+  const awayLogo = useMemo(() => resolveTeamLogoFromEnriched(match, "away"), [match]);
 
   return (
     <article
@@ -53,7 +57,7 @@ export default function LiveMatchTerminalCard({
 
       <div className="gp-lmt-card__scoreboard">
         <div className="gp-lmt-card__side">
-          <TeamBadge teamName={match.homeTeam} logoUrl={match.homeLogo} size="md" />
+          <TeamBadge teamName={match.homeTeam} logoUrl={homeLogo} size="md" />
           <div>
             <span className="gp-lmt-card__team-name" title={match.homeTeam}>
               {match.homeTeam}
@@ -76,7 +80,7 @@ export default function LiveMatchTerminalCard({
               {match.awayTeam}
             </span>
           </div>
-          <TeamBadge teamName={match.awayTeam} logoUrl={match.awayLogo} size="md" />
+          <TeamBadge teamName={match.awayTeam} logoUrl={awayLogo} size="md" />
         </div>
       </div>
 

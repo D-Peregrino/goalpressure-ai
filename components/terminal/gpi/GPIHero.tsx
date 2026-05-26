@@ -2,8 +2,10 @@
 
 import { useMemo } from "react";
 import type { EnrichedLiveMatch } from "@/hooks/useLiveMatchCenter";
+import TeamBadge from "@/components/matches/TeamBadge";
 import { evaluateGpiFromEnriched } from "@/lib/gpi/gpiEvaluate";
 import type { GPIClassification } from "@/lib/gpi/gpi.types";
+import { resolveTeamLogoFromEnriched } from "@/lib/teams/teamLogoResolver";
 
 const CLASS_MOD: Record<GPIClassification, string> = {
   neutro: "gp-gpi-hero--neutro",
@@ -15,12 +17,33 @@ const CLASS_MOD: Record<GPIClassification, string> = {
 
 export default function GPIHero({ match }: { match: EnrichedLiveMatch }) {
   const gpi = useMemo(() => evaluateGpiFromEnriched(match), [match]);
+  const homeLogo = useMemo(() => resolveTeamLogoFromEnriched(match, "home"), [match]);
+  const awayLogo = useMemo(() => resolveTeamLogoFromEnriched(match, "away"), [match]);
+  const scoreHome = match.scoreKnown ? String(match.homeScore ?? 0) : "—";
+  const scoreAway = match.scoreKnown ? String(match.awayScore ?? 0) : "—";
 
   return (
     <section className={`gp-gpi-hero ${CLASS_MOD[gpi.classification]}`}>
       <div className="gp-gpi-hero__brand">
         <span className="gp-gpi-hero__label">GoalPressure Index</span>
-        <span className="gp-gpi-hero__fixture">{gpi.matchLabel}</span>
+        <span className="gp-gpi-hero__fixture">{match.league}</span>
+      </div>
+
+      <div className="gp-gpi-hero__faceoff">
+        <div className="gp-gpi-hero__faceoff-side">
+          <TeamBadge teamName={match.homeTeam} logoUrl={homeLogo} size="lg" />
+          <span>{match.homeTeam}</span>
+        </div>
+        <div className="gp-gpi-hero__faceoff-score">
+          <span>
+            {scoreHome} × {scoreAway}
+          </span>
+          <em>{match.minuteLabel}</em>
+        </div>
+        <div className="gp-gpi-hero__faceoff-side gp-gpi-hero__faceoff-side--away">
+          <span>{match.awayTeam}</span>
+          <TeamBadge teamName={match.awayTeam} logoUrl={awayLogo} size="lg" />
+        </div>
       </div>
 
       <div className="gp-gpi-hero__core">

@@ -36,6 +36,7 @@ import { mapOperationalDecision } from "@/components/terminal/decision/decisionM
 import PredictivePanel from "@/components/terminal/predictive/PredictivePanel";
 import GPIHero from "@/components/terminal/gpi/GPIHero";
 import GPIBreakdown from "@/components/terminal/gpi/GPIBreakdown";
+import { resolveTeamLogoFromEnriched } from "@/lib/teams/teamLogoResolver";
 
 const METRIC_ICONS = {
   shots: Target,
@@ -93,6 +94,8 @@ export default function MatchPanelCard({
   const footer = footerMetrics(match);
   const context = contextView ?? evaluateMatchContext(match);
   const decision = useMemo(() => mapOperationalDecision(match, context), [match, context]);
+  const homeLogo = useMemo(() => resolveTeamLogoFromEnriched(match, "home"), [match]);
+  const awayLogo = useMemo(() => resolveTeamLogoFromEnriched(match, "away"), [match]);
 
   const levelClass =
     decision.selo === "EVITAR" || decision.selo === "ALERTA"
@@ -173,8 +176,10 @@ export default function MatchPanelCard({
       ) : (
         <div className="gp-sports__scoreboard">
           <div className="gp-sports__team-col">
-            <TeamBadge teamName={match.homeTeam} logoUrl={match.homeLogo} size="md" />
-            <span className="gp-sports__team-name">{match.homeTeam}</span>
+            <div className="gp-sports__team-faceoff">
+              <TeamBadge teamName={match.homeTeam} logoUrl={homeLogo} size="lg" />
+              <span className="gp-sports__team-name">{match.homeTeam}</span>
+            </div>
             {homeOdd ? (
               <span className="gp-sports__odd" title="Cotação do mandante">
                 Cotação {homeOdd}
@@ -188,8 +193,10 @@ export default function MatchPanelCard({
             <p className="gp-sports__minute">{match.minuteLabel}</p>
           </div>
           <div className="gp-sports__team-col gp-sports__team-col--away">
-            <TeamBadge teamName={match.awayTeam} logoUrl={match.awayLogo} size="md" />
-            <span className="gp-sports__team-name">{match.awayTeam}</span>
+            <div className="gp-sports__team-faceoff gp-sports__team-faceoff--away">
+              <span className="gp-sports__team-name">{match.awayTeam}</span>
+              <TeamBadge teamName={match.awayTeam} logoUrl={awayLogo} size="lg" />
+            </div>
             {awayOdd ? (
               <span className="gp-sports__odd" title="Cotação do visitante">
                 Cotação {awayOdd}

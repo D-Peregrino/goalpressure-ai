@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { getTeamColor, getTeamInitials, getTeamTextOnColor } from "@/lib/ui/teamColors";
+import { memo, useEffect, useState } from "react";
+import { getCachedLogoUrl } from "@/lib/teams/teamLogoResolver";
+import { resolveFallbackLogo } from "@/lib/teams/teamLogoResolver";
 
 const SIZE_CLASS = {
   sm: "gp-team-crest--sm",
@@ -11,7 +12,7 @@ const SIZE_CLASS = {
   "2xl": "gp-team-crest--2xl",
 } as const;
 
-export default function TeamBadge({
+function TeamBadgeInner({
   teamName,
   logoUrl,
   size = "md",
@@ -20,13 +21,31 @@ export default function TeamBadge({
   logoUrl?: string | null;
   size?: keyof typeof SIZE_CLASS;
 }) {
-  const color = getTeamColor(teamName);
-  const initials = getTeamInitials(teamName);
+  const fallback = resolveFallbackLogo(teamName);
+  const resolvedUrl = logoUrl ? getCachedLogoUrl(teamName, logoUrl) : null;
   const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(!resolvedUrl);
   const sizeCls = SIZE_CLASS[size];
-  const showLogo = Boolean(logoUrl) && !failed;
 
-  if (showLogo) {
+  useEffect(() => {
+    setFailed(false);
+    setLoaded(!resolvedUrl);
+  }, [resolvedUrl]);
+
+  const showLogo = Boolean(resolvedUrl) && !failed;
+  const showSkeleton = Boolean(resolvedUrl) && !loaded && !failed;
+
+  if (showSkeleton) {
+    return (
+      <span
+        className={`gp-team-crest gp-team-crest--skeleton gp-team-crest--premium ${sizeCls}`}
+        title={teamName}
+        aria-hidden
+      />
+    );
+  }
+
+  if (showLogo && resolvedUrl) {
     return (
       <span
         className={`gp-team-crest gp-team-crest--img gp-team-crest--premium ${sizeCls}`}
@@ -34,11 +53,12 @@ export default function TeamBadge({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={logoUrl!}
+          src={resolvedUrl}
           alt=""
           loading="lazy"
           decoding="async"
           className="gp-team-crest__img"
+          onLoad={() => setLoaded(true)}
           onError={() => setFailed(true)}
         />
       </span>
@@ -48,10 +68,13 @@ export default function TeamBadge({
   return (
     <span
       className={`gp-team-crest gp-team-crest--fallback gp-team-crest--premium ${sizeCls}`}
-      style={{ background: color, color: getTeamTextOnColor(teamName) }}
+      style={{ background: fallback.background, color: fallback.color }}
       title={teamName}
     >
-      {initials}
+      {fallback.initials}
     </span>
   );
 }
+
+const TeamBadge = memo(TeamBadgeInner);
+export default TeamBadge;

@@ -4,6 +4,7 @@
  * @see https://docs.sportmonks.com/football/
  */
 
+import { extractParticipantLogo } from "@/lib/teams/teamLogoResolver";
 import { applyPressureToMatch } from "@/lib/pressureScore";
 import { buildPremiumContext } from "@/lib/mappers/buildPremiumContext";
 import { normalizeFixtureOdds } from "@/lib/mappers/normalizeSportmonksOdds";
@@ -35,6 +36,9 @@ export interface SportmonksTeam {
   id?: number;
   name?: string;
   short_code?: string;
+  image_path?: string;
+  logo_path?: string;
+  logo?: string;
   meta?: {
     location?: "home" | "away";
     winner?: boolean | null;
@@ -313,6 +317,21 @@ function resolveParticipants(fixture: SportmonksFixture): {
   if (!away && participants[1]) away = participants[1];
 
   return { home, away };
+}
+
+function mapParticipantLogos(fixture: SportmonksFixture): {
+  home: string | null;
+  away: string | null;
+} {
+  const { home, away } = resolveParticipants(fixture);
+  return {
+    home: home
+      ? extractParticipantLogo(home as unknown as Record<string, unknown>)
+      : null,
+    away: away
+      ? extractParticipantLogo(away as unknown as Record<string, unknown>)
+      : null,
+  };
 }
 
 function mapTeams(fixture: SportmonksFixture): {
@@ -754,9 +773,12 @@ export function buildMatchFromSportmonksFixture(
         ? "RISING"
         : "STABLE");
 
+  const participantLogos = mapParticipantLogos(fixture);
+
   const feedMeta: MatchFeedMeta = {
     ...buildFeedMeta(fixture, stats),
     pressureTrend,
+    participantLogos,
   };
 
   return {
@@ -765,6 +787,8 @@ export function buildMatchFromSportmonksFixture(
     league: mapLeague(fixture),
     homeTeam,
     awayTeam,
+    homeLogoUrl: participantLogos.home,
+    awayLogoUrl: participantLogos.away,
     minute: mapMinute(fixture),
     status: mapStatus(fixture),
     startingAt: fixture.starting_at ?? null,
