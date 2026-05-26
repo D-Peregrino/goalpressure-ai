@@ -39,23 +39,7 @@ export function buildPushNotification(
   };
 }
 
-export function buildInstitutionalDispatchMessage(item: QueuedDispatch): string {
-  const ev =
-    item.evPercent != null ? `EV +${item.evPercent.toFixed(1)}%` : "EV —";
-  const fair = item.fairOdd != null ? item.fairOdd.toFixed(2) : "—";
-  const market = item.marketOdd != null ? item.marketOdd.toFixed(2) : "—";
-  const risk = item.riskContext ?? "—";
-
-  return [
-    "GOALPRESSURE · LEITURA OPERACIONAL",
-    item.headline,
-    `${item.matchLabel} · ${item.scoreDisplay} · ${item.minute}'`,
-    `${ev} · Justa ${fair} · Mercado ${market}`,
-    `Pressão ${Math.round(item.pressureScore)} · Urgência ${item.urgency}`,
-    `Risco ${risk}`,
-    item.narrative.slice(0, 280),
-  ].join("\n");
-}
+export { buildInstitutionalDispatchMessage } from "@/lib/execution/telegramMessageBuilder";
 
 export function urgencyLabel(u: DispatchUrgency): string {
   const map: Record<DispatchUrgency, string> = {

@@ -5,12 +5,44 @@ const ROUTE_PATH = "/api/telegram/test";
 const TELEGRAM_API = "https://api.telegram.org";
 const TIMEOUT_MS = 10_000;
 
-const TEST_MESSAGE = [
-  "🚨 GOALPRESSURE AI",
-  "",
-  "Telegram integration successful.",
-  "Runtime dispatcher online.",
-].join("\n");
+import { buildPremiumOperationalTelegramMessage } from "@/lib/execution/telegramMessageBuilder";
+import type { QueuedDispatch } from "@/lib/execution/execution.types";
+
+function buildTestMessage(): string {
+  const sample: QueuedDispatch = {
+    id: "telegram-test",
+    fixtureId: "test",
+    matchId: "test-match",
+    matchLabel: "Bahia x Coritiba",
+    league: "Teste",
+    homeTeam: "Bahia",
+    awayTeam: "Coritiba",
+    signalType: "TEST",
+    market: "OVER_0_5",
+    source: "OPS_LAYER",
+    minute: 67,
+    pressureScore: 78,
+    momentumScore: 72,
+    chaosLevel: 40,
+    accelerationScore: 60,
+    evPercent: 3.5,
+    fairOdd: 1.4,
+    marketOdd: 1.52,
+    confidence: 81,
+    gameState: null,
+    temperature: "HOT",
+    riskContext: null,
+    narrative:
+      "Canal operacional premium conectado. Leitura contextual de teste enviada com sucesso.",
+    headline: "Teste de integração",
+    scoreDisplay: "1 – 0",
+    urgency: "MEDIUM",
+    priorityScore: 60,
+    routes: ["telegram"],
+    queuedAt: new Date().toISOString(),
+  };
+  return buildPremiumOperationalTelegramMessage(sample);
+}
 
 type TelegramApiResult = {
   ok?: boolean;
@@ -108,7 +140,7 @@ export async function GET(): Promise<Response> {
     );
   }
 
-  const send = await sendToTelegram(env.botToken, env.chatId, TEST_MESSAGE);
+  const send = await sendToTelegram(env.botToken, env.chatId, buildTestMessage());
 
   if (!send.ok) {
     log("api/telegram/test", "Telegram send failed", { error: send.error });

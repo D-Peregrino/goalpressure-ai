@@ -15,7 +15,10 @@ import {
 } from "@/lib/execution/cooldownManager";
 import { signalQueue } from "@/lib/execution/signalQueue";
 import { buildInstitutionalDispatchMessage, buildPushNotification } from "@/lib/execution/notificationEngine";
-import { sendTelegramLiveDispatch } from "@/lib/execution/telegramLiveEngine";
+import {
+  sendTelegramBatchDigests,
+  sendTelegramLiveDispatch,
+} from "@/lib/execution/telegramLiveEngine";
 import { persistLiveSignalDispatch } from "@/lib/execution/dispatchPersistence";
 import {
   enqueuePendingPush,
@@ -271,6 +274,10 @@ export async function runExecutionDispatcher(
 
   const snapshot = buildSnapshot(executed, queue, input.matches);
   setDispatchSnapshot(snapshot);
+
+  if (enableTelegram && executed.length > 0) {
+    void sendTelegramBatchDigests(executed);
+  }
 
   if (enableTelegram && input.signals.length > 0) {
     const { insights } = generateLiveSignals(input.matches);
