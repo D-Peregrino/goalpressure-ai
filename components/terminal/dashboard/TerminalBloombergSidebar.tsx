@@ -15,14 +15,14 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export const TERMINAL_SECTIONS = [
-  { id: "live-matches", label: "Live Matches", icon: Radio },
-  { id: "pressure-radar", label: "Pressure Radar", icon: Gauge },
-  { id: "ev-signals", label: "EV Signals", icon: Zap },
-  { id: "autonomous-core", label: "Autonomous Core", icon: Brain },
-  { id: "dispatch-center", label: "Dispatch Center", icon: Send },
-  { id: "learning-layer", label: "Learning Layer", icon: Sparkles },
-  { id: "telegram-logs", label: "Telegram Logs", icon: Activity },
-  { id: "settings", label: "Settings", icon: Settings },
+  { id: "live-matches", label: "Jogos ao vivo", icon: Radio },
+  { id: "pressure-radar", label: "Radar de pressão", icon: Gauge },
+  { id: "ev-signals", label: "Sinais de valor", icon: Zap },
+  { id: "autonomous-core", label: "Núcleo autônomo", icon: Brain },
+  { id: "dispatch-center", label: "Central de alertas", icon: Send },
+  { id: "learning-layer", label: "Aprendizado", icon: Sparkles },
+  { id: "telegram-logs", label: "Registros Telegram", icon: Activity },
+  { id: "settings", label: "Configurações", icon: Settings },
 ] as const;
 
 export type TerminalSectionId = (typeof TERMINAL_SECTIONS)[number]["id"];
@@ -49,19 +49,16 @@ export default function TerminalBloombergSidebar({
         />
       )}
       <aside
-        className={cn(
-          "gp-bloomberg__sidebar",
-          mobileOpen && "gp-bloomberg__sidebar--open"
-        )}
+        className={cn("gp-bloomberg__sidebar", mobileOpen && "gp-bloomberg__sidebar--open")}
       >
         <div className="gp-bloomberg__brand">
           Goal<span>Pressure</span>
-          <div className="mt-1 text-[9px] font-normal tracking-[0.2em] text-[#F4F7FA]/40">
-            Ops Terminal
+          <div className="mt-1.5 text-[10px] font-normal tracking-wide text-[#AAB6C5] normal-case">
+            Central esportiva
           </div>
         </div>
 
-        <nav className="gp-bloomberg__nav" aria-label="Módulos do terminal">
+        <nav className="gp-bloomberg__nav" aria-label="Módulos da central">
           {TERMINAL_SECTIONS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -82,8 +79,8 @@ export default function TerminalBloombergSidebar({
           ))}
         </nav>
 
-        <div className="mt-auto border-t border-[#1A222C] pt-3 text-[10px] text-[#F4F7FA]/40 px-2">
-          Institutional · v2.0
+        <div className="mt-auto border-t border-[#2A3A52] pt-3 text-[10px] text-[#AAB6C5] px-2">
+          Análise profissional · v2
         </div>
       </aside>
     </>

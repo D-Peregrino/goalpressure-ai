@@ -30,7 +30,7 @@ export default function OperatorModePanel() {
   return (
     <section className="gp-operator-mode" aria-label="Modo operador">
       <header className="gp-operator-mode__head">
-        <h2 className="gp-type-title">OPERATOR MODE</h2>
+        <h2 className="gp-type-title">Modo operador</h2>
         <span className="gp-sport-badge">CENTRAL</span>
       </header>
 

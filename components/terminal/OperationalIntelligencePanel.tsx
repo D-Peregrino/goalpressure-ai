@@ -39,7 +39,7 @@ export default function OperationalIntelligencePanel({
   return (
     <section className="gp-ops-intel-panel">
       <header className="gp-ops-intel-panel__head">
-        <h2 className="gp-type-title">OPERATIONAL INTELLIGENCE</h2>
+        <h2 className="gp-type-title">Inteligência operacional</h2>
         <span className="gp-sport-badge gp-sport-badge--live">CONTEXTO LIVE</span>
       </header>
       <div className="gp-ops-intel-panel__kpis">

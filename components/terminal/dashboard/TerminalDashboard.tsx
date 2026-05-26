@@ -24,6 +24,7 @@ import TerminalSignalsTable from "@/components/terminal/dashboard/TerminalSignal
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { feedStatusLabel, opsStatusLabel, roundDisplay } from "@/lib/terminal/formatDisplay";
 
 function Section({
   id,
@@ -93,7 +94,11 @@ export default function TerminalDashboard() {
   const clock = useMemo(
     () =>
       lastUpdated
-        ? new Date(lastUpdated).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+        ? new Date(lastUpdated).toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          })
         : "—",
     [lastUpdated]
   );
@@ -112,26 +117,28 @@ export default function TerminalDashboard() {
 
         <div className="gp-bloomberg__main">
           <header className="gp-bloomberg__topbar">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               <TerminalMobileMenuButton onClick={() => setMobileNav(true)} />
-              <div>
-                <p className="font-[family-name:var(--font-orbitron)] text-sm font-semibold tracking-wide text-[#F4F7FA]">
-                  Central operacional
+              <div className="min-w-0">
+                <p className="font-[family-name:var(--font-orbitron)] text-base font-semibold tracking-wide text-[#F4F7FA]">
+                  Central de Inteligência Esportiva
                 </p>
-                <p className="text-[11px] text-[#F4F7FA]/45">
-                  Bloomberg · TradingView · StatsBomb intelligence layer
+                <p className="text-[13px] text-[#AAB6C5] leading-snug max-w-xl">
+                  Leitura em tempo real de pressão ofensiva, valor de mercado e alertas
+                  operacionais.
                 </p>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant={feedStatus === "live" ? "live" : "warn"}>
-                Feed {feedStatus}
+                Feed · {feedStatusLabel(feedStatus)}
               </Badge>
-              <Badge variant="muted">OPS {opsStatus}</Badge>
+              <Badge variant="muted">Ops · {opsStatusLabel(opsStatus)}</Badge>
               <Badge variant="muted">{source}</Badge>
-              <span className="gp-bloomberg__mono text-[11px] text-[#F4F7FA]/50">
-                Sync {clock} · {responseTime != null ? `${responseTime}ms` : "—"}
+              <span className="gp-bloomberg__mono text-[11px] text-[#AAB6C5]">
+                Atualizado {clock}
+                {responseTime != null ? ` · ${responseTime} ms` : ""}
               </span>
               <Button variant="outline" size="sm" asChild>
                 <Link href="/minha-central">Conta</Link>
@@ -140,22 +147,32 @@ export default function TerminalDashboard() {
           </header>
 
           <div className="gp-bloomberg__scroll">
-            {/* Status + gauges */}
-            <div className="mb-6 gp-bloomberg__metrics-row">
-              <TerminalGauge label="Pressure" value={aggregates.avgPressure} accent />
-              <TerminalGauge label="Chaos index" value={aggregates.avgChaos} />
-              <TerminalGauge label="EV score" value={aggregates.avgEv} unit="%" />
-              <TerminalGauge label="Momentum" value={aggregates.avgMomentum + 50} />
-              <TerminalGauge label="Odds distortion" value={aggregates.avgEdge} unit="%" />
+            <div className="gp-bloomberg__metrics-row">
               <TerminalGauge
-                label="Live fixtures"
+                label="Pressão média"
+                value={aggregates.avgPressure}
+                accent
+              />
+              <TerminalGauge label="Índice de caos" value={aggregates.avgChaos} />
+              <TerminalGauge label="Valor médio" value={aggregates.avgEv} unit="%" />
+              <TerminalGauge
+                label="Momento ofensivo"
+                value={Math.round(aggregates.avgMomentum + 50)}
+              />
+              <TerminalGauge
+                label="Distorção odd"
+                value={aggregates.avgEdge}
+                unit="%"
+              />
+              <TerminalGauge
+                label="Jogos ao vivo"
                 value={kpis.live}
                 max={Math.max(kpis.live, 20)}
                 accent={kpis.live > 0}
               />
             </div>
 
-            <Section id="live-matches" title="Live Matches">
+            <Section id="live-matches" title="Jogos ao vivo">
               {isEmpty && !isLoading && (
                 <LiveFeedEmptyState
                   source={source}
@@ -166,7 +183,9 @@ export default function TerminalDashboard() {
                 />
               )}
               {isLoading && pool.length === 0 && (
-                <p className="text-sm text-[#F4F7FA]/50 py-8 text-center">Carregando feed ao vivo…</p>
+                <p className="text-sm text-[#AAB6C5] py-10 text-center">
+                  Carregando jogos ao vivo…
+                </p>
               )}
               <div className="gp-bloomberg__matches-grid">
                 {matches.slice(0, 24).map((m) => (
@@ -179,7 +198,7 @@ export default function TerminalDashboard() {
               </div>
             </Section>
 
-            <Section id="pressure-radar" title="Pressure Radar">
+            <Section id="pressure-radar" title="Radar de pressão">
               <div className="gp-bloomberg__desk">
                 <TerminalPressureHeatmap matches={pool} />
                 <div className="space-y-3">
@@ -189,12 +208,12 @@ export default function TerminalDashboard() {
               </div>
             </Section>
 
-            <Section id="ev-signals" title="EV Signals">
+            <Section id="ev-signals" title="Sinais de valor">
               <Tabs defaultValue="chart">
                 <TabsList>
-                  <TabsTrigger value="chart">Charts</TabsTrigger>
-                  <TabsTrigger value="table">Matrix</TabsTrigger>
-                  <TabsTrigger value="engine">Engine</TabsTrigger>
+                  <TabsTrigger value="chart">Gráficos</TabsTrigger>
+                  <TabsTrigger value="table">Tabela</TabsTrigger>
+                  <TabsTrigger value="engine">Motor</TabsTrigger>
                 </TabsList>
                 <TabsContent value="chart">
                   <TerminalChartsPanel matches={pool} />
@@ -208,42 +227,42 @@ export default function TerminalDashboard() {
               </Tabs>
             </Section>
 
-            <Section id="autonomous-core" title="Autonomous Core">
+            <Section id="autonomous-core" title="Núcleo autônomo">
               <AutonomousCorePanel />
             </Section>
 
-            <Section id="dispatch-center" title="Dispatch Center">
+            <Section id="dispatch-center" title="Central de alertas">
               <div className="grid gap-3 lg:grid-cols-2">
                 <LiveCommandCenterPanel />
                 <LiveDispatchFeed />
               </div>
             </Section>
 
-            <Section id="learning-layer" title="Learning Layer">
+            <Section id="learning-layer" title="Aprendizado">
               <div className="grid gap-3 lg:grid-cols-2">
                 <LearningEnginePanel />
                 <OperationalIntelligencePanel matches={pool} />
               </div>
             </Section>
 
-            <Section id="telegram-logs" title="Telegram Logs">
+            <Section id="telegram-logs" title="Registros Telegram">
               <div className="gp-bloomberg__card-glow p-4">
-                <p className="text-xs text-[#F4F7FA]/55 mb-3">
-                  Stream de despachos e confirmações Telegram (integrado ao dispatch engine).
+                <p className="text-sm text-[#AAB6C5] mb-3">
+                  Histórico de despachos e confirmações enviadas pelo canal operacional.
                 </p>
                 <LiveDispatchFeed />
               </div>
             </Section>
 
-            <Section id="settings" title="Settings">
-              <div className="gp-bloomberg__card-glow p-4 max-w-lg">
-                <p className="font-[family-name:var(--font-orbitron)] text-xs font-semibold mb-3">
-                  Terminal preferences
+            <Section id="settings" title="Configurações">
+              <div className="gp-bloomberg__card-glow p-5 max-w-lg">
+                <p className="font-[family-name:var(--font-orbitron)] text-xs font-semibold mb-3 text-[#F4F7FA]">
+                  Preferências da central
                 </p>
-                <ul className="space-y-2 text-sm text-[#F4F7FA]/70">
-                  <li>· Tema: Dark institutional (fixo)</li>
-                  <li>· Fonte dados: {source}</li>
-                  <li>· Fixtures visíveis: {pool.length}</li>
+                <ul className="space-y-2 text-sm text-[#AAB6C5]">
+                  <li>· Tema: Sala de análise (ardósia)</li>
+                  <li>· Fonte de dados: {source}</li>
+                  <li>· Jogos visíveis: {roundDisplay(pool.length)}</li>
                   <li>
                     ·{" "}
                     <Link href="/conta" className="text-[#FF4D4D] hover:underline">

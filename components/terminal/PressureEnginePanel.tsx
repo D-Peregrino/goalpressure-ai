@@ -40,7 +40,7 @@ export default function PressureEnginePanel({
   return (
     <section className="gp-pressure-engine-panel">
       <header className="gp-pressure-engine-panel__head">
-        <h2 className="gp-type-title">PRESSURE ENGINE</h2>
+        <h2 className="gp-type-title">Motor de pressão</h2>
         <span className="gp-sport-badge gp-sport-badge--live">DADOS REAIS · SPORTMONKS</span>
       </header>
       <div className="gp-pressure-engine-panel__kpis">

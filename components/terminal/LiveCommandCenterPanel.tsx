@@ -30,8 +30,8 @@ export default function LiveCommandCenterPanel() {
   return (
     <section className="gp-command-center">
       <header className="gp-command-center__head">
-        <h2 className="gp-type-title">LIVE COMMAND CENTER</h2>
-        <span className="gp-sport-badge gp-sport-badge--live">DISPATCH</span>
+        <h2 className="gp-type-title">Central de alertas</h2>
+        <span className="gp-sport-badge gp-sport-badge--live">Despacho</span>
       </header>
       <div className="gp-command-center__kpis">
         <div>

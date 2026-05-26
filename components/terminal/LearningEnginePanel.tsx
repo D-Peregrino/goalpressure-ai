@@ -33,7 +33,7 @@ export default function LearningEnginePanel() {
   return (
     <section className="gp-learning-panel">
       <header className="gp-learning-panel__head">
-        <h2 className="gp-type-title">LEARNING ENGINE</h2>
+        <h2 className="gp-type-title">Aprendizado</h2>
         <span className="gp-sport-badge">MEMÓRIA</span>
       </header>
 

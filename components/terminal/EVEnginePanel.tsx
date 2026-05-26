@@ -26,7 +26,7 @@ export default function EVEnginePanel({ matches }: { matches: EnrichedLiveMatch[
   return (
     <section className="gp-ev-engine-panel">
       <header className="gp-ev-engine-panel__head">
-        <h2 className="gp-type-title">EV ENGINE</h2>
+        <h2 className="gp-type-title">Motor de valor</h2>
         <span className="gp-sport-badge gp-sport-badge--live">VALUE LIVE</span>
       </header>
       <div className="gp-ev-engine-panel__kpis">

@@ -12,7 +12,7 @@ const Progress = ({
   indicatorClassName?: string;
 }) => (
   <ProgressPrimitive.Root
-    className={cn("relative h-2 w-full overflow-hidden rounded-full bg-[#080B0F]", className)}
+    className={cn("relative h-2 w-full overflow-hidden rounded-full bg-[#101722]", className)}
     {...props}
   >
     <ProgressPrimitive.Indicator

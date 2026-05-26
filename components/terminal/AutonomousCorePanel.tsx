@@ -33,7 +33,7 @@ export default function AutonomousCorePanel() {
   return (
     <section className="gp-autonomous-core">
       <header className="gp-autonomous-core__head">
-        <h2 className="gp-type-title">AUTONOMOUS CORE</h2>
+        <h2 className="gp-type-title">Núcleo autônomo</h2>
         <span className="gp-sport-badge">ADAPTATIVO</span>
       </header>
 
