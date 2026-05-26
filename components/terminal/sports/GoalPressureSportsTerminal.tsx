@@ -16,15 +16,17 @@ import {
   X,
 } from "lucide-react";
 import { useLiveMatchCenter, type MatchCenterFilter } from "@/hooks/useLiveMatchCenter";
-import LiveFeedEmptyState from "@/components/live/LiveFeedEmptyState";
 import DispatchPushSubscriber from "@/components/terminal/DispatchPushSubscriber";
 import type { TimelineWindow } from "@/lib/terminal/sportsDisplay";
+import { feedStatusLabel } from "@/lib/terminal/formatDisplay";
 import { cn } from "@/lib/utils";
 import MatchDetailModal from "./MatchDetailModal";
+import MatchListRow from "./MatchListRow";
 import MatchPanelCard from "./MatchPanelCard";
 import SportsToast from "./SportsToast";
 import type { MatchTabId } from "./LiveMatchTabs";
 import { evaluateMatchContext } from "@/components/terminal/intelligence/ContextEngine";
+import { mapOperationalDecision } from "@/components/terminal/decision/decisionMapper";
 
 const FILTER_CHIPS: {
   id: MatchCenterFilter | "scanner";
@@ -33,7 +35,7 @@ const FILTER_CHIPS: {
 }[] = [
   { id: "all", label: "Todos", filter: "all" },
   { id: "live", label: "Ao vivo", filter: "live" },
-  { id: "scanner", label: "Scanner", filter: "execute" },
+  { id: "scanner", label: "Varredura", filter: "execute" },
   { id: "favorites", label: "Favoritos", filter: "favorites" },
   { id: "upcoming", label: "Próximos", filter: "upcoming" },
   { id: "high_pressure", label: "Alta pressão", filter: "high_pressure" },
@@ -58,12 +60,7 @@ export default function GoalPressureSportsTerminal() {
     favorites,
     toggleFavorite,
     feedStatus,
-    source,
-    feedError,
     isLoading,
-    isEmpty,
-    lastUpdated,
-    responseTime,
     dataSourceBadge,
   } = useLiveMatchCenter();
 
@@ -186,7 +183,7 @@ export default function GoalPressureSportsTerminal() {
           break;
         case "scanner":
           setFilter("execute");
-          showToast("Scanner: jogos com sinal de execução");
+          showToast("Varredura: jogos com leitura de execução");
           break;
         case "favoritos":
           setFilter("favorites");
@@ -202,7 +199,7 @@ export default function GoalPressureSportsTerminal() {
       if (chip.filter) setFilter(chip.filter);
       if (chip.id === "live") setListFilter("live");
       if (chip.id === "upcoming" || chip.id === "all") setListFilter("upcoming");
-      if (chip.id === "scanner") showToast("Scanner ativo — jogos com leitura de execução");
+      if (chip.id === "scanner") showToast("Varredura ativa — jogos com leitura de execução");
     },
     [setFilter, showToast]
   );
@@ -234,7 +231,7 @@ export default function GoalPressureSportsTerminal() {
         case "scanner":
           scrollToSection("scanner");
           setFilter("execute");
-          showToast("Scanner de oportunidades");
+          showToast("Varredura de oportunidades");
           break;
         case "settings":
           setSidePanelOpen((o) => !o);
@@ -273,7 +270,7 @@ export default function GoalPressureSportsTerminal() {
               { id: "jogos" as const, label: "Jogos", count: kpis.tracked },
               { id: "ligas" as const, label: "Ligas", count: Math.min(kpis.tracked, 120) },
               { id: "aovivo" as const, label: "Ao vivo", count: kpis.live },
-              { id: "scanner" as const, label: "Scanner", count: kpis.execute },
+              { id: "scanner" as const, label: "Varredura", count: kpis.execute },
               { id: "favoritos" as const, label: "Favoritos", count: favorites.size },
             ] as const
           ).map((item) => (
@@ -351,7 +348,7 @@ export default function GoalPressureSportsTerminal() {
             [
               { id: "stats" as const, icon: BarChart3, label: "Estatísticas" },
               { id: "games" as const, icon: MonitorPlay, label: "Jogos" },
-              { id: "scanner" as const, icon: Scan, label: "Scanner" },
+              { id: "scanner" as const, icon: Scan, label: "Varredura" },
               { id: "settings" as const, icon: Settings, label: "Configurações" },
               { id: "clear" as const, icon: X, label: "Limpar" },
             ] as const
@@ -373,15 +370,18 @@ export default function GoalPressureSportsTerminal() {
           {sidePanelOpen ? (
             <aside className="gp-sports-side-panel">
               <h3>Configurações rápidas</h3>
-              <p>Janela da timeline: {timelineWindow === "total" ? "Total" : `${timelineWindow} min`}</p>
+              <p>
+                Janela da linha do tempo:{" "}
+                {timelineWindow === "total" ? "Partida inteira" : `Últimos ${timelineWindow} min`}
+              </p>
               <button type="button" onClick={() => setTimelineWindow("total")}>
-                Timeline: partida inteira
+                Linha do tempo: partida inteira
               </button>
               <button type="button" onClick={() => setTimelineWindow("10")}>
-                Timeline: últimos 10 min
+                Linha do tempo: últimos 10 min
               </button>
               <button type="button" onClick={() => setTimelineWindow("5")}>
-                Timeline: últimos 5 min
+                Linha do tempo: últimos 5 min
               </button>
               <button type="button" onClick={() => setSidePanelOpen(false)}>
                 Fechar painel
@@ -425,20 +425,23 @@ export default function GoalPressureSportsTerminal() {
 
           {isLoading ? (
             <p className="p-8 text-center text-[#6B7280]">Carregando jogos…</p>
-          ) : isEmpty && pool.length === 0 ? (
-            <LiveFeedEmptyState
-              source={source}
-              matchCount={0}
-              lastUpdated={lastUpdated}
-              responseTimeMs={responseTime}
-              error={feedError}
-            />
+          ) : pool.length === 0 ? (
+            <div className="gp-sports__empty">
+              <h3>Nenhum jogo disponível no momento</h3>
+              <p>
+                Ajuste os filtros ou aguarde a próxima atualização dos dados ao vivo.
+              </p>
+              {searchTerm.trim() ? (
+                <p className="gp-sports__empty-sub">Nenhum resultado para a busca atual.</p>
+              ) : null}
+            </div>
           ) : (
             <div className="gp-sports__grid">
               <div className="gp-sports__col-primary">
                 {primary ? (
                   <MatchPanelCard
                     match={primary}
+                    highlight
                     activeTab={getActiveTab(primary.fixtureId, primary)}
                     onTabChange={(tab) => setActiveTab(primary.fixtureId, tab)}
                     timelineWindow={timelineWindow}
@@ -506,66 +509,39 @@ export default function GoalPressureSportsTerminal() {
                         : "Aguardando jogos"}
                     </p>
                   ) : (
-                    sideList.map((m) => (
-                      <button
-                        key={m.fixtureId}
-                        type="button"
-                        className={cn(
-                          "gp-sports__list-item w-full text-left border-0",
-                          primary?.fixtureId === m.fixtureId && "gp-sports__list-item--on"
-                        )}
-                        onClick={() => {
-                          setSelectedMatch(m.fixtureId);
-                          showToast(`${m.homeTeam} × ${m.awayTeam} selecionado`);
-                        }}
-                      >
-                        <div>
-                          <div className="text-xs text-[#6B7280]">{m.league}</div>
-                          <div className="text-sm font-semibold text-[#1B2430]">
-                            {m.homeTeam} × {m.awayTeam}
-                          </div>
-                          <div className="text-[0.65rem] text-[#6B7280]">
-                            Pressão {Math.round(m.pressureScore)}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm font-bold tabular-nums">
-                            {m.scoreKnown
-                              ? `${m.homeScore ?? 0}×${m.awayScore ?? 0}`
-                              : "—"}
-                          </div>
-                          <div className="text-xs text-[#22A86B]">{m.minuteLabel}</div>
-                          <button
-                            type="button"
-                            className="gp-sports__list-fav"
-                            aria-label={
-                              favorites.has(m.fixtureId)
-                                ? "Remover favorito"
-                                : "Adicionar favorito"
-                            }
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const was = favorites.has(m.fixtureId);
-                              toggleFavorite(m.fixtureId);
-                              showToast(was ? "Favorito removido" : "Favorito adicionado");
-                            }}
-                          >
-                            {favorites.has(m.fixtureId) ? "★" : "☆"}
-                          </button>
-                        </div>
-                      </button>
-                    ))
+                    sideList.map((m) => {
+                      const ctx = evaluateMatchContext(m);
+                      const decision = mapOperationalDecision(m, ctx);
+                      return (
+                        <MatchListRow
+                          key={m.fixtureId}
+                          match={m}
+                          decision={decision}
+                          selected={primary?.fixtureId === m.fixtureId}
+                          isFavorite={favorites.has(m.fixtureId)}
+                          onSelect={() => {
+                            setSelectedMatch(m.fixtureId);
+                            showToast(`${m.homeTeam} × ${m.awayTeam} selecionado`);
+                          }}
+                          onToggleFavorite={() => {
+                            const was = favorites.has(m.fixtureId);
+                            toggleFavorite(m.fixtureId);
+                            showToast(was ? "Favorito removido" : "Favorito adicionado");
+                          }}
+                        />
+                      );
+                    })
                   )}
                 </div>
               </div>
             </div>
           )}
 
-          {dataSourceBadge ? (
-            <p className="px-4 pb-3 text-xs text-[#6B7280]">
-              Fonte: {dataSourceBadge} · atualização: {feedStatus}
-            </p>
-          ) : null}
+          <p className="px-4 pb-3 text-xs text-[#6B7280]">
+            {dataSourceBadge ? `Fonte de dados: ${dataSourceBadge}` : "Fonte de dados: ao vivo"}
+            {" · "}
+            Situação da atualização: {feedStatusLabel(feedStatus)}
+          </p>
         </div>
       </div>
 

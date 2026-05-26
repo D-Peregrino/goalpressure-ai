@@ -5,11 +5,11 @@ import { cn } from "@/lib/utils";
 export const MATCH_TABS = [
   { id: "pre", label: "Pré" },
   { id: "live", label: "Ao vivo" },
-  { id: "odds", label: "Odds" },
+  { id: "odds", label: "Cotações" },
   { id: "stats", label: "Estatísticas" },
   { id: "players", label: "Jogadores" },
   { id: "traits", label: "Características" },
-  { id: "h2h", label: "H2H" },
+  { id: "h2h", label: "Confronto direto" },
 ] as const;
 
 export type MatchTabId = (typeof MATCH_TABS)[number]["id"];

@@ -50,7 +50,7 @@ export function buildRecommendation(level: ContextLevel): string {
 export function buildOperationalStatus(level: ContextLevel): string {
   switch (level) {
     case "oportunidade_ev":
-      return "Oportunidade contextual EV+";
+      return "Oportunidade de valor contextual";
     case "zona_critica":
       return "Pressão ofensiva em zona crítica";
     case "pressao_crescente":
@@ -74,7 +74,7 @@ export function buildTrendLabel(match: EnrichedLiveMatch, s: ContextSignalSet): 
 
 export function buildMarketRead(match: EnrichedLiveMatch, s: ContextSignalSet): string {
   if (s.marketLate) return "Leitura de mercado atrasada em relação ao contexto em campo.";
-  if (s.oddDistortion) return "Distorção de odd detectada, com divergência em relação ao fluxo da partida.";
+  if (s.oddDistortion) return "Distorção de cotação detectada, com divergência em relação ao fluxo da partida.";
   if ((match.edgePercent ?? 0) <= -3) return "Mercado ajustado contra o fluxo ofensivo recente.";
   return "Mercado aderente ao contexto atual, sem distorções relevantes.";
 }

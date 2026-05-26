@@ -59,7 +59,14 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  max-width: min(58vw, 520px);
+  scrollbar-width: none;
+}
+
+.gp-sports__nav::-webkit-scrollbar {
+  display: none;
 }
 
 .gp-sports__nav-item {
@@ -215,20 +222,23 @@
   box-shadow: 0 0 0 1px rgba(255, 122, 69, 0.08), 0 8px 24px rgba(255, 122, 69, 0.14);
 }
 
-.gp-sports__panel-card--critical {
-  border-color: rgba(255, 43, 95, 0.65);
-  box-shadow: 0 0 0 1px rgba(255, 43, 95, 0.22), 0 10px 28px rgba(255, 43, 95, 0.22);
-  animation: gp-critical-pulse 2s ease-in-out infinite;
+.gp-sports__panel-card--opportunity {
+  border-color: rgba(34, 168, 107, 0.45);
+  box-shadow: 0 4px 18px rgba(34, 168, 107, 0.1);
 }
 
-@keyframes gp-critical-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 1px rgba(255, 43, 95, 0.2), 0 10px 28px rgba(255, 43, 95, 0.18);
-  }
-  50% {
-    box-shadow: 0 0 0 2px rgba(255, 43, 95, 0.4), 0 12px 32px rgba(255, 43, 95, 0.28);
-  }
+.gp-sports__panel-card--highlight {
+  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow: 0 6px 22px rgba(37, 99, 235, 0.08);
+}
+
+.gp-sports__highlight-banner {
+  padding: 0.45rem 0.85rem;
+  background: linear-gradient(90deg, #eff6ff, #f0fdf4);
+  border-bottom: 1px solid var(--gp-border);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #1e40af;
 }
 
 .gp-sports__panel-top {
@@ -888,6 +898,128 @@
   border-left: 3px solid var(--gp-blue);
 }
 
+.gp-sports__list-main {
+  min-width: 0;
+}
+
+.gp-sports__list-topline {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.2rem;
+}
+
+.gp-sports__list-seal {
+  display: inline-block;
+  padding: 0.12rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.gp-sports__list-seal--neutral {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.gp-sports__list-seal--watch {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.gp-sports__list-seal--alert {
+  background: #fef2f2;
+  color: #be123c;
+}
+
+.gp-sports__list-seal--opportunity {
+  background: #ecfdf5;
+  color: #15803d;
+}
+
+.gp-sports__list-seal--avoid {
+  background: #fff1f2;
+  color: #9f1239;
+}
+
+.gp-sports__list-situacao {
+  font-size: 0.68rem;
+  color: var(--gp-muted);
+  margin-top: 0.15rem;
+}
+
+.gp-sports__list-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+}
+
+.gp-sports__empty {
+  margin: 2rem 1rem;
+  padding: 2rem 1.25rem;
+  text-align: center;
+  border: 1px dashed var(--gp-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.gp-sports__empty h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  color: var(--gp-text);
+}
+
+.gp-sports__empty p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--gp-muted);
+}
+
+.gp-sports__empty-sub {
+  margin-top: 0.5rem !important;
+  font-size: 0.78rem !important;
+}
+
+.gp-sports__section-block {
+  margin: 0.5rem 1rem 0.75rem;
+  padding-top: 0.25rem;
+}
+
+.gp-sports__section-block-title {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--gp-text);
+}
+
+.gp-sports__section-block-sub {
+  margin: 0.15rem 0 0.5rem;
+  font-size: 0.68rem;
+  color: var(--gp-muted);
+}
+
+.gp-sports__context-sub {
+  margin: 0.1rem 0 0;
+  font-size: 0.68rem;
+  color: var(--gp-muted);
+}
+
+.gp-sports__footer-metrics-wrap {
+  margin: 0.5rem 1rem 1rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--gp-border);
+}
+
+.gp-sports__footer-metrics-title {
+  margin: 0 0 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--gp-text);
+}
+
 .gp-sports__tab-panel {
   padding: 1rem;
   font-size: 0.85rem;
@@ -1463,4 +1595,53 @@
 
 .gp-decision--alert .gp-decision__confidence-bar span {
   background: linear-gradient(90deg, #2563eb, #ff7a45);
+}
+
+@media (max-width: 768px) {
+  .gp-sports__topbar {
+    flex-wrap: wrap;
+    padding-bottom: 0.35rem;
+  }
+
+  .gp-sports__nav {
+    order: 3;
+    flex: 1 1 100%;
+    max-width: 100%;
+    padding-bottom: 0.25rem;
+  }
+
+  .gp-sports__filters {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .gp-sports__filters input[type="search"] {
+    flex: 1 1 100%;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-top: 0.35rem;
+  }
+
+  .gp-sports__grid {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .gp-sports__scoreboard {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .gp-sports__team-name {
+    font-size: 0.78rem;
+    max-width: 100px;
+  }
+
+  .gp-sports__metrics-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gp-sports-modal__panel {
+    max-height: 100vh;
+    border-radius: 0;
+  }
 }

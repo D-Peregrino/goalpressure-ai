@@ -119,7 +119,7 @@ function buildJustificativa(
     return "Pressão ofensiva subiu, mas a eficiência nas finalizações ainda é baixa.";
   }
   if (signals.marketLate) {
-    return "O contexto em campo evoluiu mais rápido que a reação observada nas odds.";
+    return "O contexto em campo evoluiu mais rápido que a reação observada nas cotações.";
   }
   if (signals.pressureCritical) {
     return "Índice de pressão e ataques perigosos indicam momento ofensivo intenso.";
@@ -192,6 +192,21 @@ function mapSelo(
   }
 
   return { selo: "NEUTRO", tone: "neutral" };
+}
+
+/** Resumo leve para lista lateral (sem recalcular contexto duas vezes no pai). */
+export function mapListPreview(
+  match: EnrichedLiveMatch,
+  context: MatchContextResult
+): Pick<OperationalDecision, "situacaoAtual" | "selo" | "sealTone" | "acaoSugerida" | "risco"> {
+  const full = mapOperationalDecision(match, context);
+  return {
+    situacaoAtual: full.situacaoAtual,
+    selo: full.selo,
+    sealTone: full.sealTone,
+    acaoSugerida: full.acaoSugerida,
+    risco: full.risco,
+  };
 }
 
 export function mapOperationalDecision(

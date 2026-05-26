@@ -49,6 +49,26 @@ export function humanizeSignalLabel(raw: string | null | undefined): string {
   return t.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+const MARKET_PT: Record<string, string> = {
+  "1X2": "Resultado final",
+  FT_1X2: "Resultado final",
+  OVER_UNDER: "Mais/menos gols",
+  OVER_15: "Mais de 1,5 gols",
+  OVER_25: "Mais de 2,5 gols",
+  BTTS: "Ambas marcam",
+  ASIAN_HANDICAP: "Handicap asiático",
+};
+
+export function marketLabelPt(raw: string | null | undefined): string {
+  if (!raw?.trim()) return "Mercado";
+  const key = raw.trim().toUpperCase().replace(/\s+/g, "_");
+  if (MARKET_PT[key]) return MARKET_PT[key];
+  return raw
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .replace(/\bOdd\b/gi, "cotação");
+}
+
 export function feedStatusLabel(status: string): string {
   const map: Record<string, string> = {
     loading: "Carregando",

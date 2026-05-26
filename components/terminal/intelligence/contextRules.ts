@@ -10,7 +10,7 @@ export type ContextLevel =
 
 export type ContextBadge =
   | "PRESSÃO ALTA"
-  | "DISTORÇÃO DE ODD"
+  | "DISTORÇÃO DE COTAÇÃO"
   | "DOMÍNIO TERRITORIAL"
   | "TRANSIÇÃO RÁPIDA"
   | "BAIXA EFICIÊNCIA"
@@ -72,7 +72,7 @@ export function classifyContextLevel(match: EnrichedLiveMatch, s: ContextSignalS
 export function buildContextBadges(match: EnrichedLiveMatch, s: ContextSignalSet): ContextBadge[] {
   const badges: ContextBadge[] = [];
   if (s.pressureHigh) badges.push("PRESSÃO ALTA");
-  if (s.oddDistortion) badges.push("DISTORÇÃO DE ODD");
+  if (s.oddDistortion) badges.push("DISTORÇÃO DE COTAÇÃO");
   if (s.territorialDominance) badges.push("DOMÍNIO TERRITORIAL");
   if (s.transitionFast) badges.push("TRANSIÇÃO RÁPIDA");
   if (s.lowEfficiency) badges.push("BAIXA EFICIÊNCIA");

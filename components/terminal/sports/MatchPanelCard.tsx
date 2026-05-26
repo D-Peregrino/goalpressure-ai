@@ -32,6 +32,7 @@ import MetricIconBox from "./MetricIconBox";
 import LiveTacticalField from "@/components/terminal/field/LiveTacticalField";
 import OperationalDecisionPanel from "@/components/terminal/decision/OperationalDecisionPanel";
 import SmartPressureTimeline from "@/components/terminal/timeline/SmartPressureTimeline";
+import { mapOperationalDecision } from "@/components/terminal/decision/decisionMapper";
 
 const METRIC_ICONS = {
   shots: Target,
@@ -57,6 +58,7 @@ export type MatchPanelCardProps = {
   expandLabel?: string;
   compact?: boolean;
   contextView?: MatchContextResult;
+  highlight?: boolean;
 };
 
 export default function MatchPanelCard({
@@ -72,6 +74,7 @@ export default function MatchPanelCard({
   expandLabel = "Expandir",
   compact = false,
   contextView,
+  highlight = false,
 }: MatchPanelCardProps) {
   const scoreHome = match.scoreKnown ? String(match.homeScore ?? 0) : "—";
   const scoreAway = match.scoreKnown ? String(match.awayScore ?? 0) : "—";
@@ -86,19 +89,25 @@ export default function MatchPanelCard({
   const metrics = useMemo(() => buildMatchMetricBoxes(match), [match]);
   const footer = footerMetrics(match);
   const context = contextView ?? evaluateMatchContext(match);
+  const decision = useMemo(() => mapOperationalDecision(match, context), [match, context]);
+
   const levelClass =
-    context.level === "zona_critica" || context.level === "oportunidade_ev"
-      ? "gp-sports__panel-card--critical"
-      : context.level === "pressao_crescente"
-        ? "gp-sports__panel-card--watch"
+    decision.selo === "EVITAR" || decision.selo === "ALERTA"
+      ? "gp-sports__panel-card--watch"
+      : decision.selo === "OPORTUNIDADE"
+        ? "gp-sports__panel-card--opportunity"
         : "";
 
   return (
     <article
-      className={`gp-sports__panel-card ${levelClass}`}
+      className={`gp-sports__panel-card ${levelClass} ${highlight ? "gp-sports__panel-card--highlight" : ""}`}
       data-fixture={match.fixtureId}
       data-context-level={context.level}
     >
+      {highlight ? (
+        <div className="gp-sports__highlight-banner">Jogo em destaque — maior prioridade agora</div>
+      ) : null}
+
       <header className="gp-sports__panel-top">
         <span>{leagueLine(match)}</span>
         <div className="gp-sports__panel-actions">
@@ -164,8 +173,8 @@ export default function MatchPanelCard({
             <TeamBadge teamName={match.homeTeam} logoUrl={match.homeLogo} size="md" />
             <span className="gp-sports__team-name">{match.homeTeam}</span>
             {homeOdd ? (
-              <span className="gp-sports__odd" title="Odd mandante">
-                Odd {homeOdd}
+              <span className="gp-sports__odd" title="Cotação do mandante">
+                Cotação {homeOdd}
               </span>
             ) : null}
           </div>
@@ -179,8 +188,8 @@ export default function MatchPanelCard({
             <TeamBadge teamName={match.awayTeam} logoUrl={match.awayLogo} size="md" />
             <span className="gp-sports__team-name">{match.awayTeam}</span>
             {awayOdd ? (
-              <span className="gp-sports__odd" title="Odd visitante">
-                Odd {awayOdd}
+              <span className="gp-sports__odd" title="Cotação do visitante">
+                Cotação {awayOdd}
               </span>
             ) : null}
           </div>
@@ -190,8 +199,13 @@ export default function MatchPanelCard({
       {!compact && (
         <>
           <OperationalDecisionPanel match={match} context={context} />
+          <LiveTacticalField match={match} context={context} />
+
           <section className="gp-sports__context-read">
             <h4 className="gp-sports__context-title">Leitura contextual da partida</h4>
+            <p className="gp-sports__context-sub">
+              Resumo automático do que está acontecendo no jogo agora
+            </p>
             <p className="gp-sports__context-narrative">{context.narrativa}</p>
             <div className="gp-sports__context-grid">
               <div>
@@ -211,39 +225,30 @@ export default function MatchPanelCard({
                 <strong>{context.leituraMercado}</strong>
               </div>
             </div>
-            <div className="gp-sports__context-badges">
-              {context.badges.length > 0 ? (
-                context.badges.map((badge) => (
+            {context.badges.length > 0 ? (
+              <div className="gp-sports__context-badges">
+                {context.badges.map((badge) => (
                   <span key={badge} className="gp-sports__context-badge">
                     {badge}
                   </span>
-                ))
-              ) : (
-                <span className="gp-sports__context-badge gp-sports__context-badge--neutral">
-                  CONTEXTO ESTÁVEL
-                </span>
-              )}
-            </div>
-            <p className="gp-sports__context-reco">{context.recomendacao}</p>
-            <div className="gp-sports__context-log">
-              <h5>Mini log contextual</h5>
-              <ul>
-                {context.historico.map((item) => (
-                  <li key={`${item.minute}-${item.label}`}>
-                    <span>{item.minute}</span> {item.label}
-                  </li>
                 ))}
-              </ul>
-            </div>
+              </div>
+            ) : null}
+            <p className="gp-sports__context-reco">{context.recomendacao}</p>
           </section>
-          <LiveTacticalField match={match} context={context} />
-          <LiveMatchTabs active={activeTab} onChange={onTabChange} />
-          <MatchTabContent tab={activeTab} match={match} />
+
+          <div className="gp-sports__section-block">
+            <h4 className="gp-sports__section-block-title">Detalhes do jogo</h4>
+            <p className="gp-sports__section-block-sub">Informações por fase e por mercado</p>
+            <LiveMatchTabs active={activeTab} onChange={onTabChange} />
+            <MatchTabContent tab={activeTab} match={match} />
+          </div>
+
           <div className="gp-sports__metrics-section">
             <div className="gp-sports__metrics-section-head">
               <h4 className="gp-sports__metrics-section-title">Indicadores de pressão</h4>
               <p className="gp-sports__metrics-section-sub">
-                Mandante × visitante — valores do feed ao vivo
+                Números mandante × visitante com descrição em cada caixa
               </p>
             </div>
             <div className="gp-sports__metrics-row">
@@ -262,20 +267,25 @@ export default function MatchPanelCard({
               })}
             </div>
           </div>
+
           <SmartPressureTimeline
             match={match}
             context={context}
             window={timelineWindow}
             onWindowChange={onTimelineWindowChange}
           />
-          <div className="gp-sports__footer-metrics">
-            {footer.map((f) => (
-              <div key={f.label} className="gp-sports__footer-metric" title={f.hint}>
-                <span>{f.label}</span>
-                <strong>{f.value}</strong>
-                <em>{f.hint}</em>
-              </div>
-            ))}
+
+          <div className="gp-sports__footer-metrics-wrap">
+            <h4 className="gp-sports__footer-metrics-title">Métricas finais da partida</h4>
+            <div className="gp-sports__footer-metrics">
+              {footer.map((f) => (
+                <div key={f.label} className="gp-sports__footer-metric" title={f.hint}>
+                  <span>{f.label}</span>
+                  <strong>{f.value}</strong>
+                  <em>{f.hint}</em>
+                </div>
+              ))}
+            </div>
           </div>
         </>
       )}

@@ -43,15 +43,17 @@ export default function SmartPressureTimeline({
     <section className="gp-sports__timeline-block gp-smart-timeline">
       <div className="gp-sports__timeline-head">
         <div>
-          <span className="gp-sports__timeline-title">Indicadores de pressão</span>
-          <p className="gp-sports__timeline-subtitle">Linha do tempo ofensiva</p>
+          <span className="gp-sports__timeline-title">Linha do tempo ofensiva</span>
+          <p className="gp-sports__timeline-subtitle">
+            Evolução da pressão por minuto (mandante e visitante)
+          </p>
         </div>
         <div className="gp-sports__timeline-btns">
           {(
             [
               ["total", "Total"],
-              ["10", "Últimos 10'"],
-              ["5", "Últimos 5'"],
+              ["10", "Últimos 10 min"],
+              ["5", "Últimos 5 min"],
             ] as const
           ).map(([key, label]) => (
             <button

@@ -6,17 +6,17 @@ import {
   possessionPair,
   pressurePair,
 } from "@/lib/terminal/sportsDisplay";
-import { roundDisplay } from "@/lib/terminal/formatDisplay";
+import { marketLabelPt, roundDisplay } from "@/lib/terminal/formatDisplay";
 import type { MatchTabId } from "./LiveMatchTabs";
 
 const TAB_TITLES: Record<MatchTabId, string> = {
   pre: "Pré-jogo",
   live: "Ao vivo",
-  odds: "Odds",
+  odds: "Cotações",
   stats: "Estatísticas",
   players: "Jogadores",
   traits: "Características",
-  h2h: "Confronto direto (H2H)",
+  h2h: "Confronto direto",
 };
 
 export default function MatchTabContent({ tab, match }: { tab: MatchTabId; match: EnrichedLiveMatch }) {
@@ -62,13 +62,13 @@ function TabBody({ tab, match }: { tab: MatchTabId; match: EnrichedLiveMatch }) 
       );
     case "odds":
       if (match.markets.length === 0) {
-        return <p className="gp-sports__tab-empty">Aguardando odds</p>;
+        return <p className="gp-sports__tab-empty">Aguardando cotações</p>;
       }
       return (
         <ul className="gp-sports__tab-list">
           {match.markets.slice(0, 8).map((m) => (
             <li key={m.market}>
-              <strong>{m.market}:</strong> {m.odd?.toFixed(2) ?? "—"}
+              <strong>{marketLabelPt(m.market)}:</strong> {m.odd?.toFixed(2) ?? "—"}
               {m.edge != null ? ` · distorção ${m.edge.toFixed(1)}%` : ""}
             </li>
           ))}
@@ -78,7 +78,7 @@ function TabBody({ tab, match }: { tab: MatchTabId; match: EnrichedLiveMatch }) 
       return (
         <ul className="gp-sports__tab-list">
           <li>
-            <strong>xG:</strong> {roundDisplay(match.xG)}
+            <strong>Gols esperados (xG):</strong> {roundDisplay(match.xG)}
           </li>
           <li>
             <strong>Finalizações (total):</strong> {match.shots || "—"}

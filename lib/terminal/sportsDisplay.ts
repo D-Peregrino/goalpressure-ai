@@ -183,9 +183,9 @@ export function footerMetrics(match: EnrichedLiveMatch) {
       hint: "Volatilidade tática",
     },
     {
-      label: "Distorção de odd",
+      label: "Distorção de cotação",
       value: formatPercentDisplay(match.edgePercent),
-      hint: "Gap vs odd de referência",
+      hint: "Diferença em relação à cotação de referência",
     },
     {
       label: "Confiança",
