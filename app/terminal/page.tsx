@@ -1,11 +1,11 @@
-import TerminalDashboard from "@/components/terminal/dashboard/TerminalDashboard";
+import GoalPressureSportsTerminal from "@/components/terminal/sports/GoalPressureSportsTerminal";
 
 export const metadata = {
   title: "Terminal — GoalPressure AI",
   description:
-    "Central de Inteligência Esportiva — pressão ofensiva, valor de mercado e alertas em tempo real.",
+    "Painel esportivo ao vivo — pressão ofensiva, valor esperado e leitura tática em tempo real.",
 };
 
 export default function TerminalPage() {
-  return <TerminalDashboard />;
+  return <GoalPressureSportsTerminal />;
 }
