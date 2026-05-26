@@ -16,6 +16,9 @@ import CopaGpi from "@/components/copa/sections/CopaGpi";
 import CopaContext from "@/components/copa/sections/CopaContext";
 import CopaReplaySection from "@/components/copa/sections/CopaReplay";
 import CopaOpsSection from "@/components/copa/sections/CopaOps";
+import CopaLeadCapture from "@/components/copa/CopaLeadCapture";
+import CopaSeasonalBanner from "@/components/copa/CopaSeasonalBanner";
+import Link from "next/link";
 
 const TABS: { id: CopaSection; label: string; premium?: boolean }[] = [
   { id: "overview", label: "Visão geral" },
@@ -109,6 +112,12 @@ export default function CopaPageClient() {
               </div>
             </>
           ) : null}
+          <CopaLeadCapture source={`copa-tab-${section}`} />
+          <p style={{ textAlign: "center", marginTop: "1rem" }}>
+            <Link href="/copa/alertas" className="gp-copa-btn">
+              Saiba mais sobre alertas da Copa
+            </Link>
+          </p>
         </>
       )}
     </CopaShell>

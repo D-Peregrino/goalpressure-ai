@@ -367,3 +367,219 @@
   font-size: 0.85rem;
   border-bottom: 1px solid var(--copa-border);
 }
+
+/* Banner sazonal */
+.gp-copa-seasonal-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.55rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--copa-green-deep), var(--copa-green));
+  color: #fff;
+  border: 1px solid rgba(196, 160, 53, 0.45);
+}
+
+.gp-copa-seasonal-banner--workspace {
+  background: linear-gradient(90deg, #064d2a, #0b6b3a);
+  margin-bottom: 1.25rem;
+}
+
+.gp-copa-seasonal-banner__text {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  flex: 1 1 14rem;
+}
+
+.gp-copa-seasonal-banner__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.gp-copa-seasonal-banner__cta,
+.gp-copa-seasonal-banner__link {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: none;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+}
+
+.gp-copa-seasonal-banner__cta {
+  background: #fff;
+  color: var(--copa-green-deep);
+}
+
+.gp-copa-seasonal-banner__link {
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Captura de lead */
+.gp-copa-lead {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border-radius: var(--copa-radius);
+  background: var(--copa-surface);
+  border: 1px solid var(--copa-border);
+  box-shadow: 0 8px 24px rgba(6, 77, 42, 0.06);
+}
+
+.gp-copa-lead__grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .gp-copa-lead__grid {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+.gp-copa-lead__sub {
+  margin: 0 0 0.75rem;
+  font-size: 0.88rem;
+  color: var(--copa-muted);
+  line-height: 1.5;
+}
+
+.gp-copa-lead__fundador {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  color: var(--copa-muted);
+}
+
+.gp-copa-lead__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.gp-copa-lead__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--copa-muted);
+}
+
+.gp-copa-lead__form input {
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--copa-border);
+  font-size: 0.88rem;
+  background: #fff;
+  color: var(--copa-text);
+}
+
+.gp-copa-lead__submit {
+  width: 100%;
+  justify-content: center;
+  margin-top: 0.25rem;
+  padding: 0.65rem 1rem;
+  border: none;
+  cursor: pointer;
+}
+
+.gp-copa-lead__ok {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--copa-green);
+  font-weight: 600;
+}
+
+.gp-copa-lead__err {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--copa-live);
+}
+
+.gp-copa-barbosa {
+  margin: 0.75rem 0 0;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  background: var(--copa-gold-soft);
+  border-radius: 8px;
+  border: 1px solid rgba(196, 160, 53, 0.35);
+  color: var(--copa-text);
+}
+
+/* Paywall Copa */
+.gp-copa-paywall {
+  position: relative;
+  border-radius: var(--copa-radius);
+  overflow: hidden;
+  border: 1px solid var(--copa-border);
+}
+
+.gp-copa-paywall__preview {
+  filter: blur(4px);
+  opacity: 0.45;
+  pointer-events: none;
+  user-select: none;
+  max-height: 220px;
+  overflow: hidden;
+}
+
+.gp-copa-paywall__veil {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(242, 246, 243, 0.88);
+  padding: 1rem;
+}
+
+.gp-copa-paywall__card {
+  text-align: center;
+  max-width: 22rem;
+}
+
+.gp-copa-paywall__icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: 0 auto 0.5rem;
+  color: var(--copa-gold);
+}
+
+.gp-copa-paywall__title {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--copa-green-deep);
+  line-height: 1.25;
+}
+
+.gp-copa-paywall__sub {
+  margin: 0 0 0.85rem;
+  font-size: 0.82rem;
+  color: var(--copa-muted);
+}
+
+.gp-copa-paywall__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.gp-copa-alertas-grid {
+  display: grid;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 640px) {
+  .gp-copa-alertas-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

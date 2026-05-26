@@ -11,6 +11,8 @@ import DiffSection from "@/components/landing/premium/DiffSection";
 import PlansFinale from "@/components/landing/premium/PlansFinale";
 import MobileCtaBar from "@/components/landing/premium/MobileCtaBar";
 import ScrollReveal, { StaggerReveal, StaggerItem } from "@/components/landing/premium/ScrollReveal";
+import CopaAcquisitionSection from "@/components/landing/premium/CopaAcquisitionSection";
+import CopaSeasonalBanner from "@/components/copa/CopaSeasonalBanner";
 import { BRAND } from "@/lib/design/brand";
 
 const FAQ = [
@@ -51,11 +53,16 @@ export default function PremiumLanding() {
   return (
     <div className="gpl gpl--elite">
       <LandingAmbient />
+      <CopaSeasonalBanner variant="landing" />
       <PremiumNav />
       <PremiumHero />
       <MobileCtaBar />
 
       <CurveDivider />
+
+      <CopaAcquisitionSection />
+
+      <CurveDivider flip />
 
       <section id="produto" className="gpl-section">
         <div className="gpl-wrap">
@@ -208,6 +215,7 @@ export default function PremiumLanding() {
           </p>
           <p className="gpl-footer__sub">{BRAND.tagline}</p>
           <nav className="gpl-footer__links" aria-label="Links do rodapé">
+            <Link href="/copa">Copa 2026</Link>
             <Link href="/terminal">Central</Link>
             <Link href="/precos">Preços</Link>
             <Link href="/entrar">Entrar</Link>

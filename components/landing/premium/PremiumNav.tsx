@@ -30,6 +30,9 @@ export default function PremiumNav() {
           <a href="#gpi" className="gpl-nav__link">
             GPI
           </a>
+          <Link href="/copa" className="gpl-nav__link">
+            Copa 2026
+          </Link>
           <a href="#planos" className="gpl-nav__link">
             Planos
           </a>
