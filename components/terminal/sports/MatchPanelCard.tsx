@@ -22,6 +22,10 @@ import {
   leagueLine,
   type TimelineWindow,
 } from "@/lib/terminal/sportsDisplay";
+import {
+  evaluateMatchContext,
+  type MatchContextResult,
+} from "@/components/terminal/intelligence/ContextEngine";
 import LiveMatchTabs, { type MatchTabId } from "./LiveMatchTabs";
 import MatchTabContent from "./MatchTabContent";
 import MetricIconBox from "./MetricIconBox";
@@ -51,6 +55,7 @@ export type MatchPanelCardProps = {
   onExpand?: () => void;
   expandLabel?: string;
   compact?: boolean;
+  contextView?: MatchContextResult;
 };
 
 export default function MatchPanelCard({
@@ -65,6 +70,7 @@ export default function MatchPanelCard({
   onExpand,
   expandLabel = "Expandir",
   compact = false,
+  contextView,
 }: MatchPanelCardProps) {
   const scoreHome = match.scoreKnown ? String(match.homeScore ?? 0) : "—";
   const scoreAway = match.scoreKnown ? String(match.awayScore ?? 0) : "—";
@@ -78,9 +84,20 @@ export default function MatchPanelCard({
 
   const metrics = useMemo(() => buildMatchMetricBoxes(match), [match]);
   const footer = footerMetrics(match);
+  const context = contextView ?? evaluateMatchContext(match);
+  const levelClass =
+    context.level === "zona_critica" || context.level === "oportunidade_ev"
+      ? "gp-sports__panel-card--critical"
+      : context.level === "pressao_crescente"
+        ? "gp-sports__panel-card--watch"
+        : "";
 
   return (
-    <article className="gp-sports__panel-card" data-fixture={match.fixtureId}>
+    <article
+      className={`gp-sports__panel-card ${levelClass}`}
+      data-fixture={match.fixtureId}
+      data-context-level={context.level}
+    >
       <header className="gp-sports__panel-top">
         <span>{leagueLine(match)}</span>
         <div className="gp-sports__panel-actions">
@@ -171,6 +188,52 @@ export default function MatchPanelCard({
 
       {!compact && (
         <>
+          <section className="gp-sports__context-read">
+            <h4 className="gp-sports__context-title">Leitura contextual da partida</h4>
+            <p className="gp-sports__context-narrative">{context.narrativa}</p>
+            <div className="gp-sports__context-grid">
+              <div>
+                <span>Status operacional</span>
+                <strong>{context.statusOperacional}</strong>
+              </div>
+              <div>
+                <span>Nível de intensidade</span>
+                <strong>{context.intensidade}</strong>
+              </div>
+              <div>
+                <span>Tendência</span>
+                <strong>{context.tendencia}</strong>
+              </div>
+              <div>
+                <span>Leitura de mercado</span>
+                <strong>{context.leituraMercado}</strong>
+              </div>
+            </div>
+            <div className="gp-sports__context-badges">
+              {context.badges.length > 0 ? (
+                context.badges.map((badge) => (
+                  <span key={badge} className="gp-sports__context-badge">
+                    {badge}
+                  </span>
+                ))
+              ) : (
+                <span className="gp-sports__context-badge gp-sports__context-badge--neutral">
+                  CONTEXTO ESTÁVEL
+                </span>
+              )}
+            </div>
+            <p className="gp-sports__context-reco">{context.recomendacao}</p>
+            <div className="gp-sports__context-log">
+              <h5>Mini log contextual</h5>
+              <ul>
+                {context.historico.map((item) => (
+                  <li key={`${item.minute}-${item.label}`}>
+                    <span>{item.minute}</span> {item.label}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
           <PressureField match={match} />
           <LiveMatchTabs active={activeTab} onChange={onTabChange} />
           <MatchTabContent tab={activeTab} match={match} />

@@ -24,6 +24,7 @@ import MatchDetailModal from "./MatchDetailModal";
 import MatchPanelCard from "./MatchPanelCard";
 import SportsToast from "./SportsToast";
 import type { MatchTabId } from "./LiveMatchTabs";
+import { evaluateMatchContext } from "@/components/terminal/intelligence/ContextEngine";
 
 const FILTER_CHIPS: {
   id: MatchCenterFilter | "scanner";
@@ -96,16 +97,29 @@ export default function GoalPressureSportsTerminal() {
     return base.filter((m) => !hiddenMatches.has(m.fixtureId));
   }, [matches, allMatches, searchTerm, hiddenMatches]);
 
-  const livePool = useMemo(() => pool.filter((m) => m.isLive), [pool]);
-  const upcomingPool = useMemo(() => pool.filter((m) => m.isPreMatch), [pool]);
+  const rankedPool = useMemo(() => {
+    return [...pool].sort((a, b) => {
+      const aContext = evaluateMatchContext(a);
+      const bContext = evaluateMatchContext(b);
+      if (a.isLive !== b.isLive) return a.isLive ? -1 : 1;
+      if (aContext.alerta !== bContext.alerta) {
+        const rank = { crítico: 4, alto: 3, moderado: 2, baixo: 1 } as const;
+        return rank[bContext.alerta] - rank[aContext.alerta];
+      }
+      return bContext.score - aContext.score;
+    });
+  }, [pool]);
+
+  const livePool = useMemo(() => rankedPool.filter((m) => m.isLive), [rankedPool]);
+  const upcomingPool = useMemo(() => rankedPool.filter((m) => m.isPreMatch), [rankedPool]);
 
   const primary = useMemo(() => {
     if (selectedMatch) {
       const found = pool.find((m) => m.fixtureId === selectedMatch);
       if (found) return found;
     }
-    return livePool[0] ?? pool[0] ?? null;
-  }, [pool, livePool, selectedMatch]);
+    return livePool[0] ?? rankedPool[0] ?? null;
+  }, [pool, livePool, rankedPool, selectedMatch]);
 
   const secondary = useMemo(() => {
     if (!primary) return upcomingPool[0] ?? null;
@@ -117,9 +131,9 @@ export default function GoalPressureSportsTerminal() {
   }, [primary, livePool, upcomingPool, listFilter]);
 
   const sideList = useMemo(() => {
-    const base = listFilter === "live" ? livePool : upcomingPool.length ? upcomingPool : pool;
+    const base = listFilter === "live" ? livePool : upcomingPool.length ? upcomingPool : rankedPool;
     return base.filter((m) => m.fixtureId !== primary?.fixtureId).slice(0, 12);
-  }, [listFilter, livePool, upcomingPool, pool, primary]);
+  }, [listFilter, livePool, upcomingPool, rankedPool, primary]);
 
   const expanded = useMemo(
     () => (expandedMatch ? pool.find((m) => m.fixtureId === expandedMatch) ?? null : null),
@@ -436,6 +450,7 @@ export default function GoalPressureSportsTerminal() {
                       showToast(was ? "Removido dos favoritos" : "Adicionado aos favoritos");
                     }}
                     onExpand={() => setExpandedMatch(primary.fixtureId)}
+                    contextView={evaluateMatchContext(primary)}
                   />
                 ) : (
                   <p className="gp-sports__pregame p-8">Nenhum jogo selecionado</p>
@@ -459,6 +474,7 @@ export default function GoalPressureSportsTerminal() {
                     }}
                     onClose={() => hideMatch(secondary.fixtureId)}
                     onExpand={() => setExpandedMatch(secondary.fixtureId)}
+                    contextView={evaluateMatchContext(secondary)}
                   />
                 ) : null}
 
@@ -567,6 +583,7 @@ export default function GoalPressureSportsTerminal() {
             showToast(was ? "Removido dos favoritos" : "Adicionado aos favoritos");
           }}
           onClose={() => setExpandedMatch(null)}
+          contextView={evaluateMatchContext(expanded)}
         />
       ) : null}
     </div>
