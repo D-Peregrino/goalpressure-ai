@@ -67,6 +67,8 @@ export interface ReplayDataset {
   minMinute: number;
   maxMinute: number;
   frames: ReplayFrame[];
+  /** Replay local de demonstração — não vem do histórico persistido. */
+  isDemo?: boolean;
 }
 
 function normalizeLabel(snapshot: ReplaySnapshotPoint | null, fixtureId: string): string {

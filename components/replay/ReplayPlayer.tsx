@@ -1,7 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReplayDataset } from "@/lib/replay/replayEngine";
+import {
+  buildDemoReplayDataset,
+  isDemoFixtureId,
+  REPLAY_DEMO_DROPDOWN_LABEL,
+  REPLAY_DEMO_FIXTURE_ID,
+} from "@/lib/replay/replayDemo";
 import { useReplayState } from "@/lib/replay/replayState";
 import type { ReplaySpeed } from "@/lib/replay/replayControls";
 import ReplayControls from "@/components/replay/ReplayControls";
@@ -9,23 +15,61 @@ import ReplayTimeline from "@/components/replay/ReplayTimeline";
 import ReplayMatchCard from "@/components/replay/ReplayMatchCard";
 import ReplayContextLayer from "@/components/replay/ReplayContextLayer";
 import ReplayPressureMap from "@/components/replay/ReplayPressureMap";
+import ReplayEmptyState from "@/components/replay/ReplayEmptyState";
 import "@/app/styles/replay.css";
+
+interface ReplayFixtureOption {
+  fixtureId: string;
+  matchLabel: string;
+  league: string;
+  lastMinute: number;
+  isDemo?: boolean;
+}
 
 interface ReplayApiResponse {
   ok: boolean;
-  fixtures: { fixtureId: string; matchLabel: string; league: string; lastMinute: number }[];
+  fixtures: ReplayFixtureOption[];
   replay: ReplayDataset | null;
+  empty?: boolean;
+  reason?: string;
+  demoAvailable?: boolean;
   error?: string;
 }
 
+const DEMO_FIXTURE: ReplayFixtureOption = {
+  fixtureId: REPLAY_DEMO_FIXTURE_ID,
+  matchLabel: REPLAY_DEMO_DROPDOWN_LABEL,
+  league: "Demonstração visual",
+  lastMinute: 90,
+  isDemo: true,
+};
+
 export default function ReplayPlayer() {
-  const [fixtures, setFixtures] = useState<ReplayApiResponse["fixtures"]>([]);
+  const [fixtures, setFixtures] = useState<ReplayFixtureOption[]>([]);
   const [selectedFixture, setSelectedFixture] = useState<string>("");
   const [dataset, setDataset] = useState<ReplayDataset | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEmpty, setIsEmpty] = useState(false);
+  const [demoAvailable, setDemoAvailable] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   const replay = useReplayState(dataset);
+
+  const dropdownOptions = useMemo(() => {
+    if (isDemoMode) return [DEMO_FIXTURE];
+    return fixtures;
+  }, [fixtures, isDemoMode]);
+
+  const activateDemo = useCallback(() => {
+    const demo = buildDemoReplayDataset();
+    setIsDemoMode(true);
+    setIsEmpty(false);
+    setError(null);
+    setFixtures([]);
+    setSelectedFixture(REPLAY_DEMO_FIXTURE_ID);
+    setDataset(demo);
+  }, []);
 
   useEffect(() => {
     async function bootstrap() {
@@ -35,12 +79,23 @@ export default function ReplayPlayer() {
         const res = await fetch("/api/replay");
         const body = (await res.json()) as ReplayApiResponse;
         if (!res.ok || !body.ok) {
-          setError(body.error ?? "Falha ao carregar replay.");
+          setError(body.error ?? "Não foi possível carregar o replay agora.");
           return;
         }
+        setDemoAvailable(body.demoAvailable ?? true);
         setFixtures(body.fixtures ?? []);
+
+        if (body.empty || !body.replay) {
+          setIsEmpty(true);
+          setDataset(null);
+          setSelectedFixture("");
+          return;
+        }
+
+        setIsEmpty(false);
+        setIsDemoMode(false);
         setDataset(body.replay);
-        if (body.replay?.fixtureId) setSelectedFixture(body.replay.fixtureId);
+        setSelectedFixture(body.replay.fixtureId);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Erro de rede");
       } finally {
@@ -51,16 +106,28 @@ export default function ReplayPlayer() {
   }, []);
 
   async function loadFixture(fixtureId: string) {
+    if (isDemoFixtureId(fixtureId)) {
+      activateDemo();
+      return;
+    }
+
     setSelectedFixture(fixtureId);
+    setIsDemoMode(false);
     setLoading(true);
     setError(null);
     try {
       const res = await fetch(`/api/replay?fixtureId=${encodeURIComponent(fixtureId)}`);
       const body = (await res.json()) as ReplayApiResponse;
       if (!res.ok || !body.ok) {
-        setError(body.error ?? "Falha ao carregar replay.");
+        setError(body.error ?? "Não foi possível carregar o replay agora.");
         return;
       }
+      if (body.empty || !body.replay) {
+        setIsEmpty(true);
+        setDataset(null);
+        return;
+      }
+      setIsEmpty(false);
       setDataset(body.replay);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro de rede");
@@ -74,6 +141,9 @@ export default function ReplayPlayer() {
     return dataset.frames.flatMap((f) => f.timeline);
   }, [dataset]);
 
+  const showPlayer = Boolean(dataset) && !loading;
+  const showEmpty = !loading && !error && isEmpty && !dataset;
+
   return (
     <div className="gp-replay">
       <header className="gp-replay-hero">
@@ -84,27 +154,51 @@ export default function ReplayPlayer() {
             Replay cinematográfico com GPI, pressão, consenso, Telegram e narrativa contextual.
           </p>
         </div>
-        <label className="gp-replay-select">
-          Partida
-          <select
-            value={selectedFixture}
-            onChange={(e) => void loadFixture(e.target.value)}
-            disabled={!fixtures.length}
-          >
-            {fixtures.map((fixture) => (
-              <option key={fixture.fixtureId} value={fixture.fixtureId}>
-                {fixture.matchLabel} · {fixture.league}
-              </option>
-            ))}
-          </select>
-        </label>
+        {(showPlayer || isDemoMode) && (
+          <label className="gp-replay-select">
+            Partida
+            <select
+              value={selectedFixture}
+              onChange={(e) => {
+                if (isDemoFixtureId(e.target.value)) {
+                  activateDemo();
+                } else {
+                  void loadFixture(e.target.value);
+                }
+              }}
+            >
+              {dropdownOptions.map((fixture) => (
+                <option key={fixture.fixtureId} value={fixture.fixtureId}>
+                  {fixture.isDemo ? fixture.matchLabel : `${fixture.matchLabel} · ${fixture.league}`}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </header>
 
-      {loading && <p className="gp-replay-empty">Carregando replay...</p>}
-      {error && <p className="gp-replay-empty">{error}</p>}
-      {!loading && !dataset && <p className="gp-replay-empty">Sem snapshots históricos.</p>}
+      {isDemoMode && dataset?.isDemo && (
+        <div className="gp-replay-demo-banner" role="status">
+          <strong>Demonstração visual</strong>
+          <span>Dados locais de exemplo — não misturados com histórico real.</span>
+        </div>
+      )}
 
-      {dataset && (
+      {loading && (
+        <p className="gp-replay-status">Preparando replay…</p>
+      )}
+
+      {error && (
+        <p className="gp-replay-status gp-replay-status--warn" role="alert">
+          {error}
+        </p>
+      )}
+
+      {showEmpty && (
+        <ReplayEmptyState onShowDemo={activateDemo} />
+      )}
+
+      {showPlayer && dataset && (
         <>
           <ReplayControls
             minute={replay.minute}

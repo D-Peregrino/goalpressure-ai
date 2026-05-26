@@ -11,10 +11,29 @@ export async function GET(request: Request) {
   const fixtureIdParam = url.searchParams.get("fixtureId") ?? "";
 
   const fixtures = await listReplayFixtures();
+
+  if (!fixtures.length && !fixtureIdParam) {
+    return NextResponse.json({
+      ok: true,
+      fixtures: [],
+      replay: null,
+      empty: true,
+      reason: "no_historical_snapshots",
+      demoAvailable: true,
+    });
+  }
+
   const fixtureId = fixtureIdParam || fixtures[0]?.fixtureId;
 
   if (!fixtureId) {
-    return NextResponse.json({ ok: true, fixtures: [], replay: null });
+    return NextResponse.json({
+      ok: true,
+      fixtures: [],
+      replay: null,
+      empty: true,
+      reason: "no_historical_snapshots",
+      demoAvailable: true,
+    });
   }
 
   const raw = await loadReplayRawData(fixtureId);
@@ -60,5 +79,22 @@ export async function GET(request: Request) {
     timeline,
   });
 
-  return NextResponse.json({ ok: true, fixtures, replay });
+  if (!replay) {
+    return NextResponse.json({
+      ok: true,
+      fixtures,
+      replay: null,
+      empty: true,
+      reason: "no_historical_snapshots",
+      demoAvailable: true,
+    });
+  }
+
+  return NextResponse.json({
+    ok: true,
+    fixtures,
+    replay,
+    empty: false,
+    demoAvailable: true,
+  });
 }
