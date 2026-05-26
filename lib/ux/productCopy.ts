@@ -48,7 +48,7 @@ export function navItemsForTier(
     advancedOnly: "advancedOnly" in item ? item.advancedOnly : undefined,
   }));
   const withOps = opsAccess
-    ? [...items, { href: "/ops", label: "Operações", short: "Ops" }]
+    ? [...items, { href: "/ops", label: "OPS Center", short: "OPS" }]
     : items;
   if (isAdmin) {
     return [{ href: "/admin", label: "Admin", short: "Admin" }, ...withOps];
