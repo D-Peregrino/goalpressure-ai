@@ -9,6 +9,7 @@ import {
   Globe,
   History,
   LayoutDashboard,
+  Network,
   Radio,
   Shield,
   Star,
@@ -195,6 +196,24 @@ export default function WorkspacePage() {
       </header>
 
       <SmartWorkspacePanels smart={smart.smart} loading={smart.loading} />
+
+      <div className="gp-ws-network-cta">
+        <Network className="h-5 w-5 shrink-0 text-cyan-400" />
+        <div className="flex-1 min-w-0">
+          <strong>Signal Exchange</strong>
+          <p>
+            Consenso coletivo, pressão compartilhada e ranking de operadores — integrado à sua
+            watchlist e alertas.
+          </p>
+          <p className="gp-ws-network-cta__line">
+            Contexto monitorado coletivamente quando múltiplos operadores convergem no mesmo jogo.
+          </p>
+        </div>
+        <Link href="/network" className="gp-ws-btn gp-ws-btn--primary">
+          Abrir rede
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
 
       <div className="gp-ws-terminal-cta">
         <div>
