@@ -123,6 +123,16 @@ export async function processLiveEngineBatch(
     void runContextualBacktestCycle();
   }
 
+  const { isHistoricalPersistenceEnabled } = await import(
+    "@/lib/persistence/persistenceConfig"
+  );
+  if (isHistoricalPersistenceEnabled()) {
+    const { scheduleHistoricalPersistence } = await import(
+      "@/lib/persistence/historicalPersistenceEngine"
+    );
+    scheduleHistoricalPersistence(enrichedMatches);
+  }
+
   logInfo(LOG_SCOPE, "Live engine batch processed", {
     matches: enrichedMatches.length,
     signals: signals.length,

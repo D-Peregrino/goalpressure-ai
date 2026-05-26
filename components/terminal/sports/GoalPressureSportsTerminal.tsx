@@ -25,6 +25,8 @@ import AutonomousAlertsPanel from "./AutonomousAlertsPanel";
 import PredictiveMetricsStrip from "@/components/terminal/predictive/PredictiveMetricsStrip";
 import AdaptiveLearningPanel from "@/components/terminal/learning/AdaptiveLearningPanel";
 import BacktestingPanel from "@/components/terminal/backtesting/BacktestingPanel";
+import OperationalPersistencePanel from "@/components/terminal/persistence/OperationalPersistencePanel";
+import PersistenceHealthPanel from "@/components/terminal/persistence/PersistenceHealthPanel";
 import MatchListRow from "./MatchListRow";
 import MatchPanelCard from "./MatchPanelCard";
 import SportsToast from "./SportsToast";
@@ -486,6 +488,8 @@ export default function GoalPressureSportsTerminal() {
                 ) : null}
 
                 <PredictiveMetricsStrip />
+                <PersistenceHealthPanel />
+                <OperationalPersistencePanel />
                 <BacktestingPanel />
                 <AdaptiveLearningPanel />
                 <AutonomousAlertsPanel />

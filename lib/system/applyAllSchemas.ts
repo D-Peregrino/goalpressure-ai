@@ -17,6 +17,7 @@ export const OPERATIONAL_SCHEMA_FILES = [
   "learning-layer-schema.sql",
   "live-signal-dispatches-schema.sql",
   "autonomous-decisions-schema.sql",
+  "historical-contextual-persistence-schema.sql",
   "commercial-schema.sql",
 ] as const;
 

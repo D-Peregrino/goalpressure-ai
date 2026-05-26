@@ -7,6 +7,10 @@ import {
   ensureContextualBacktestWarm,
   getContextualBacktestingSnapshot,
 } from "@/lib/backtesting/contextualBacktestEngine";
+import {
+  getHistoricalPersistenceSnapshot,
+  warmHistoricalPersistenceSnapshot,
+} from "@/lib/persistence/historicalPersistenceEngine";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -22,6 +26,8 @@ export async function GET() {
   const adaptiveLearning = getAdaptiveLearningSnapshot();
   const contextualBacktesting =
     (await ensureContextualBacktestWarm()) ?? getContextualBacktestingSnapshot();
+  const operationalPersistence =
+    (await warmHistoricalPersistenceSnapshot()) ?? getHistoricalPersistenceSnapshot();
 
   return NextResponse.json({
     ok: true,
@@ -29,6 +35,7 @@ export async function GET() {
     predictiveEngine,
     adaptiveLearning,
     contextualBacktesting,
+    operationalPersistence,
     snapshot: snapshot ?? {
       generatedAt: new Date().toISOString(),
       dominantRegime: "CALM_MARKET",
