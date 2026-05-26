@@ -932,3 +932,278 @@
   font-weight: 700;
   margin-right: 0.25rem;
 }
+
+.gp-live-field-wrap {
+  margin: 0 1rem 0.75rem;
+}
+
+.gp-live-field-head {
+  margin-bottom: 0.35rem;
+}
+
+.gp-live-field-title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--gp-text);
+}
+
+.gp-live-field-sub {
+  margin: 0.15rem 0 0;
+  font-size: 0.68rem;
+  color: var(--gp-muted);
+}
+
+.gp-live-field {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #1e7f52;
+  min-height: 132px;
+  background: linear-gradient(180deg, #2f9d65 0%, #22a86b 50%, #1c8f59 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 6px 20px rgba(34, 168, 107, 0.18);
+}
+
+.gp-live-field__grass {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.08), transparent 70%);
+}
+
+.gp-live-field__lines {
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.45) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.35) 1px, transparent 1px);
+  background-size: 33.33% 100%, 100% 50%;
+}
+
+.gp-live-field__zones {
+  position: absolute;
+  inset: 0;
+}
+
+.gp-live-field__zone {
+  position: absolute;
+  top: 15%;
+  bottom: 22%;
+  width: 34%;
+  border-radius: 10px;
+  transition: all 0.35s ease;
+}
+
+.gp-live-field__zone-pos--home {
+  left: 8%;
+}
+
+.gp-live-field__zone-pos--away {
+  right: 8%;
+}
+
+.gp-live-field__zone-pos--center {
+  left: 33%;
+}
+
+.gp-live-field__zone--critical {
+  background: linear-gradient(90deg, rgba(255, 43, 95, 0.66), rgba(255, 122, 69, 0.46));
+  box-shadow: 0 0 26px rgba(255, 43, 95, 0.5);
+}
+
+.gp-live-field__zone--moderate {
+  background: linear-gradient(90deg, rgba(255, 122, 69, 0.52), rgba(255, 173, 92, 0.35));
+  box-shadow: 0 0 22px rgba(255, 122, 69, 0.42);
+}
+
+.gp-live-field__zone--transition {
+  background: linear-gradient(90deg, rgba(255, 122, 69, 0.45), rgba(37, 99, 235, 0.34));
+}
+
+.gp-live-field__zone--neutral {
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.28), rgba(148, 163, 184, 0.2));
+}
+
+.gp-live-field__territorial-bars {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 8%;
+  height: 9px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+}
+
+.gp-live-field__bar {
+  border-radius: 999px;
+  transition: width 0.3s ease;
+  min-width: 8%;
+}
+
+.gp-live-field__bar--home {
+  justify-self: start;
+  background: rgba(255, 43, 95, 0.72);
+}
+
+.gp-live-field__bar--center {
+  justify-self: center;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.gp-live-field__bar--away {
+  justify-self: end;
+  background: rgba(37, 99, 235, 0.72);
+}
+
+.gp-live-field__pulse {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.gp-live-field--pulse-soft {
+  animation: gp-field-soft 2.8s ease-in-out infinite;
+}
+
+.gp-live-field--pulse-active {
+  animation: gp-field-active 1.8s ease-in-out infinite;
+}
+
+.gp-live-field--pulse-critical {
+  animation: gp-field-critical 1.15s ease-in-out infinite;
+}
+
+.gp-live-field__flow {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 26%;
+  filter: blur(10px);
+  opacity: 0.45;
+  pointer-events: none;
+  animation: gp-flow-move 2.6s linear infinite;
+}
+
+.gp-live-field__flow--home {
+  left: 6%;
+  background: linear-gradient(90deg, rgba(255, 43, 95, 0.48), transparent);
+}
+
+.gp-live-field__flow--away {
+  right: 6%;
+  background: linear-gradient(270deg, rgba(37, 99, 235, 0.48), transparent);
+}
+
+.gp-live-field__flow--transition {
+  left: 37%;
+  background: linear-gradient(90deg, rgba(255, 122, 69, 0.46), rgba(37, 99, 235, 0.42));
+}
+
+.gp-live-field__flow--balanced {
+  left: 37%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.gp-live-field__mode {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0.34rem 0.72rem;
+  border-radius: 6px;
+  background: rgba(17, 24, 39, 0.68);
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.gp-live-field__indicators {
+  margin-top: 0.42rem;
+  display: grid;
+  gap: 0.42rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gp-live-field__indicators div {
+  background: #fff;
+  border: 1px solid var(--gp-border);
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+}
+
+.gp-live-field__indicators span {
+  display: block;
+  font-size: 0.62rem;
+  color: var(--gp-muted);
+}
+
+.gp-live-field__indicators strong {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
+  color: var(--gp-text);
+  line-height: 1.25;
+}
+
+.gp-live-field__legend {
+  margin-top: 0.42rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.8rem;
+  font-size: 0.62rem;
+  color: var(--gp-muted);
+}
+
+.gp-live-field__dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  margin-right: 0.2rem;
+}
+
+.gp-live-field__dot--red {
+  background: #ff2b5f;
+}
+
+.gp-live-field__dot--orange {
+  background: #ff7a45;
+}
+
+.gp-live-field__dot--blue {
+  background: #2563eb;
+}
+
+.gp-live-field__dot--neutral {
+  background: #94a3b8;
+}
+
+.gp-live-field__critical-note {
+  margin: 0.42rem 0 0;
+  font-size: 0.65rem;
+  color: #c81e4a;
+  font-weight: 700;
+}
+
+@keyframes gp-field-soft {
+  0%, 100% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+  50% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16); }
+}
+
+@keyframes gp-field-active {
+  0%, 100% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 14px rgba(255, 122, 69, 0.2); }
+  50% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2), 0 0 22px rgba(255, 122, 69, 0.35); }
+}
+
+@keyframes gp-field-critical {
+  0%, 100% { box-shadow: inset 0 0 0 1px rgba(255, 43, 95, 0.25), 0 0 18px rgba(255, 43, 95, 0.3); }
+  50% { box-shadow: inset 0 0 0 1px rgba(255, 43, 95, 0.45), 0 0 28px rgba(255, 43, 95, 0.45); }
+}
+
+@keyframes gp-flow-move {
+  0% { transform: translateX(-6px); opacity: 0.25; }
+  50% { transform: translateX(6px); opacity: 0.5; }
+  100% { transform: translateX(-6px); opacity: 0.25; }
+}
