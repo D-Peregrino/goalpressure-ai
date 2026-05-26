@@ -29,8 +29,8 @@ import {
 import LiveMatchTabs, { type MatchTabId } from "./LiveMatchTabs";
 import MatchTabContent from "./MatchTabContent";
 import MetricIconBox from "./MetricIconBox";
-import PressureTimeline from "./PressureTimeline";
 import LiveTacticalField from "@/components/terminal/field/LiveTacticalField";
+import SmartPressureTimeline from "@/components/terminal/timeline/SmartPressureTimeline";
 
 const METRIC_ICONS = {
   shots: Target,
@@ -260,8 +260,9 @@ export default function MatchPanelCard({
               })}
             </div>
           </div>
-          <PressureTimeline
+          <SmartPressureTimeline
             match={match}
+            context={context}
             window={timelineWindow}
             onWindowChange={onTimelineWindowChange}
           />
