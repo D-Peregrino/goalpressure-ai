@@ -16,6 +16,7 @@ export const NAV_ITEMS = [
   { href: "/minha-central", label: "Minha central", short: "Central" },
   { href: "/workspace", label: "Workspace", short: "Workspace" },
   { href: "/network", label: "Signal Exchange", short: "Rede" },
+  { href: "/replay", label: "Replay Engine", short: "Replay" },
   { href: "/terminal", label: "Central ao vivo", short: "Central" },
   { href: "/feed", label: "Feed ao vivo", short: "Feed" },
   { href: "/analytics", label: "Insights", short: "Insights" },
