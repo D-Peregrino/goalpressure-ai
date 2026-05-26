@@ -11,6 +11,7 @@ import {
 import type { EnrichedLiveMatch } from "@/hooks/useLiveMatchCenter";
 import type { MatchContextResult } from "@/components/terminal/intelligence/ContextEngine";
 import { mapOperationalDecision } from "./decisionMapper";
+import { evaluateGpiFromEnriched } from "@/lib/gpi/gpiEvaluate";
 
 const SEAL_ICON = {
   NEUTRO: Shield,
@@ -28,6 +29,7 @@ export default function OperationalDecisionPanel({
   context: MatchContextResult;
 }) {
   const decision = useMemo(() => mapOperationalDecision(match, context), [match, context]);
+  const gpi = useMemo(() => evaluateGpiFromEnriched(match), [match]);
   const Icon = SEAL_ICON[decision.selo];
 
   return (
@@ -40,6 +42,9 @@ export default function OperationalDecisionPanel({
         <div className="gp-decision__seal-wrap">
           <Icon className="gp-decision__seal-icon h-4 w-4" aria-hidden />
           <span className="gp-decision__seal">{decision.selo}</span>
+          <span className="gp-decision__gpi-chip" title="GoalPressure Index operacional">
+            GPI {gpi.score}
+          </span>
         </div>
         <p className="gp-decision__tooltip-hint">
           Leitura gerada a partir de pressão ofensiva, valor esperado, ritmo e risco contextual.

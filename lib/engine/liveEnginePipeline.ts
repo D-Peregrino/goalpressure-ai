@@ -133,6 +133,12 @@ export async function processLiveEngineBatch(
     scheduleHistoricalPersistence(enrichedMatches);
   }
 
+  const { isGpiEngineEnabled } = await import("@/lib/gpi/gpiEngine");
+  if (isGpiEngineEnabled()) {
+    const { runGPICycle } = await import("@/lib/gpi/gpiEngine");
+    void runGPICycle(enrichedMatches);
+  }
+
   logInfo(LOG_SCOPE, "Live engine batch processed", {
     matches: enrichedMatches.length,
     signals: signals.length,

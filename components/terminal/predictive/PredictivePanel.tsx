@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import type { EnrichedLiveMatch } from "@/hooks/useLiveMatchCenter";
 import type { MatchContextResult } from "@/components/terminal/intelligence/ContextEngine";
 import { evaluatePredictiveFromEnriched } from "@/lib/predictive/predictiveEvaluate";
+import { evaluateGpiFromEnriched } from "@/lib/gpi/gpiEvaluate";
 import type { PredictiveLevel } from "@/lib/predictive/predictive.types";
 
 const LEVEL_CLASS: Record<PredictiveLevel, string> = {
@@ -25,6 +26,7 @@ export default function PredictivePanel({
     () => evaluatePredictiveFromEnriched(match),
     [match, context.score]
   );
+  const gpi = useMemo(() => evaluateGpiFromEnriched(match), [match]);
 
   return (
     <section className={`gp-predictive ${LEVEL_CLASS[reading.level]}`}>
@@ -35,7 +37,12 @@ export default function PredictivePanel({
             Antecipação contextual antes da confirmação total do evento
           </p>
         </div>
-        <span className="gp-predictive__level">{reading.levelLabel}</span>
+        <div className="gp-predictive__badges">
+          <span className="gp-predictive__level">{reading.levelLabel}</span>
+          <span className="gp-predictive__gpi" title="GoalPressure Index">
+            GPI {gpi.score}
+          </span>
+        </div>
       </header>
 
       <p className="gp-predictive__narrative">{reading.narrative}</p>

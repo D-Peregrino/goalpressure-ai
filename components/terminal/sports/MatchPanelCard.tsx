@@ -34,6 +34,8 @@ import OperationalDecisionPanel from "@/components/terminal/decision/Operational
 import SmartPressureTimeline from "@/components/terminal/timeline/SmartPressureTimeline";
 import { mapOperationalDecision } from "@/components/terminal/decision/decisionMapper";
 import PredictivePanel from "@/components/terminal/predictive/PredictivePanel";
+import GPIHero from "@/components/terminal/gpi/GPIHero";
+import GPIBreakdown from "@/components/terminal/gpi/GPIBreakdown";
 
 const METRIC_ICONS = {
   shots: Target,
@@ -197,9 +199,12 @@ export default function MatchPanelCard({
         </div>
       )}
 
+      {!compact && match.isLive ? <GPIHero match={match} /> : null}
+
       {!compact && (
         <>
           <OperationalDecisionPanel match={match} context={context} />
+          <GPIBreakdown match={match} />
           <PredictivePanel match={match} context={context} />
           <LiveTacticalField match={match} context={context} />
 

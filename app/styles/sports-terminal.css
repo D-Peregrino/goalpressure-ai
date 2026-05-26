@@ -1463,6 +1463,17 @@
   padding: 0.3rem 0.65rem;
   border-radius: 8px;
   background: rgba(27, 36, 48, 0.06);
+  flex-wrap: wrap;
+}
+
+.gp-decision__gpi-chip {
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+  color: #fff;
+  font-variant-numeric: tabular-nums;
 }
 
 .gp-decision--watch .gp-decision__seal-wrap {
@@ -1640,6 +1651,23 @@
   margin: 0.12rem 0 0;
   font-size: 0.65rem;
   color: var(--gp-muted);
+}
+
+.gp-predictive__badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.gp-predictive__gpi {
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  background: #1e293b;
+  color: #f8fafc;
+  font-variant-numeric: tabular-nums;
 }
 
 .gp-predictive__level {
@@ -2196,6 +2224,312 @@
 }
 
 .gp-ctx-backtest__empty {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--gp-muted);
+  text-align: center;
+  padding: 0.75rem;
+}
+
+/* GoalPressure Index */
+.gp-gpi-hero {
+  margin: 0 0 0.75rem;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(30, 58, 95, 0.15);
+  background: linear-gradient(145deg, #0f172a 0%, #1e3a5f 42%, #1d4ed8 100%);
+  color: #f8fafc;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.22);
+}
+
+.gp-gpi-hero--neutro {
+  background: linear-gradient(145deg, #1e293b 0%, #334155 100%);
+}
+
+.gp-gpi-hero--monitor {
+  background: linear-gradient(145deg, #1e3a5f 0%, #2563eb 100%);
+}
+
+.gp-gpi-hero--accel {
+  background: linear-gradient(145deg, #14532d 0%, #15803d 55%, #1d4ed8 100%);
+}
+
+.gp-gpi-hero--critical {
+  background: linear-gradient(145deg, #7c2d12 0%, #ea580c 50%, #1e3a5f 100%);
+}
+
+.gp-gpi-hero--rupture {
+  background: linear-gradient(145deg, #7f1d1d 0%, #dc2626 45%, #431407 100%);
+  border-color: rgba(254, 202, 202, 0.35);
+}
+
+.gp-gpi-hero__brand {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.gp-gpi-hero__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.gp-gpi-hero__fixture {
+  font-size: 0.62rem;
+  opacity: 0.75;
+  text-align: right;
+}
+
+.gp-gpi-hero__core {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 0.55rem;
+}
+
+.gp-gpi-hero__score-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 0.15rem;
+}
+
+.gp-gpi-hero__score {
+  font-size: 3.25rem;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+}
+
+.gp-gpi-hero__score-max {
+  font-size: 0.85rem;
+  opacity: 0.65;
+  font-weight: 600;
+}
+
+.gp-gpi-hero__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+}
+
+.gp-gpi-hero__class {
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.gp-gpi-hero__intensity,
+.gp-gpi-hero__trend {
+  opacity: 0.85;
+}
+
+.gp-gpi-hero__narrative {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  opacity: 0.95;
+}
+
+.gp-gpi-hero__disclaimer {
+  margin: 0.5rem 0 0;
+  font-size: 0.58rem;
+  opacity: 0.55;
+  line-height: 1.35;
+}
+
+.gp-gpi-breakdown {
+  margin: 0.65rem 0;
+  padding: 0.75rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--gp-border);
+  background: #fafbfd;
+}
+
+.gp-gpi-breakdown--compact {
+  padding: 0.5rem 0.65rem;
+}
+
+.gp-gpi-breakdown__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.45rem;
+}
+
+.gp-gpi-breakdown__title {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.gp-gpi-breakdown__score {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #1e40af;
+}
+
+.gp-gpi-breakdown__compact-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--gp-muted);
+}
+
+.gp-gpi-breakdown__bars {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.gp-gpi-breakdown__row-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.62rem;
+  margin-bottom: 0.12rem;
+}
+
+.gp-gpi-breakdown__row-top strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-gpi-breakdown__track {
+  height: 5px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.gp-gpi-breakdown__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2563eb, #3b82f6);
+}
+
+.gp-gpi-breakdown__fill--risk {
+  background: linear-gradient(90deg, #f97316, #ef4444);
+}
+
+.gp-gpi-panel {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--gp-border);
+  border-radius: 12px;
+  background: linear-gradient(165deg, #0f172a 0%, #1e293b 8%, #fff 45%);
+  box-shadow: 0 2px 14px rgba(15, 23, 42, 0.08);
+}
+
+.gp-gpi-panel__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.gp-gpi-panel__title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.gp-gpi-panel__sub {
+  margin: 0.15rem 0 0;
+  font-size: 0.65rem;
+  color: var(--gp-muted);
+}
+
+.gp-gpi-panel__pill {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--gp-border);
+  color: var(--gp-muted);
+}
+
+.gp-gpi-panel__pill--on {
+  background: #1e293b;
+  color: #f8fafc;
+  border-color: #1e293b;
+}
+
+.gp-gpi-panel__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.gp-gpi-panel__metrics div {
+  padding: 0.35rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid var(--gp-border);
+  text-align: center;
+}
+
+.gp-gpi-panel__metrics span {
+  display: block;
+  font-size: 0.55rem;
+  color: var(--gp-muted);
+}
+
+.gp-gpi-panel__metrics strong {
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-gpi-panel__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gp-gpi-panel__list li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 0.65rem;
+}
+
+.gp-gpi-panel__score {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1e40af;
+  font-variant-numeric: tabular-nums;
+  min-width: 2rem;
+}
+
+.gp-gpi-panel__list strong {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--gp-text);
+}
+
+.gp-gpi-panel__list li span:last-child {
+  color: var(--gp-muted);
+}
+
+.gp-gpi-panel__muted {
+  color: var(--gp-muted);
+  padding: 0.5rem 0;
+}
+
+.gp-gpi-panel__empty {
   margin: 0;
   font-size: 0.78rem;
   color: var(--gp-muted);

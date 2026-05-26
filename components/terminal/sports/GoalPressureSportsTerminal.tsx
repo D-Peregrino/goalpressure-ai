@@ -27,6 +27,7 @@ import AdaptiveLearningPanel from "@/components/terminal/learning/AdaptiveLearni
 import BacktestingPanel from "@/components/terminal/backtesting/BacktestingPanel";
 import OperationalPersistencePanel from "@/components/terminal/persistence/OperationalPersistencePanel";
 import PersistenceHealthPanel from "@/components/terminal/persistence/PersistenceHealthPanel";
+import GPIPanel from "@/components/terminal/gpi/GPIPanel";
 import MatchListRow from "./MatchListRow";
 import MatchPanelCard from "./MatchPanelCard";
 import SportsToast from "./SportsToast";
@@ -487,6 +488,7 @@ export default function GoalPressureSportsTerminal() {
                   />
                 ) : null}
 
+                <GPIPanel />
                 <PredictiveMetricsStrip />
                 <PersistenceHealthPanel />
                 <OperationalPersistencePanel />
