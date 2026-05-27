@@ -1,3 +1,5 @@
+import { envBool } from "@/lib/env/envBool";
+
 function parseBool(value: string | undefined, defaultValue: boolean): boolean {
   if (value == null || value.trim() === "") return defaultValue;
   const n = value.trim().toLowerCase();
@@ -6,8 +8,8 @@ function parseBool(value: string | undefined, defaultValue: boolean): boolean {
 
 export function getNetworkConfig() {
   return {
-    enabled: parseBool(process.env.NETWORK_ENGINE_ENABLED, true),
-    sandbox: parseBool(process.env.NETWORK_ENGINE_SANDBOX, true),
+    enabled: envBool("NETWORK_ENGINE_ENABLED", true, true),
+    sandbox: envBool("NETWORK_ENGINE_SANDBOX", true, false),
     maxSignalsPerFeed: 40,
     consensusWindowHours: 6,
     minObserversForConsensus: 2,

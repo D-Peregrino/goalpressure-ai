@@ -18,6 +18,7 @@ import CopaReplaySection from "@/components/copa/sections/CopaReplay";
 import CopaOpsSection from "@/components/copa/sections/CopaOps";
 import CopaLeadCapture from "@/components/copa/CopaLeadCapture";
 import CopaSeasonalBanner from "@/components/copa/CopaSeasonalBanner";
+import CopaDataSourceBanner from "@/components/copa/CopaDataSourceBanner";
 import Link from "next/link";
 
 const TABS: { id: CopaSection; label: string; premium?: boolean }[] = [
@@ -87,6 +88,7 @@ export default function CopaPageClient() {
         <p className="gp-copa-loading">Carregando GoalPressure Copa 2026…</p>
       ) : (
         <>
+          <CopaDataSourceBanner data={data} />
           {section === "overview" ? <CopaOverview data={data} /> : null}
           {section === "today" ? <CopaToday matches={data.today} /> : null}
           {section === "calendar" ? <CopaCalendar days={data.calendar} /> : null}

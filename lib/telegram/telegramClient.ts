@@ -6,18 +6,14 @@ import { sendTelegramRouted } from "@/lib/telegram/telegramRouting";
 const LOG_SCOPE = "telegram-client";
 const TELEGRAM_API_BASE = "https://api.telegram.org";
 
-function parseSandboxMode(value: string | undefined): boolean {
-  if (!value) return true;
-  const normalized = value.trim().toLowerCase();
-  return normalized === "true" || normalized === "1" || normalized === "yes";
-}
+import { envBool } from "@/lib/env/envBool";
 
 /**
  * Reads Telegram configuration from environment (server-side only).
- * Defaults to sandbox mode when unset — no real messages are sent.
+ * Dev: sandbox default true. Produção: sandbox default false (envio real se token ok).
  */
 export function getTelegramConfig(): TelegramConfig {
-  const sandboxMode = parseSandboxMode(process.env.TELEGRAM_SANDBOX_MODE);
+  const sandboxMode = envBool("TELEGRAM_SANDBOX_MODE", true, false);
   const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim() || null;
   const chatId = process.env.TELEGRAM_CHAT_ID?.trim() || null;
 

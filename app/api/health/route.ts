@@ -9,35 +9,47 @@ export const runtime = "nodejs";
 const ROUTE_SCOPE = "api/health";
 
 export async function GET(): Promise<NextResponse> {
-  bootstrapGoalPressureRuntime();
-  const report = await getSystemHealthReport();
+  try {
+    bootstrapGoalPressureRuntime();
+    const report = await getSystemHealthReport();
 
-  const httpStatus =
-    report.status === "unhealthy"
-      ? 503
-      : report.status === "degraded"
-        ? 200
-        : 200;
+    const httpStatus =
+      report.status === "unhealthy"
+        ? 503
+        : report.status === "degraded"
+          ? 200
+          : 200;
 
-  if (process.env.NODE_ENV === "production") {
-    logOps(ROUTE_SCOPE, "Health check", {
-      status: report.status,
-      database: report.database.mode,
-      telegram: report.telegram.status,
-    });
+    if (process.env.NODE_ENV === "production") {
+      logOps(ROUTE_SCOPE, "Health check", {
+        status: report.status,
+        database: report.database.mode,
+        telegram: report.telegram.status,
+      });
+    }
+
+    return NextResponse.json(
+      {
+        status: report.status,
+        uptime: report.uptime,
+        database: report.database,
+        telegram: report.telegram,
+        liveFeed: report.liveFeed,
+        storage: report.storage,
+        environment: report.environment,
+        timestamp: report.timestamp,
+      },
+      { status: httpStatus }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "health_check_failed";
+    return NextResponse.json(
+      {
+        status: "unhealthy",
+        error: message,
+        timestamp: new Date().toISOString(),
+      },
+      { status: 503 }
+    );
   }
-
-  return NextResponse.json(
-    {
-      status: report.status,
-      uptime: report.uptime,
-      database: report.database,
-      telegram: report.telegram,
-      liveFeed: report.liveFeed,
-      storage: report.storage,
-      environment: report.environment,
-      timestamp: report.timestamp,
-    },
-    { status: httpStatus }
-  );
 }

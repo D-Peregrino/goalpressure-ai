@@ -114,6 +114,12 @@ export default function OpsCenter() {
       ref={rootRef}
       className={`gp-ops ${broadcastMode ? "gp-ops--broadcast" : ""}`}
     >
+      {center.sandbox ? (
+        <p className="gp-ops-empty" role="alert" style={{ marginBottom: "1rem" }}>
+          <strong>Sandbox OPS</strong> — dados simulados. Defina OPS_CENTER_SANDBOX=false em
+          produção para agregar jogos reais.
+        </p>
+      ) : null}
       <div className="gp-ops__toolbar">
         <MultiViewSelector
           value={viewCount}
