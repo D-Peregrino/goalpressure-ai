@@ -5,6 +5,7 @@ import type { EnrichedLiveMatch } from "@/hooks/useLiveMatchCenter";
 import type { MatchTabId } from "./LiveMatchTabs";
 import type { TimelineWindow } from "@/lib/terminal/sportsDisplay";
 import MatchPanelCard from "./MatchPanelCard";
+import TerminalMatchDetail from "./TerminalMatchDetail";
 import type { MatchContextResult } from "@/components/terminal/intelligence/ContextEngine";
 
 export default function MatchDetailModal({
@@ -28,6 +29,17 @@ export default function MatchDetailModal({
   onClose: () => void;
   contextView: MatchContextResult;
 }) {
+  if (match.isFinished || match.isPreMatch) {
+    return (
+      <TerminalMatchDetail
+        match={match}
+        isFavorite={isFavorite}
+        onToggleFavorite={onToggleFavorite}
+        onClose={onClose}
+      />
+    );
+  }
+
   return (
     <div className="gp-sports-modal" role="dialog" aria-modal="true" aria-label="Detalhe do jogo">
       <button

@@ -13,7 +13,9 @@ import { SportmonksServiceError } from "@/lib/utils/sportmonksErrors";
 import { logWarn } from "@/lib/utils/logger";
 import type { Match } from "@/types/domain";
 
-const SCHEDULE_INCLUDES = ["participants", "scores", "league", "state"];
+import { TERMINAL_FIXTURE_INCLUDES } from "@/lib/sportmonks/fetchFixtureById";
+
+const SCHEDULE_INCLUDES = [...TERMINAL_FIXTURE_INCLUDES];
 
 function formatYmd(d: Date): string {
   return d.toISOString().slice(0, 10);

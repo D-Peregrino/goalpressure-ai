@@ -38,15 +38,73 @@ export function normalizeLogoUrl(url: string | null | undefined): string | null 
   return null;
 }
 
+function pickLogoString(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  return normalizeLogoUrl(value);
+}
+
 export function extractParticipantLogo(participant: Record<string, unknown>): string | null {
-  const img =
-    participant.image_path ??
-    participant.logo_path ??
-    participant.logo ??
-    participant.image ??
-    null;
-  if (typeof img !== "string") return null;
-  return normalizeLogoUrl(img);
+  const direct = [
+    participant.image_path,
+    participant.logo_path,
+    participant.logo,
+    participant.image,
+  ];
+
+  for (const candidate of direct) {
+    const url = pickLogoString(candidate);
+    if (url) return url;
+  }
+
+  const team = participant.team;
+  if (team && typeof team === "object") {
+    const t = team as Record<string, unknown>;
+    for (const candidate of [t.image_path, t.logo_path, t.logo, t.image]) {
+      const url = pickLogoString(candidate);
+      if (url) return url;
+    }
+  }
+
+  const meta = participant.meta;
+  if (meta && typeof meta === "object") {
+    const m = meta as Record<string, unknown>;
+    const url = pickLogoString(m.image_path ?? m.logo_path);
+    if (url) return url;
+  }
+
+  return null;
+}
+
+/** Logos a partir do fixture bruto (participants + local/visitor team). */
+export function extractLogosFromFixture(raw: unknown): {
+  homeLogo: string | null;
+  awayLogo: string | null;
+} {
+  const fromParticipants = extractLogosFromRaw(raw);
+  if (fromParticipants.homeLogo && fromParticipants.awayLogo) {
+    return fromParticipants;
+  }
+
+  if (!raw || typeof raw !== "object") return fromParticipants;
+  const f = raw as Record<string, unknown>;
+
+  const local =
+    f.localTeam ?? f.localteam ?? f.local_team ?? f.home_team ?? f.homeTeam;
+  const visitor =
+    f.visitorTeam ?? f.visitorteam ?? f.visitor_team ?? f.away_team ?? f.awayTeam;
+
+  return {
+    homeLogo:
+      fromParticipants.homeLogo ??
+      (local && typeof local === "object"
+        ? extractParticipantLogo(local as Record<string, unknown>)
+        : null),
+    awayLogo:
+      fromParticipants.awayLogo ??
+      (visitor && typeof visitor === "object"
+        ? extractParticipantLogo(visitor as Record<string, unknown>)
+        : null),
+  };
 }
 
 export function extractLogosFromRaw(raw: unknown): {

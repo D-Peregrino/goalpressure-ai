@@ -16,6 +16,7 @@ import {
   isTerminalVisibleMatch,
   normalizeFixtureId,
 } from "@/lib/ui/matchFormatting";
+import { resolveTeamLogoFromMatch } from "@/lib/teams/teamLogoResolver";
 import { normalizeLiveMatch } from "@/lib/ui/normalizeLiveMatch";
 import type { Match, MatchStatus, Odds } from "@/types/domain";
 import {
@@ -285,7 +286,37 @@ export function useLiveMatchCenter() {
       byFixture.set(fixtureIdFromMatch(m), m);
     }
     for (const m of live.matches) {
-      byFixture.set(fixtureIdFromMatch(m), m);
+      const id = fixtureIdFromMatch(m);
+      const prev = byFixture.get(id);
+      if (!prev) {
+        byFixture.set(id, m);
+        continue;
+      }
+      byFixture.set(id, {
+        ...m,
+        homeLogoUrl: m.homeLogoUrl ?? prev.homeLogoUrl,
+        awayLogoUrl: m.awayLogoUrl ?? prev.awayLogoUrl,
+        score: m.score ?? prev.score,
+        teamStats: m.teamStats ?? prev.teamStats,
+        stats: (m.stats?.shots ?? 0) > 0 ? m.stats : prev.stats,
+        feedMeta: prev.feedMeta
+          ? {
+              ...prev.feedMeta,
+              participantLogos: {
+                home:
+                  m.feedMeta?.participantLogos?.home ??
+                  m.homeLogoUrl ??
+                  prev.feedMeta.participantLogos?.home ??
+                  null,
+                away:
+                  m.feedMeta?.participantLogos?.away ??
+                  m.awayLogoUrl ??
+                  prev.feedMeta.participantLogos?.away ??
+                  null,
+              },
+            }
+          : m.feedMeta,
+      });
     }
     return Array.from(byFixture.values());
   }, [live.matches, schedule.matches]);
@@ -386,8 +417,8 @@ export function useLiveMatchCenter() {
         minuteLabel: core.minuteLabel,
         status: core.status,
         displayStatus: core.displayStatus,
-        homeLogo: core.homeLogo,
-        awayLogo: core.awayLogo,
+        homeLogo: resolveTeamLogoFromMatch(match, "home") ?? core.homeLogo,
+        awayLogo: resolveTeamLogoFromMatch(match, "away") ?? core.awayLogo,
         debug: core.debug,
         odds: match.odds,
         pressureScore: split.total,

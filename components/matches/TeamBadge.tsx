@@ -1,8 +1,7 @@
 "use client";
 
 import { memo, useEffect, useState } from "react";
-import { getCachedLogoUrl } from "@/lib/teams/teamLogoResolver";
-import { resolveFallbackLogo } from "@/lib/teams/teamLogoResolver";
+import { getCachedLogoUrl, resolveFallbackLogo } from "@/lib/teams/teamLogoResolver";
 
 const SIZE_CLASS = {
   sm: "gp-team-crest--sm",
@@ -23,55 +22,41 @@ function TeamBadgeInner({
 }) {
   const fallback = resolveFallbackLogo(teamName);
   const resolvedUrl = logoUrl ? getCachedLogoUrl(teamName, logoUrl) : null;
-  const [failed, setFailed] = useState(false);
-  const [loaded, setLoaded] = useState(!resolvedUrl);
+  const [showImage, setShowImage] = useState(Boolean(resolvedUrl));
   const sizeCls = SIZE_CLASS[size];
 
   useEffect(() => {
-    setFailed(false);
-    setLoaded(!resolvedUrl);
+    setShowImage(Boolean(resolvedUrl));
   }, [resolvedUrl]);
 
-  const showLogo = Boolean(resolvedUrl) && !failed;
-  const showSkeleton = Boolean(resolvedUrl) && !loaded && !failed;
-
-  if (showSkeleton) {
+  if (!resolvedUrl || !showImage) {
     return (
       <span
-        className={`gp-team-crest gp-team-crest--skeleton gp-team-crest--premium ${sizeCls}`}
+        className={`gp-team-crest gp-team-crest--fallback gp-team-crest--premium ${sizeCls}`}
+        style={{ background: fallback.background, color: fallback.color }}
         title={teamName}
-        aria-hidden
-      />
-    );
-  }
-
-  if (showLogo && resolvedUrl) {
-    return (
-      <span
-        className={`gp-team-crest gp-team-crest--img gp-team-crest--premium ${sizeCls}`}
-        title={teamName}
+        aria-label={teamName}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={resolvedUrl}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          className="gp-team-crest__img"
-          onLoad={() => setLoaded(true)}
-          onError={() => setFailed(true)}
-        />
+        {fallback.initials}
       </span>
     );
   }
 
   return (
     <span
-      className={`gp-team-crest gp-team-crest--fallback gp-team-crest--premium ${sizeCls}`}
-      style={{ background: fallback.background, color: fallback.color }}
+      className={`gp-team-crest gp-team-crest--img gp-team-crest--premium ${sizeCls}`}
       title={teamName}
     >
-      {fallback.initials}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={resolvedUrl}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        className="gp-team-crest__img"
+        style={{ objectFit: "contain" }}
+        onError={() => setShowImage(false)}
+      />
     </span>
   );
 }

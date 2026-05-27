@@ -6,7 +6,10 @@ import TeamBadge from "@/components/matches/TeamBadge";
 import LeagueFlag from "./LeagueFlag";
 import type { EnrichedLiveMatch } from "@/hooks/useLiveMatchCenter";
 import { leagueLine } from "@/lib/terminal/sportsDisplay";
-import { resolveTeamLogoFromEnriched } from "@/lib/teams/teamLogoResolver";
+import {
+  resolveTeamLogo,
+  resolveTeamLogoFromEnriched,
+} from "@/lib/teams/teamLogoResolver";
 import { cn } from "@/lib/utils";
 
 function matchStatus(match: EnrichedLiveMatch): {
@@ -29,7 +32,7 @@ function matchStatus(match: EnrichedLiveMatch): {
 }
 
 function formatOdd(value: number | null | undefined): string | null {
-  if (value == null || !Number.isFinite(value) || value <= 0) return null;
+  if (value == null || !Number.isFinite(value) || value <= 1.01) return null;
   return value.toFixed(2);
 }
 
@@ -44,8 +47,18 @@ export default function MatchWatchCard({
   onOpen: () => void;
   onToggleFavorite: () => void;
 }) {
-  const homeLogo = useMemo(() => resolveTeamLogoFromEnriched(match, "home"), [match]);
-  const awayLogo = useMemo(() => resolveTeamLogoFromEnriched(match, "away"), [match]);
+  const homeLogo = useMemo(
+    () =>
+      resolveTeamLogoFromEnriched(match, "home") ??
+      resolveTeamLogo({ side: "home", teamName: match.homeTeam, enriched: match }),
+    [match]
+  );
+  const awayLogo = useMemo(
+    () =>
+      resolveTeamLogoFromEnriched(match, "away") ??
+      resolveTeamLogo({ side: "away", teamName: match.awayTeam, enriched: match }),
+    [match]
+  );
   const status = matchStatus(match);
 
   const scoreHome =

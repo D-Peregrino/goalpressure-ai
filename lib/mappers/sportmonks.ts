@@ -4,7 +4,10 @@
  * @see https://docs.sportmonks.com/football/
  */
 
-import { extractParticipantLogo } from "@/lib/teams/teamLogoResolver";
+import {
+  extractLogosFromFixture,
+  extractParticipantLogo,
+} from "@/lib/teams/teamLogoResolver";
 import { applyPressureToMatch } from "@/lib/pressureScore";
 import { buildPremiumContext } from "@/lib/mappers/buildPremiumContext";
 import { normalizeFixtureOdds } from "@/lib/mappers/normalizeSportmonksOdds";
@@ -325,14 +328,23 @@ function mapParticipantLogos(fixture: SportmonksFixture): {
   home: string | null;
   away: string | null;
 } {
+  const fromFixture = extractLogosFromFixture(fixture);
+  if (fromFixture.homeLogo && fromFixture.awayLogo) {
+    return { home: fromFixture.homeLogo, away: fromFixture.awayLogo };
+  }
+
   const { home, away } = resolveParticipants(fixture);
   return {
-    home: home
-      ? extractParticipantLogo(home as unknown as Record<string, unknown>)
-      : null,
-    away: away
-      ? extractParticipantLogo(away as unknown as Record<string, unknown>)
-      : null,
+    home:
+      fromFixture.homeLogo ??
+      (home
+        ? extractParticipantLogo(home as unknown as Record<string, unknown>)
+        : null),
+    away:
+      fromFixture.awayLogo ??
+      (away
+        ? extractParticipantLogo(away as unknown as Record<string, unknown>)
+        : null),
   };
 }
 
