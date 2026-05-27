@@ -8,12 +8,13 @@ import type {
 } from "@/types/telegram";
 
 /** Live production fingerprint: fixture + market (5 min cooldown lock). */
+/** Um alerta por jogo na janela de cooldown (não por mercado). */
 export function buildLiveDispatchFingerprint(
   matchId: string,
-  market: MarketType
+  _market?: MarketType
 ): string {
   const fixtureId = matchId.replace(/^sm-/, "") || matchId;
-  return `live|${fixtureId}|${market}`;
+  return `live|${fixtureId}`;
 }
 
 export function buildSignalFingerprint(
@@ -86,38 +87,14 @@ export function formatInstitutionalSignalMessage(
     ? formatReasonBlock(reason)
     : formatReasonBlock(signal.reason);
 
+  const reasonShort = reasonLines.slice(0, 2).join(" · ");
+
   return [
-    "🚨 GOALPRESSURE AI SIGNAL",
-    "",
-    "Match:",
-    signal.matchLabel,
-    "",
-    "Market:",
-    marketLabelLive(signal.market),
-    "",
-    "Minute:",
-    minuteLabel,
-    "",
-    "Pressure Score:",
-    `${Math.round(signal.pressureScore)}/100`,
-    "",
-    "Confidence:",
-    signal.confidence,
-    "",
-    "Current Odd:",
-    signal.odd.toFixed(2),
-    "",
-    "Momentum:",
-    momentumLabel,
-    "",
-    "Reason:",
-    ...reasonLines,
-    "",
-    "Model:",
-    modelId,
-    "",
-    "Signal ID:",
-    signalId,
+    `🚨 GoalPressure · ${signal.matchLabel}`,
+    `${marketLabelLive(signal.market)} · ${minuteLabel} · Pressão ${Math.round(signal.pressureScore)}/100`,
+    `Odd ${signal.odd.toFixed(2)} · Conf. ${signal.confidence} · ${momentumLabel}`,
+    reasonShort,
+    `ID ${signalId.slice(0, 24)}`,
   ].join("\n");
 }
 

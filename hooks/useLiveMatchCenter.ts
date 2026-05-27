@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLiveMatches } from "@/hooks/useLiveMatches";
+import { useTerminalSchedule } from "@/hooks/useTerminalSchedule";
 import { useOps } from "@/hooks/useOps";
 import { useUserWorkspace } from "@/hooks/useUserWorkspace";
 import { useSmartWorkspace } from "@/hooks/useSmartWorkspace";
@@ -10,6 +11,7 @@ import {
   fixtureIdFromMatch,
   formatKickoffLabel,
   isLiveStatus,
+  isFinishedStatus,
   isPreMatchStatus,
   isTerminalVisibleMatch,
   normalizeFixtureId,
@@ -43,6 +45,7 @@ export type MatchCenterFilter =
   | "all"
   | "live"
   | "upcoming"
+  | "finished"
   | "high_pressure"
   | "ev_plus"
   | "execute"
@@ -119,6 +122,7 @@ export interface EnrichedLiveMatch {
   urgency: number;
   isPreMatch: boolean;
   isLive: boolean;
+  isFinished: boolean;
   kickoffLabel: string | null;
   /** Narrativa principal do card (contextual por fixture). */
   cardInsight: string;
@@ -187,28 +191,6 @@ export interface EnrichedLiveMatch {
   autonomousDispatchIntensity?: string;
 }
 
-const SUPPLEMENTARY_PATHS = [
-  "/api/meta/live",
-  "/api/market/edges",
-  "/api/temporal/live",
-  "/api/microevent/live",
-  "/api/sequence/live",
-  "/api/player/runtime",
-] as const;
-
-async function fetchOptional(path: string): Promise<unknown | null> {
-  try {
-    const res = await fetch(path, { cache: "no-store", headers: { Accept: "application/json" } });
-    if (!res.ok) return null;
-    const body = await res.json();
-    if (body && typeof body === "object" && "ok" in body && body.ok === false) return null;
-    return body;
-  } catch {
-    console.warn(`[useLiveMatchCenter] optional fetch failed: ${path}`);
-    return null;
-  }
-}
-
 function splitPressure(
   match: Match,
   ops?: {
@@ -264,27 +246,13 @@ function buildRecentEvents(parts: {
 
 export function useLiveMatchCenter() {
   const live = useLiveMatches({ pollIntervalMs: 30_000 });
-  const ops = useOps({ pollIntervalMs: 15_000 });
+  const schedule = useTerminalSchedule(60_000);
+  const ops = useOps({ pollIntervalMs: 30_000 });
   const { favorites, watched, toggleFavorite, ready: workspaceReady } = useUserWorkspace();
   const { smart } = useSmartWorkspace();
   const [filter, setFilter] = useState<MatchCenterFilter>("all");
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const supplementaryOk = useRef(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    const run = async () => {
-      await Promise.allSettled(SUPPLEMENTARY_PATHS.map((p) => fetchOptional(p)));
-      if (!cancelled) supplementaryOk.current = true;
-    };
-    void run();
-    const id = window.setInterval(run, 25_000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, []);
 
   const dispatchByFixture = useMemo(() => {
     const snap = live.dispatchSnapshot;
@@ -311,8 +279,19 @@ export function useLiveMatchCenter() {
     return map;
   }, [live.dispatchSnapshot]);
 
+  const mergedMatches = useMemo(() => {
+    const byFixture = new Map<string, Match>();
+    for (const m of schedule.matches) {
+      byFixture.set(fixtureIdFromMatch(m), m);
+    }
+    for (const m of live.matches) {
+      byFixture.set(fixtureIdFromMatch(m), m);
+    }
+    return Array.from(byFixture.values());
+  }, [live.matches, schedule.matches]);
+
   const enriched = useMemo((): EnrichedLiveMatch[] => {
-    const mapped = live.matches.map((match) => {
+    const mapped = mergedMatches.map((match) => {
       const fixtureId = fixtureIdFromMatch(match);
       const pressureOps = ops.livePressure?.metrics.find((m) => m.fixtureId === fixtureId);
       const meta = ops.metaConsensus?.consensusHeatmap.find((c) => c.fixtureId === fixtureId);
@@ -385,6 +364,7 @@ export function useLiveMatchCenter() {
 
       const isPreMatch = isPreMatchStatus(core.status, core.displayStatus);
       const isLive = isLiveStatus(core.status, core.displayStatus);
+      const isFinished = isFinishedStatus(core.status, core.displayStatus);
 
       return {
         fixtureId: core.fixtureId,
@@ -392,6 +372,7 @@ export function useLiveMatchCenter() {
         league: match.league,
         isPreMatch,
         isLive,
+        isFinished,
         kickoffLabel: formatKickoffLabel(
           match.startingAt,
           match.startingAtTimestamp
@@ -758,7 +739,7 @@ export function useLiveMatchCenter() {
     });
 
     return applyTrustLayer(sorted);
-  }, [live.matches, ops, dispatchByFixture]);
+  }, [mergedMatches, ops, dispatchByFixture]);
 
   const liveSignals = useMemo(
     (): LiveSignalEntry[] =>
@@ -778,6 +759,8 @@ export function useLiveMatchCenter() {
           return m.isLive;
         case "upcoming":
           return m.isPreMatch;
+        case "finished":
+          return m.isFinished;
         case "high_pressure":
           return m.isLive && m.pressureScore >= 70;
         case "ev_plus":
@@ -802,6 +785,7 @@ export function useLiveMatchCenter() {
       tracked: enriched.length,
       live: enriched.filter((m) => m.isLive).length,
       upcoming: enriched.filter((m) => m.isPreMatch).length,
+      finished: enriched.filter((m) => m.isFinished).length,
       signals: ops.signalDecision?.activeSignals.length ?? live.signals.length,
       execute: enriched.filter((m) => m.operationalState === "EXECUTE").length,
     }),
@@ -831,7 +815,7 @@ export function useLiveMatchCenter() {
     sportmonksError: live.sportmonksError,
     isEmpty: live.isEmpty,
     responseTime: live.responseTime,
-    isLoading: live.isInitialLoad && ops.isInitialLoad,
+    isLoading: live.isInitialLoad && schedule.loading,
     autonomousSnapshot: live.autonomousSnapshot,
     normalizeFixtureId,
   };

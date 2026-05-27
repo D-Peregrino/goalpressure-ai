@@ -14,7 +14,10 @@ import {
   isTelegramSandboxMode,
   sendTelegramMessageWithRetry,
 } from "@/lib/telegram/telegramClient";
-import { TELEGRAM_COOLDOWN_MS } from "@/lib/telegram/constants";
+import {
+  TELEGRAM_COOLDOWN_MS,
+  TELEGRAM_GLOBAL_COOLDOWN_MS,
+} from "@/lib/telegram/constants";
 import { logInfo, logWarn } from "@/lib/utils/logger";
 
 export { TELEGRAM_COOLDOWN_MS } from "@/lib/telegram/constants";
@@ -38,6 +41,7 @@ export class SignalDispatcher {
   private processing = false;
   private readonly cooldownByFingerprint = new Map<string, CooldownEntry>();
   private readonly locks = new Set<string>();
+  private lastGlobalDispatchAt = 0;
 
   dispatch(request: TelegramDispatchRequest): TelegramDispatchResult {
     const formatted = formatSignalForTelegram(request);
@@ -99,7 +103,16 @@ export class SignalDispatcher {
       reasonByMatchId?: Record<string, string>;
     }
   ): TelegramDispatchResult[] {
-    return signals.map((signal) =>
+    const bestByFixture = new Map<string, Signal>();
+    for (const signal of signals) {
+      const fixtureId = signal.matchId.replace(/^sm-/, "") || signal.matchId;
+      const prev = bestByFixture.get(fixtureId);
+      if (!prev || signal.confidence > prev.confidence) {
+        bestByFixture.set(fixtureId, signal);
+      }
+    }
+
+    return Array.from(bestByFixture.values()).map((signal) =>
       this.dispatch({
         signal,
         source: "production",
@@ -186,6 +199,18 @@ export class SignalDispatcher {
         const message = this.queue.shift();
         if (!message) continue;
 
+        const now = Date.now();
+        if (now - this.lastGlobalDispatchAt < TELEGRAM_GLOBAL_COOLDOWN_MS) {
+          this.queue.unshift(message);
+          await new Promise((resolve) =>
+            setTimeout(
+              resolve,
+              TELEGRAM_GLOBAL_COOLDOWN_MS - (now - this.lastGlobalDispatchAt)
+            )
+          );
+          continue;
+        }
+
         const fixtureId = message.matchId.replace(/^sm-/, "");
         const startedAt = Date.now();
         const result = await sendTelegramMessageWithRetry(message.text, {
@@ -227,6 +252,7 @@ export class SignalDispatcher {
             message: `Sandbox dispatch: ${message.signalId}`,
           });
         } else if (result.ok) {
+          this.lastGlobalDispatchAt = Date.now();
           recordTelegramDispatchSuccess(message.signalId, latencyMs);
           void persistDispatchLog({
             dispatchId: message.signalId,

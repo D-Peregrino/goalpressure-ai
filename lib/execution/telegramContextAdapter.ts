@@ -57,6 +57,7 @@ export function dispatchToContextMatch(item: QueuedDispatch): EnrichedLiveMatch 
     dataQuality: item.confidence < 50 ? "sparse" : "partial",
     isLive: true,
     isPreMatch: false,
+    isFinished: false,
   };
 }
 
@@ -131,6 +132,7 @@ function emptyEnrichedShell(fixtureId: string, matchId: string): EnrichedLiveMat
     urgency: 0,
     isPreMatch: false,
     isLive: true,
+    isFinished: false,
     kickoffLabel: null,
     cardInsight: "",
     cardInsightSecondary: null,

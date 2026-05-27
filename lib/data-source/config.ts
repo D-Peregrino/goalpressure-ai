@@ -29,6 +29,7 @@ export function isSeedLiveExplicitlyEnabled(): boolean {
 }
 
 export function isSeedAllowed(): boolean {
+  if (process.env.NODE_ENV === "production") return false;
   return isSeedLiveExplicitlyEnabled() && !isSportmonksTokenConfigured();
 }
 

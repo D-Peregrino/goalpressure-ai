@@ -20,8 +20,34 @@ function hasSessionCookie(request: NextRequest): boolean {
   return false;
 }
 
+/** Módulos experimentais — redirecionados para o terminal core. */
+const CORE_HIDDEN_PATHS = [
+  "/ops",
+  "/network",
+  "/replay",
+  "/admin/quant",
+  "/backtest",
+  "/validation",
+  "/research",
+  "/analytics",
+  "/feed",
+  "/models",
+] as const;
+
+function isCoreHiddenPath(pathname: string): boolean {
+  return CORE_HIDDEN_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  );
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (isCoreHiddenPath(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/terminal";
+    return NextResponse.redirect(url);
+  }
 
   if (pathname.startsWith("/api/")) {
     pruneRateLimitBuckets();

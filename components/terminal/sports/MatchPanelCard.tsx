@@ -26,16 +26,14 @@ import {
   evaluateMatchContext,
   type MatchContextResult,
 } from "@/components/terminal/intelligence/ContextEngine";
-import LiveMatchTabs, { type MatchTabId } from "./LiveMatchTabs";
-import MatchTabContent from "./MatchTabContent";
+import type { MatchTabId } from "./LiveMatchTabs";
 import MetricIconBox from "./MetricIconBox";
 import LiveTacticalField from "@/components/terminal/field/LiveTacticalField";
 import OperationalDecisionPanel from "@/components/terminal/decision/OperationalDecisionPanel";
 import SmartPressureTimeline from "@/components/terminal/timeline/SmartPressureTimeline";
 import { mapOperationalDecision } from "@/components/terminal/decision/decisionMapper";
-import PredictivePanel from "@/components/terminal/predictive/PredictivePanel";
 import GPIHero from "@/components/terminal/gpi/GPIHero";
-import GPIBreakdown from "@/components/terminal/gpi/GPIBreakdown";
+import LeagueFlag from "./LeagueFlag";
 import { resolveTeamLogoFromEnriched } from "@/lib/teams/teamLogoResolver";
 
 const METRIC_ICONS = {
@@ -115,7 +113,10 @@ export default function MatchPanelCard({
       ) : null}
 
       <header className="gp-sports__panel-top">
-        <span>{leagueLine(match)}</span>
+        <span className="gp-sports__league-row">
+          <LeagueFlag league={match.league} />
+          <span>{leagueLine(match)}</span>
+        </span>
         <div className="gp-sports__panel-actions">
           {onExpand ? (
             <button
@@ -208,79 +209,36 @@ export default function MatchPanelCard({
 
       {!compact && match.isLive ? <GPIHero match={match} /> : null}
 
-      {!compact && (
+      {!compact && match.isLive && (
         <>
           <OperationalDecisionPanel match={match} context={context} />
-          <GPIBreakdown match={match} />
-          <PredictivePanel match={match} context={context} />
           <LiveTacticalField match={match} context={context} />
 
-          <section className="gp-sports__context-read">
-            <h4 className="gp-sports__context-title">Leitura contextual da partida</h4>
-            <p className="gp-sports__context-sub">
-              Resumo automático do que está acontecendo no jogo agora
-            </p>
-            <p className="gp-sports__context-narrative">{context.narrativa}</p>
-            <div className="gp-sports__context-grid">
-              <div>
-                <span>Status operacional</span>
-                <strong>{context.statusOperacional}</strong>
+          {metrics.length > 0 ? (
+            <div className="gp-sports__metrics-section">
+              <div className="gp-sports__metrics-section-head">
+                <h4 className="gp-sports__metrics-section-title">Estatísticas ao vivo</h4>
+                <p className="gp-sports__metrics-section-sub">
+                  Mandante × visitante — só exibido quando a fonte envia o dado
+                </p>
               </div>
-              <div>
-                <span>Nível de intensidade</span>
-                <strong>{context.intensidade}</strong>
-              </div>
-              <div>
-                <span>Tendência</span>
-                <strong>{context.tendencia}</strong>
-              </div>
-              <div>
-                <span>Leitura de mercado</span>
-                <strong>{context.leituraMercado}</strong>
+              <div className="gp-sports__metrics-row">
+                {metrics.map((m) => {
+                  const Icon = METRIC_ICONS[m.id as keyof typeof METRIC_ICONS] ?? Gauge;
+                  return (
+                    <MetricIconBox
+                      key={m.id}
+                      icon={Icon}
+                      title={m.title}
+                      value={m.value}
+                      hint={m.hint}
+                      tooltip={m.tooltip}
+                    />
+                  );
+                })}
               </div>
             </div>
-            {context.badges.length > 0 ? (
-              <div className="gp-sports__context-badges">
-                {context.badges.map((badge) => (
-                  <span key={badge} className="gp-sports__context-badge">
-                    {badge}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-            <p className="gp-sports__context-reco">{context.recomendacao}</p>
-          </section>
-
-          <div className="gp-sports__section-block">
-            <h4 className="gp-sports__section-block-title">Detalhes do jogo</h4>
-            <p className="gp-sports__section-block-sub">Informações por fase e por mercado</p>
-            <LiveMatchTabs active={activeTab} onChange={onTabChange} />
-            <MatchTabContent tab={activeTab} match={match} />
-          </div>
-
-          <div className="gp-sports__metrics-section">
-            <div className="gp-sports__metrics-section-head">
-              <h4 className="gp-sports__metrics-section-title">Indicadores de pressão</h4>
-              <p className="gp-sports__metrics-section-sub">
-                Números mandante × visitante com descrição em cada caixa
-              </p>
-            </div>
-            <div className="gp-sports__metrics-row">
-              {metrics.map((m) => {
-                const Icon = METRIC_ICONS[m.id as keyof typeof METRIC_ICONS] ?? Gauge;
-                return (
-                  <MetricIconBox
-                    key={m.id}
-                    icon={Icon}
-                    title={m.title}
-                    value={m.value}
-                    hint={m.hint}
-                    tooltip={m.tooltip}
-                  />
-                );
-              })}
-            </div>
-          </div>
+          ) : null}
 
           <SmartPressureTimeline
             match={match}
@@ -289,18 +247,20 @@ export default function MatchPanelCard({
             onWindowChange={onTimelineWindowChange}
           />
 
-          <div className="gp-sports__footer-metrics-wrap">
-            <h4 className="gp-sports__footer-metrics-title">Métricas finais da partida</h4>
-            <div className="gp-sports__footer-metrics">
-              {footer.map((f) => (
-                <div key={f.label} className="gp-sports__footer-metric" title={f.hint}>
-                  <span>{f.label}</span>
-                  <strong>{f.value}</strong>
-                  <em>{f.hint}</em>
-                </div>
-              ))}
+          {footer.length > 0 ? (
+            <div className="gp-sports__footer-metrics-wrap">
+              <h4 className="gp-sports__footer-metrics-title">Resumo da leitura</h4>
+              <div className="gp-sports__footer-metrics">
+                {footer.map((f) => (
+                  <div key={f.label} className="gp-sports__footer-metric" title={f.hint}>
+                    <span>{f.label}</span>
+                    <strong>{f.value}</strong>
+                    <em>{f.hint}</em>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : null}
         </>
       )}
     </article>

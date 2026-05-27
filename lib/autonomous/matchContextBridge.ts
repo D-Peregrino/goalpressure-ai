@@ -233,6 +233,7 @@ function emptyShell(fixtureId: string, matchId: string): EnrichedLiveMatch {
     urgency: 0,
     isPreMatch: false,
     isLive: true,
+    isFinished: false,
     kickoffLabel: null,
     cardInsight: "",
     cardInsightSecondary: null,

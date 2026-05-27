@@ -241,6 +241,26 @@
   color: #1e40af;
 }
 
+.gp-sports__league-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.gp-sports__body--core .gp-sports__rail {
+  display: none;
+}
+
+.gp-sports__grid--core {
+  grid-template-columns: 1fr minmax(280px, 340px);
+}
+
+@media (max-width: 960px) {
+  .gp-sports__grid--core {
+    grid-template-columns: 1fr;
+  }
+}
+
 .gp-sports__panel-top {
   display: flex;
   align-items: center;

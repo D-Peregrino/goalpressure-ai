@@ -12,18 +12,11 @@ export const BRAND_PRODUCT = {
   footer: "Central esportiva · GoalPressure",
 } as const;
 
+/** Navegação principal — terminal core (módulos experimentais ocultos). */
 export const NAV_ITEMS = [
+  { href: "/terminal", label: "Terminal", short: "Terminal" },
   { href: "/minha-central", label: "Minha central", short: "Central" },
   { href: "/workspace", label: "Workspace", short: "Workspace" },
-  { href: "/network", label: "Signal Exchange", short: "Rede" },
-  { href: "/replay", label: "Replay Engine", short: "Replay" },
-  { href: "/terminal", label: "Central ao vivo", short: "Central" },
-  { href: "/feed", label: "Feed ao vivo", short: "Feed" },
-  { href: "/analytics", label: "Insights", short: "Insights" },
-  { href: "/validation", label: "Precisão", short: "Precisão" },
-  { href: "/backtest", label: "Histórico", short: "Histórico" },
-  { href: "/research", label: "Leitura tática", short: "Tática" },
-  { href: "/models", label: "Avançado", short: "Avançado", advancedOnly: true },
 ] as const;
 
 export type NavItem = {
@@ -34,27 +27,19 @@ export type NavItem = {
 };
 
 export function navItemsForTier(
-  tier: SubscriptionTier,
-  opsAccess: boolean,
+  _tier: SubscriptionTier,
+  _opsAccess: boolean,
   isAdmin = false
 ): NavItem[] {
-  const items: NavItem[] = NAV_ITEMS.filter(
-    (item) =>
-      !("advancedOnly" in item && item.advancedOnly) ||
-      tierMeetsMinimum(tier, "pro")
-  ).map((item) => ({
+  const items: NavItem[] = NAV_ITEMS.map((item) => ({
     href: item.href,
     label: item.label,
     short: item.short,
-    advancedOnly: "advancedOnly" in item ? item.advancedOnly : undefined,
   }));
-  const withOps = opsAccess
-    ? [...items, { href: "/ops", label: "OPS Center", short: "OPS" }]
-    : items;
   if (isAdmin) {
-    return [{ href: "/admin", label: "Admin", short: "Admin" }, ...withOps];
+    return [{ href: "/admin", label: "Admin", short: "Admin" }, ...items];
   }
-  return withOps;
+  return items;
 }
 
 export const PAGE_COPY = {

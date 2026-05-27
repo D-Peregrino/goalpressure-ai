@@ -31,6 +31,22 @@ export function isLiveStatus(
   return false;
 }
 
+/** Partida encerrada. */
+export function isFinishedStatus(
+  status?: MatchStatus,
+  display?: DisplayMatchStatus
+): boolean {
+  if (display === "FT" || display === "POST") return true;
+  if (
+    status === "FINISHED" ||
+    status === "CANCELLED" ||
+    status === "POSTPONED"
+  ) {
+    return true;
+  }
+  return false;
+}
+
 /** Visível no filtro «Todos» (inclui pré-jogo e encerradas recentes no cache). */
 export function isTerminalVisibleMatch(
   status?: MatchStatus,

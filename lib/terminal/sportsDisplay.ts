@@ -71,13 +71,21 @@ export function evDisplay(match: EnrichedLiveMatch): string {
   return formatPercentDisplay(match.ev);
 }
 
+function hasPairValue(value: string): boolean {
+  if (!value || value === "—") return false;
+  if (value.includes("— × —")) return false;
+  return true;
+}
+
 export function buildMatchMetricBoxes(match: EnrichedLiveMatch): SportsMetricBox[] {
+  if (!match.isLive) return [];
+
   const [shotsH, shotsA] = splitAggregate(match.shots, match);
   const [sotH, sotA] = splitAggregate(match.shotsOnTarget, match);
   const [daH, daA] = splitAggregate(match.dangerousAttacks, match);
   const [cornersH, cornersA] = splitAggregate(match.corners, match);
 
-  return [
+  const boxes: SportsMetricBox[] = [
     {
       id: "shots",
       title: "Finalizações",
@@ -114,13 +122,6 @@ export function buildMatchMetricBoxes(match: EnrichedLiveMatch): SportsMetricBox
       tooltip: "Percentual de posse estimado para mandante e visitante.",
     },
     {
-      id: "cards",
-      title: "Cartões",
-      value: "—",
-      hint: "Aguardando dados",
-      tooltip: "Cartões amarelos e vermelhos ainda não disponíveis neste feed.",
-    },
-    {
       id: "pressure",
       title: "Pressão ofensiva",
       value: pressurePair(match),
@@ -135,6 +136,21 @@ export function buildMatchMetricBoxes(match: EnrichedLiveMatch): SportsMetricBox
       tooltip: "Momento ofensivo repartido conforme a dominância recente.",
     },
   ];
+
+  const hasStat = (total: number) => Number.isFinite(total) && total > 0;
+
+  return boxes.filter((box) => {
+    if (box.id === "possession") {
+      return match.possession != null && Number.isFinite(match.possession);
+    }
+    if (box.id === "shots") return hasStat(match.shots) && hasPairValue(box.value);
+    if (box.id === "sot") return hasStat(match.shotsOnTarget) && hasPairValue(box.value);
+    if (box.id === "dangerous") return hasStat(match.dangerousAttacks) && hasPairValue(box.value);
+    if (box.id === "corners") return hasStat(match.corners) && hasPairValue(box.value);
+    if (box.id === "pressure") return match.pressureScore > 0 && hasPairValue(box.value);
+    if (box.id === "momentum") return match.momentum !== 0 && hasPairValue(box.value);
+    return hasPairValue(box.value);
+  });
 }
 
 export function pressureFieldLabel(match: EnrichedLiveMatch): string {
@@ -160,8 +176,15 @@ export function pressureZoneSide(
   return "balanced";
 }
 
+function footerValueOk(value: string): boolean {
+  if (!value || value === "—" || value === "—%") return false;
+  return true;
+}
+
 export function footerMetrics(match: EnrichedLiveMatch) {
-  return [
+  if (!match.isLive) return [];
+
+  const items = [
     {
       label: "Pressão ofensiva",
       value: roundDisplay(match.pressureScore),
@@ -198,6 +221,8 @@ export function footerMetrics(match: EnrichedLiveMatch) {
       hint: "Estado operacional",
     },
   ];
+
+  return items.filter((item) => footerValueOk(item.value));
 }
 
 export function leagueLine(match: EnrichedLiveMatch): string {
