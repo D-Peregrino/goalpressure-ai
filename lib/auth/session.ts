@@ -8,9 +8,16 @@ export type SessionUser = {
   role: "user" | "admin";
 };
 
+import type { DbPlan } from "@/lib/subscription/permissions";
+import type { PlanSlug } from "@/lib/billing/planSlugs";
+
 export type AccountPayload = {
   user: SessionUser;
-  plan: "free" | "fundador" | "pro" | "elite" | "ops";
+  plan: DbPlan;
+  planSlug: PlanSlug;
   subscriptionStatus: string;
   couponCode: string | null;
+  stripeCustomerId?: string | null;
+  currentPeriodEnd?: string | null;
+  cancelAtPeriodEnd?: boolean;
 };

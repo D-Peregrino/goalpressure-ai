@@ -5,6 +5,8 @@ import "./globals.css";
 import "./styles/saas-stabilization.css";
 import "./styles/landing-premium.css";
 import "./copa/copa-theme.css";
+import "./styles/billing-saas.css";
+import "./styles/billing-premium.css";
 import { BRAND } from "@/lib/design/brand";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";

@@ -3,6 +3,11 @@ import { ensureAdminAutoSubscription, fetchSubscriptionForUser } from "@/lib/com
 import type { AccountPayload } from "@/lib/auth/session";
 import { getEffectivePlan } from "@/lib/auth/entitlements";
 import type { DbPlan } from "@/lib/subscription/permissions";
+import { planSlugToLegacyDbPlan } from "@/lib/billing/planSlugs";
+import {
+  fetchUserSubscription,
+  resolveEffectivePlanSlug,
+} from "@/lib/billing/userSubscriptionStore";
 
 export async function resolveAccountPayload(input: {
   userId: string;
@@ -18,11 +23,20 @@ export async function resolveAccountPayload(input: {
     await ensureAdminAutoSubscription(input.userId);
   }
 
-  const sub = await fetchSubscriptionForUser(input.userId);
-  const rawPlan = (sub?.plan as DbPlan) ?? "free";
+  const legacySub = await fetchSubscriptionForUser(input.userId);
+  const userSub = await fetchUserSubscription(input.userId);
+
+  const planSlug = resolveEffectivePlanSlug(
+    userSub,
+    legacySub?.plan ?? undefined
+  );
+  const rawPlan: DbPlan = isAdmin
+    ? "fundador"
+    : (planSlugToLegacyDbPlan(planSlug) as DbPlan);
+
   const subscriptionStatus = isAdmin
     ? "active"
-    : sub?.status ?? (rawPlan === "free" ? "inactive" : "active");
+    : userSub?.status ?? legacySub?.status ?? (rawPlan === "free" ? "inactive" : "active");
 
   const plan = getEffectivePlan(rawPlan, role, subscriptionStatus);
 
@@ -34,7 +48,11 @@ export async function resolveAccountPayload(input: {
       role,
     },
     plan,
+    planSlug: isAdmin ? "founder" : planSlug,
     subscriptionStatus,
-    couponCode: sub?.coupon_code ?? null,
+    couponCode: userSub?.coupon_code ?? legacySub?.coupon_code ?? null,
+    stripeCustomerId: userSub?.stripe_customer_id ?? legacySub?.provider_customer_id ?? null,
+    currentPeriodEnd: userSub?.current_period_end ?? legacySub?.current_period_end ?? null,
+    cancelAtPeriodEnd: userSub?.cancel_at_period_end ?? false,
   };
 }

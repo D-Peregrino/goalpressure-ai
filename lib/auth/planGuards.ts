@@ -4,7 +4,11 @@ import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/client";
 import type { DbPlan } from "@/lib/subscription/permissions";
 import { dbPlanToTier, subscriptionActive } from "@/lib/subscription/permissions";
 import type { FeatureKey, SubscriptionTier } from "@/lib/subscription/tiers";
-import { canAccessFeature, tierMeetsMinimum } from "@/lib/subscription/tiers";
+import { tierMeetsMinimum } from "@/lib/subscription/tiers";
+import { fetchUserSubscription } from "@/lib/billing/userSubscriptionStore";
+import { buildAccessContext, hasFeatureAccess as hasBillingFeature } from "@/lib/billing/featureAccess";
+import type { PlanSlug } from "@/lib/billing/planSlugs";
+import { planSlugToLegacyDbPlan } from "@/lib/billing/planSlugs";
 
 export type PlanKey = "free" | "founder" | "pro" | "ops" | "admin";
 
@@ -30,11 +34,25 @@ export function hasFeatureAccess(params: {
   role: "user" | "admin";
   subscriptionStatus: string;
   feature: FeatureKey;
+  planSlug?: PlanSlug;
 }): boolean {
   if (params.role === "admin") return true;
-  if (params.plan !== "free" && !subscriptionActive(params.subscriptionStatus)) return false;
-  const tier = dbPlanToTier(params.plan);
-  return canAccessFeature(tier, params.feature);
+  const slug =
+    params.planSlug ??
+    (params.plan === "fundador"
+      ? "founder"
+      : params.plan === "starter"
+        ? "starter"
+        : params.plan === "pro"
+          ? "pro"
+          : "free");
+  const ctx = buildAccessContext({
+    planSlug: slug,
+    status: params.subscriptionStatus,
+    role: params.role,
+    legacyPlan: params.plan,
+  });
+  return hasBillingFeature(ctx, params.feature);
 }
 
 /**
@@ -66,14 +84,19 @@ export async function requirePlan(
     return null;
   }
 
+  const userSub = await fetchUserSubscription(user.id);
   const { data: sub } = await db
     .from("subscriptions")
     .select("plan,status")
     .eq("user_id", user.id)
     .maybeSingle();
 
-  const plan = normalizeDbPlan(sub?.plan);
-  const status = String(sub?.status ?? (plan === "free" ? "inactive" : "active"));
+  const plan = userSub?.plan_slug
+    ? planSlugToLegacyDbPlan(userSub.plan_slug as PlanSlug)
+    : normalizeDbPlan(sub?.plan);
+  const status = String(
+    userSub?.status ?? sub?.status ?? (plan === "free" ? "inactive" : "active")
+  );
 
   if (minimum === "admin") return null;
   const requiredTier = PLAN_MIN_TIER[minimum];

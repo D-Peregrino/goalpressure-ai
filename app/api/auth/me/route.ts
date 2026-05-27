@@ -22,6 +22,16 @@ export async function GET(request: NextRequest) {
     const role = isAdminEmail(u.email) ? "admin" : u.role;
     const rawPlan = role === "admin" ? "fundador" : u.plan;
     const plan = getEffectivePlan(rawPlan, role, u.subscriptionStatus);
+    const planSlug =
+      role === "admin"
+        ? "founder"
+        : u.plan === "fundador"
+          ? "founder"
+          : u.plan === "starter"
+            ? "starter"
+            : u.plan === "pro"
+              ? "pro"
+              : "free";
     return NextResponse.json({
       user: {
         id: u.id,
@@ -30,8 +40,10 @@ export async function GET(request: NextRequest) {
         role,
       },
       plan,
+      planSlug,
       subscriptionStatus: role === "admin" ? "active" : u.subscriptionStatus,
       couponCode: u.couponCode,
+      cancelAtPeriodEnd: false,
     });
   }
 

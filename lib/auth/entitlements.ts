@@ -5,7 +5,13 @@ import {
   subscriptionActive,
   type DbPlan,
 } from "@/lib/subscription/permissions";
-import { canAccessFeature, type FeatureKey, type SubscriptionTier } from "@/lib/subscription/tiers";
+import type { FeatureKey, SubscriptionTier } from "@/lib/subscription/tiers";
+import {
+  buildAccessContext,
+  hasFeatureAccess as hasFeatureAccessBilling,
+} from "@/lib/billing/featureAccess";
+import type { PlanSlug } from "@/lib/billing/planSlugs";
+import { planSlugToLegacyDbPlan } from "@/lib/billing/planSlugs";
 
 export function getEffectivePlan(
   rawPlan: DbPlan,
@@ -20,23 +26,34 @@ export function getEffectivePlan(
 export function hasTerminalAccess(
   plan: DbPlan,
   role: SessionUser["role"],
-  subscriptionStatus: string
+  subscriptionStatus: string,
+  planSlug: PlanSlug = planSlugFromDb(plan)
 ): boolean {
-  if (role === "admin") return true;
-  return isPaidPlan(plan) && subscriptionActive(subscriptionStatus);
+  return hasFeatureAccess(plan, role, subscriptionStatus, "terminal", planSlug);
 }
 
 export function hasFeatureAccess(
   plan: DbPlan,
   role: SessionUser["role"],
   subscriptionStatus: string,
-  feature: FeatureKey
+  feature: FeatureKey,
+  planSlug?: PlanSlug
 ): boolean {
-  if (role === "admin") return true;
-  const effective = getEffectivePlan(plan, role, subscriptionStatus);
-  const tier: SubscriptionTier = dbPlanToTier(effective);
-  if (!subscriptionActive(subscriptionStatus) && isPaidPlan(plan)) return false;
-  return canAccessFeature(tier, feature);
+  const slug = planSlug ?? planSlugFromDb(plan);
+  const ctx = buildAccessContext({
+    planSlug: slug,
+    status: subscriptionStatus,
+    role,
+    legacyPlan: plan,
+  });
+  return hasFeatureAccessBilling(ctx, feature);
+}
+
+function planSlugFromDb(plan: DbPlan): PlanSlug {
+  if (plan === "fundador" || plan === "elite" || plan === "ops") return "founder";
+  if (plan === "starter") return "starter";
+  if (plan === "pro") return "pro";
+  return "free";
 }
 
 export function getPostLoginRedirect(input: {
@@ -59,7 +76,6 @@ export function getPostLoginRedirect(input: {
   return "/minha-central";
 }
 
-/** Mesma regra que /api/debug/session e requireAdmin (role derivado de ADMIN_EMAILS). */
 export function hasAdminAccess(role: SessionUser["role"]): boolean {
   return role === "admin";
 }
@@ -77,3 +93,5 @@ export function sessionDebugReason(input: {
   }
   return "plano_gratuito";
 }
+
+export { dbPlanToTier, type SubscriptionTier, planSlugToLegacyDbPlan };

@@ -20,8 +20,10 @@ import type { DbPlan } from "@/lib/subscription/permissions";
 interface AuthContextValue {
   user: AccountPayload["user"] | null;
   plan: DbPlan;
+  planSlug: AccountPayload["planSlug"];
   subscriptionStatus: string;
   couponCode: string | null;
+  isAuthenticated: boolean;
   isAdmin: boolean;
   loading: boolean;
   signUp: (
@@ -333,8 +335,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => ({
       user: account?.user ?? null,
       plan: account?.plan ?? "free",
+      planSlug: account?.planSlug ?? "free",
       subscriptionStatus: account?.subscriptionStatus ?? "inactive",
       couponCode: account?.couponCode ?? null,
+      isAuthenticated: Boolean(account?.user),
       isAdmin: account?.user?.role === "admin",
       loading,
       signUp,
@@ -355,8 +359,10 @@ export function useAuth(): AuthContextValue {
     return {
       user: null,
       plan: "free",
+      planSlug: "free",
       subscriptionStatus: "inactive",
       couponCode: null,
+      isAuthenticated: false,
       isAdmin: false,
       loading: false,
       signUp: async () => ({}),

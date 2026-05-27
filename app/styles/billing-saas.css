@@ -1,0 +1,342 @@
+/* GoalPressure Billing — Stripe / Apple SaaS dark premium */
+
+.gp-billing {
+  --bill-bg: #0a0e14;
+  --bill-surface: #121820;
+  --bill-elevated: #1a2230;
+  --bill-border: rgba(255, 255, 255, 0.08);
+  --bill-text: #f4f7fb;
+  --bill-muted: #8b9cb0;
+  --bill-accent: #ff2b2b;
+  --bill-green: #22c55e;
+  --bill-gold: #c4a035;
+  color: var(--bill-text);
+}
+
+.gp-billing-page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 0 3rem;
+}
+
+.gp-billing-hero {
+  margin-bottom: 2rem;
+}
+
+.gp-billing-hero h1 {
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.gp-billing-hero p {
+  margin: 0;
+  color: var(--bill-muted);
+  font-size: 0.95rem;
+  max-width: 36rem;
+}
+
+.gp-billing-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 900px) {
+  .gp-billing-grid--2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.gp-billing-card {
+  background: var(--bill-surface);
+  border: 1px solid var(--bill-border);
+  border-radius: 16px;
+  padding: 1.35rem 1.5rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.gp-billing-card__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--bill-muted);
+  margin: 0 0 0.5rem;
+}
+
+.gp-billing-card__value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.gp-billing-card__sub {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: var(--bill-muted);
+}
+
+.gp-billing-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.gp-billing-status--active {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--bill-green);
+}
+
+.gp-billing-status--trialing {
+  background: rgba(196, 160, 53, 0.15);
+  color: var(--bill-gold);
+}
+
+.gp-billing-status--inactive {
+  background: rgba(139, 156, 176, 0.15);
+  color: var(--bill-muted);
+}
+
+.gp-billing-pricing {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .gp-billing-pricing {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1100px) {
+  .gp-billing-pricing {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.gp-billing-plan {
+  position: relative;
+  background: var(--bill-elevated);
+  border: 1px solid var(--bill-border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.gp-billing-plan:hover {
+  border-color: rgba(255, 43, 43, 0.35);
+}
+
+.gp-billing-plan--featured {
+  border-color: rgba(255, 43, 43, 0.5);
+  box-shadow: 0 0 0 1px rgba(255, 43, 43, 0.2);
+}
+
+.gp-billing-plan__badge {
+  position: absolute;
+  top: -0.5rem;
+  right: 1rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  background: var(--bill-accent);
+  color: #fff;
+}
+
+.gp-billing-plan h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.gp-billing-plan__price {
+  font-size: 1.65rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.gp-billing-plan__price span {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--bill-muted);
+}
+
+.gp-billing-plan ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  font-size: 0.82rem;
+  color: var(--bill-muted);
+}
+
+.gp-billing-plan li {
+  padding: 0.25rem 0;
+}
+
+.gp-billing-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.55rem 1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid var(--bill-border);
+  background: transparent;
+  color: var(--bill-text);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.gp-billing-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.gp-billing-btn--primary {
+  background: var(--bill-accent);
+  border-color: var(--bill-accent);
+  color: #fff;
+}
+
+.gp-billing-btn--primary:hover {
+  filter: brightness(1.08);
+}
+
+.gp-billing-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gp-billing-invoices {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.gp-billing-invoices th,
+.gp-billing-invoices td {
+  padding: 0.55rem 0.4rem;
+  border-bottom: 1px solid var(--bill-border);
+  text-align: left;
+}
+
+.gp-billing-invoices th {
+  color: var(--bill-muted);
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.gp-billing-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.gp-billing-modal {
+  width: 100%;
+  max-width: 420px;
+  background: var(--bill-surface);
+  border: 1px solid var(--bill-border);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.gp-billing-modal h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.2rem;
+}
+
+.gp-billing-modal p {
+  margin: 0 0 1rem;
+  color: var(--bill-muted);
+  font-size: 0.88rem;
+}
+
+.gp-billing-modal__actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.gp-billing-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--bill-elevated);
+  border: 1px solid var(--bill-border);
+}
+
+.gp-billing-coupon {
+  margin-top: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.gp-billing-coupon input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--bill-border);
+  background: var(--bill-bg);
+  color: var(--bill-text);
+  font-size: 0.85rem;
+}
+
+.gp-billing-banner {
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  font-size: 0.88rem;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: var(--bill-green);
+}
+
+.gp-billing-admin-kpis {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, 1fr);
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .gp-billing-admin-kpis {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.gp-billing-admin-kpi {
+  background: var(--gp-admin-card, #1a2230);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.gp-billing-admin-kpi strong {
+  display: block;
+  font-size: 1.35rem;
+  margin-top: 0.25rem;
+}

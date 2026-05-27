@@ -41,11 +41,26 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       isAdmin: auth.isAdmin,
       email: auth.user?.email ?? null,
       can: (feature) =>
-        hasFeatureAccess(auth.plan, role, auth.subscriptionStatus, feature),
+        hasFeatureAccess(
+          auth.plan,
+          role,
+          auth.subscriptionStatus,
+          feature,
+          auth.planSlug
+        ),
       limits: getTierLimits(tier),
       refresh: auth.refreshAccount,
     }),
-    [tier, auth.plan, auth.user, auth.isAdmin, auth.subscriptionStatus, role, auth.refreshAccount]
+    [
+      tier,
+      auth.plan,
+      auth.planSlug,
+      auth.user,
+      auth.isAdmin,
+      auth.subscriptionStatus,
+      role,
+      auth.refreshAccount,
+    ]
   );
 
   return (

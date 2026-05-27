@@ -22,6 +22,7 @@ export const OPERATIONAL_SCHEMA_FILES = [
   "telegram-destinations-schema.sql",
   "billing-mercadopago-schema.sql",
   "copa-leads-schema.sql",
+  "subscription-stripe-schema.sql",
 ] as const;
 
 export interface SchemaApplyFailure {
