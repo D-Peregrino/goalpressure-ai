@@ -1,10 +1,10 @@
 /**
- * Estatísticas do terminal — somente tipos SportMonks reconhecidos + validação matemática.
+ * Estatísticas do terminal — type_id oficial SportMonks, um valor por período, validação cruzada.
  */
 
 import type { SportmonksFixture } from "@/lib/mappers/sportmonks";
-import type { MatchStats, MatchTeamStats, TeamSideStats } from "@/types/domain";
-import { logInfo } from "@/lib/utils/logger";
+import type { MatchTeamStats, TeamSideStats } from "@/types/domain";
+import { fieldForSportmonksTypeId } from "@/lib/terminal/sportmonksStatMap";
 
 export interface SportmonksStatisticRow {
   id?: number;
@@ -13,7 +13,7 @@ export interface SportmonksStatisticRow {
   participant_id?: number;
   value?: number | string | null;
   location?: string | null;
-  period?: number | string | null;
+  period?: number | string | { id?: number; name?: string; description?: string } | null;
   period_id?: number | null;
   type?: {
     id?: number;
@@ -51,8 +51,8 @@ export interface ValidatedTeamStats {
 }
 
 export interface ParsedTeamStats {
-  home: TeamSideStats;
-  away: TeamSideStats;
+  home: TeamSideStats & { yellowCards?: number; redCards?: number };
+  away: TeamSideStats & { yellowCards?: number; redCards?: number };
 }
 
 export interface SafeTerminalStatsResult {
@@ -62,61 +62,28 @@ export interface SafeTerminalStatsResult {
   totalShotsOnTarget: number | null;
   totalDangerousAttacks: number | null;
   totalCorners: number | null;
-  /** Posse do mandante (%) — só quando par casa/visitante valida 98–102. */
   possessionHome: number | null;
 }
 
-const ALLOWED_TYPE_ID: Record<number, ValidatedStatField> = {
-  34: "corners",
-  42: "shots",
-  45: "possession",
-  47: "dangerousAttacks",
-  52: "dangerousAttacks",
-  58: "corners",
-  78: "dangerousAttacks",
-  84: "corners",
-  86: "shotsOnTarget",
-  83: "yellowCards",
-  87: "redCards",
-};
-
-const ALLOWED_TYPE_NAMES: Record<string, ValidatedStatField> = {
-  ballpossession: "possession",
-  ball_possession: "possession",
-  shotstotal: "shots",
-  shots_total: "shots",
-  shotsontarget: "shotsOnTarget",
-  shots_on_target: "shotsOnTarget",
-  dangerousattacks: "dangerousAttacks",
-  dangerous_attacks: "dangerousAttacks",
-  corners: "corners",
-  corner: "corners",
-  yellowcards: "yellowCards",
-  yellowcard: "yellowCards",
-  yellow_cards: "yellowCards",
-  redcards: "redCards",
-  redcard: "redCards",
-  red_cards: "redCards",
-};
+export interface StatConsistencyResult {
+  consistent: boolean;
+  blockedFields: Set<ValidatedStatField>;
+}
 
 const LIMITS = {
   possessionSumMin: 98,
   possessionSumMax: 102,
   shotsPerTeam: 60,
   shotsTotal: 80,
-  cornersPerTeam: 30,
+  cornersPerTeam: 25,
+  cornersTotal: 25,
   dangerousPerTeam: 150,
+  redCardsTotal: 3,
+  yellowCardsPerTeam: 20,
 } as const;
 
-function normalizeKey(raw: string): string {
-  return raw
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .replace(/[\s-]+/g, "_")
-    .replace(/[^a-z0-9_]/g, "");
-}
+type SideKey = "home" | "away";
+type PeriodTier = 0 | 1 | 2;
 
 function safeNum(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -134,25 +101,36 @@ function extractValue(stat: SportmonksStatisticRow): number | null {
   return n;
 }
 
-function resolveAllowedField(stat: SportmonksStatisticRow): ValidatedStatField | null {
-  if (stat.type_id != null && ALLOWED_TYPE_ID[stat.type_id]) {
-    return ALLOWED_TYPE_ID[stat.type_id]!;
+function periodLabel(stat: SportmonksStatisticRow): string {
+  const parts: string[] = [];
+  const p = stat.period;
+  if (p != null && typeof p === "object") {
+    if (p.name) parts.push(p.name);
+    if (p.description) parts.push(p.description);
+    if (p.id != null) parts.push(String(p.id));
+  } else if (p != null) {
+    parts.push(String(p));
   }
+  if (stat.period_id != null) parts.push(String(stat.period_id));
+  if (stat.location) parts.push(String(stat.location));
+  return parts.join(" ").toUpperCase();
+}
 
-  const candidates = [
-    stat.type?.developer_name,
-    stat.type?.code,
-    stat.type?.name,
-  ].filter((v): v is string => typeof v === "string" && v.trim().length > 0);
-
-  for (const raw of candidates) {
-    const key = normalizeKey(raw);
-    if (ALLOWED_TYPE_NAMES[key]) return ALLOWED_TYPE_NAMES[key]!;
-    const compact = key.replace(/_/g, "");
-    if (ALLOWED_TYPE_NAMES[compact]) return ALLOWED_TYPE_NAMES[compact]!;
+/** 0 = FULLTIME, 1 = CURRENT, 2 = demais (HT etc.) */
+function periodTier(stat: SportmonksStatisticRow): PeriodTier {
+  const label = periodLabel(stat);
+  if (
+    label.includes("FULL") ||
+    label.includes("FT") ||
+    label.includes("FULLTIME") ||
+    label.includes("FULL_TIME")
+  ) {
+    return 0;
   }
-
-  return null;
+  if (label.includes("CURRENT") || label.includes("LIVE")) {
+    return 1;
+  }
+  return 2;
 }
 
 function resolveParticipants(fixture: SportmonksFixture): {
@@ -171,7 +149,19 @@ function resolveParticipants(fixture: SportmonksFixture): {
   return { homeId, awayId };
 }
 
-function emptyParsedSide(): TeamSideStats {
+function resolveSide(
+  stat: SportmonksStatisticRow,
+  homeId?: number,
+  awayId?: number
+): SideKey | null {
+  const pid = stat.participant_id;
+  const loc = (stat.location ?? "").toLowerCase();
+  if (pid === homeId || loc === "home") return "home";
+  if (pid === awayId || loc === "away") return "away";
+  return null;
+}
+
+function emptyParsedSide(): ParsedTeamStats["home"] {
   return {
     shots: 0,
     shotsOnTarget: 0,
@@ -181,8 +171,8 @@ function emptyParsedSide(): TeamSideStats {
   };
 }
 
-function setParsedSide(
-  side: TeamSideStats,
+function applyField(
+  side: ParsedTeamStats["home"],
   field: ValidatedStatField,
   value: number
 ): void {
@@ -203,17 +193,30 @@ function setParsedSide(
       side.possession = Math.round(value * 10) / 10;
       break;
     case "yellowCards":
-      (side as TeamSideStats & { yellowCards?: number }).yellowCards = Math.round(value);
+      side.yellowCards = Math.round(value);
       break;
     case "redCards":
-      (side as TeamSideStats & { redCards?: number }).redCards = Math.round(value);
+      side.redCards = Math.round(value);
       break;
     default:
       break;
   }
 }
 
-/** Parse bruto — allowlist apenas; atribuição por participante (sem somar duplicatas). */
+function pickSinglePeriodRow(rows: SportmonksStatisticRow[]): SportmonksStatisticRow | null {
+  if (rows.length === 0) return null;
+  const sorted = [...rows].sort((a, b) => {
+    const ta = periodTier(a);
+    const tb = periodTier(b);
+    if (ta !== tb) return ta - tb;
+    return (b.id ?? 0) - (a.id ?? 0);
+  });
+  return sorted[0] ?? null;
+}
+
+/**
+ * Parse por type_id oficial — uma linha por (lado, métrica) após prioridade de período.
+ */
 export function parseSportMonksStats(fixture: SportmonksFixture): ParsedTeamStats | null {
   const statistics = (fixture.statistics ?? []) as SportmonksStatisticRow[];
   if (statistics.length === 0) return null;
@@ -221,38 +224,59 @@ export function parseSportMonksStats(fixture: SportmonksFixture): ParsedTeamStat
   const { homeId, awayId } = resolveParticipants(fixture);
   if (homeId == null && awayId == null) return null;
 
-  const home = emptyParsedSide();
-  const away = emptyParsedSide();
-  let matched = false;
+  /** Uma fila por (lado, type_id) — evita somar FT+HT; red 83+85 somam depois. */
+  const buckets = new Map<string, SportmonksStatisticRow[]>();
 
   for (const stat of statistics) {
-    const field = resolveAllowedField(stat);
+    if (!fieldForSportmonksTypeId(stat.type_id)) continue;
+
+    const side = resolveSide(stat, homeId, awayId);
+    if (!side) continue;
+
+    const key = `${side}|${stat.type_id}`;
+    const list = buckets.get(key) ?? [];
+    list.push(stat);
+    buckets.set(key, list);
+  }
+
+  if (buckets.size === 0) return null;
+
+  const home = emptyParsedSide();
+  const away = emptyParsedSide();
+  const accum = new Map<string, number>();
+
+  for (const [key, rows] of buckets) {
+    const [side, typeIdStr] = key.split("|");
+    const typeId = Number(typeIdStr);
+    const field = fieldForSportmonksTypeId(typeId);
     if (!field) continue;
 
-    const value = extractValue(stat);
+    const picked = pickSinglePeriodRow(rows);
+    if (!picked) continue;
+    const value = extractValue(picked);
     if (value == null) continue;
 
-    const pid = stat.participant_id;
-    const loc = (stat.location ?? "").toLowerCase();
-
-    if (pid === homeId || loc === "home") {
-      setParsedSide(home, field, value);
-      matched = true;
-    } else if (pid === awayId || loc === "away") {
-      setParsedSide(away, field, value);
-      matched = true;
+    const accKey = `${side}|${field}`;
+    if (field === "redCards") {
+      accum.set(accKey, (accum.get(accKey) ?? 0) + value);
+    } else {
+      accum.set(accKey, value);
     }
   }
 
-  if (!matched) return null;
+  for (const [accKey, value] of accum) {
+    const [side, field] = accKey.split("|") as [SideKey, ValidatedStatField];
+    applyField(side === "home" ? home : away, field, value);
+  }
+
   return { home, away };
 }
 
-function stripInvalidSide(side: ValidatedSideStats): ValidatedSideStats {
+function stripPerSideLimits(side: ValidatedSideStats): ValidatedSideStats {
   const out: ValidatedSideStats = {};
 
-  if (side.shots != null) {
-    if (side.shots >= 0 && side.shots <= LIMITS.shotsPerTeam) out.shots = side.shots;
+  if (side.shots != null && side.shots >= 0 && side.shots <= LIMITS.shotsPerTeam) {
+    out.shots = side.shots;
   }
   if (side.shotsOnTarget != null) {
     const maxShots = out.shots ?? side.shots;
@@ -264,39 +288,123 @@ function stripInvalidSide(side: ValidatedSideStats): ValidatedSideStats {
       out.shotsOnTarget = side.shotsOnTarget;
     }
   }
-  if (side.dangerousAttacks != null) {
-    if (side.dangerousAttacks >= 0 && side.dangerousAttacks <= LIMITS.dangerousPerTeam) {
-      out.dangerousAttacks = side.dangerousAttacks;
-    }
+  if (
+    side.dangerousAttacks != null &&
+    side.dangerousAttacks >= 0 &&
+    side.dangerousAttacks <= LIMITS.dangerousPerTeam
+  ) {
+    out.dangerousAttacks = side.dangerousAttacks;
   }
-  if (side.corners != null) {
-    if (side.corners >= 0 && side.corners <= LIMITS.cornersPerTeam) out.corners = side.corners;
+  if (side.corners != null && side.corners >= 0 && side.corners <= LIMITS.cornersPerTeam) {
+    out.corners = side.corners;
   }
-  if (side.yellowCards != null && side.yellowCards >= 0 && side.yellowCards <= 20) {
+  if (
+    side.yellowCards != null &&
+    side.yellowCards >= 0 &&
+    side.yellowCards <= LIMITS.yellowCardsPerTeam
+  ) {
     out.yellowCards = side.yellowCards;
   }
-  if (side.redCards != null && side.redCards >= 0 && side.redCards <= 10) {
+  if (side.redCards != null && side.redCards >= 0 && side.redCards <= 2) {
     out.redCards = side.redCards;
+  }
+  if (side.possession != null && side.possession >= 0 && side.possession <= 100) {
+    out.possession = side.possession;
   }
 
   return out;
 }
 
+/** Validação cruzada — remove métricas suspeitas. */
+export function validateStatConsistency(
+  stats: ValidatedTeamStats
+): StatConsistencyResult {
+  const blocked = new Set<ValidatedStatField>();
+  const h = stats.home;
+  const a = stats.away;
+
+  const shotsTotal = (h.shots ?? 0) + (a.shots ?? 0);
+  const sotTotal = (h.shotsOnTarget ?? 0) + (a.shotsOnTarget ?? 0);
+  const daTotal = (h.dangerousAttacks ?? 0) + (a.dangerousAttacks ?? 0);
+  const cornersTotal = (h.corners ?? 0) + (a.corners ?? 0);
+  const redTotal = (h.redCards ?? 0) + (a.redCards ?? 0);
+  const yellowTotal = (h.yellowCards ?? 0) + (a.yellowCards ?? 0);
+
+  if (redTotal > LIMITS.redCardsTotal) {
+    blocked.add("redCards");
+  }
+
+  if (cornersTotal > LIMITS.cornersTotal) {
+    blocked.add("corners");
+  }
+
+  if (shotsTotal > 20 && daTotal < 5) {
+    blocked.add("dangerousAttacks");
+    if (daTotal === 0 && shotsTotal > 25) {
+      blocked.add("shots");
+      blocked.add("shotsOnTarget");
+    }
+  }
+
+  if (cornersTotal > 0 && shotsTotal > 0 && cornersTotal > shotsTotal) {
+    blocked.add("corners");
+  }
+
+  if (redTotal > yellowTotal + 2 && yellowTotal >= 0) {
+    blocked.add("redCards");
+  }
+
+  for (const side of [h, a] as const) {
+    if (
+      side.shots != null &&
+      side.shotsOnTarget != null &&
+      side.shotsOnTarget > side.shots
+    ) {
+      blocked.add("shotsOnTarget");
+      blocked.add("shots");
+    }
+    if (
+      side.shots != null &&
+      side.shots >= 15 &&
+      (side.dangerousAttacks ?? 0) < 3
+    ) {
+      blocked.add("dangerousAttacks");
+    }
+  }
+
+  return { consistent: blocked.size === 0, blockedFields: blocked };
+}
+
+function applyBlockedFields(
+  stats: ValidatedTeamStats,
+  blocked: Set<ValidatedStatField>
+): ValidatedTeamStats {
+  if (blocked.size === 0) return stats;
+
+  const strip = (side: ValidatedSideStats): ValidatedSideStats => {
+    const out = { ...side };
+    for (const f of blocked) {
+      delete out[f];
+    }
+    return out;
+  };
+
+  return { home: strip(stats.home), away: strip(stats.away) };
+}
+
 export function validateMatchStats(parsed: ParsedTeamStats | null): ValidatedTeamStats | null {
   if (!parsed) return null;
 
-  let homePoss = parsed.home.possession;
-  let awayPoss = parsed.away.possession;
-  const possessionOk =
+  const homePoss = parsed.home.possession;
+  const awayPoss = parsed.away.possession;
+  const possessionSum = (homePoss ?? 0) + (awayPoss ?? 0);
+  const validPossession =
     homePoss != null &&
     awayPoss != null &&
     homePoss >= 0 &&
+    awayPoss <= 100 &&
     awayPoss >= 0 &&
-    homePoss <= 100 &&
-    awayPoss <= 100;
-  const possessionSum = (homePoss ?? 0) + (awayPoss ?? 0);
-  const validPossession =
-    possessionOk &&
+    awayPoss <= 100 &&
     possessionSum >= LIMITS.possessionSumMin &&
     possessionSum <= LIMITS.possessionSumMax;
 
@@ -306,8 +414,8 @@ export function validateMatchStats(parsed: ParsedTeamStats | null): ValidatedTea
     dangerousAttacks:
       parsed.home.dangerousAttacks > 0 ? parsed.home.dangerousAttacks : undefined,
     corners: parsed.home.corners > 0 ? parsed.home.corners : undefined,
-    yellowCards: (parsed.home as TeamSideStats & { yellowCards?: number }).yellowCards,
-    redCards: (parsed.home as TeamSideStats & { redCards?: number }).redCards,
+    yellowCards: parsed.home.yellowCards,
+    redCards: parsed.home.redCards,
     possession: validPossession ? Math.round(homePoss!) : undefined,
   };
 
@@ -317,46 +425,69 @@ export function validateMatchStats(parsed: ParsedTeamStats | null): ValidatedTea
     dangerousAttacks:
       parsed.away.dangerousAttacks > 0 ? parsed.away.dangerousAttacks : undefined,
     corners: parsed.away.corners > 0 ? parsed.away.corners : undefined,
-    yellowCards: (parsed.away as TeamSideStats & { yellowCards?: number }).yellowCards,
-    redCards: (parsed.away as TeamSideStats & { redCards?: number }).redCards,
+    yellowCards: parsed.away.yellowCards,
+    redCards: parsed.away.redCards,
     possession: validPossession ? Math.round(awayPoss!) : undefined,
   };
 
-  const home = stripInvalidSide(homeRaw);
-  const away = stripInvalidSide(awayRaw);
+  let home = stripPerSideLimits(homeRaw);
+  let away = stripPerSideLimits(awayRaw);
 
   const totalShots = (home.shots ?? 0) + (away.shots ?? 0);
   if (totalShots > LIMITS.shotsTotal) {
-    delete home.shots;
-    delete away.shots;
-    delete home.shotsOnTarget;
-    delete away.shotsOnTarget;
+    home = { ...home, shots: undefined, shotsOnTarget: undefined };
+    away = { ...away, shots: undefined, shotsOnTarget: undefined };
   }
 
+  let merged: ValidatedTeamStats = { home, away };
+  const consistency = validateStatConsistency(merged);
+  merged = applyBlockedFields(merged, consistency.blockedFields);
+
   const hasAny =
-    Object.keys(home).length > 0 || Object.keys(away).length > 0;
+    Object.keys(merged.home).length > 0 || Object.keys(merged.away).length > 0;
   if (!hasAny) return null;
 
-  return { home, away };
+  return merged;
 }
 
-function validatedFromLegacyTeamStats(
-  teamStats: MatchTeamStats | undefined
-): ValidatedTeamStats | null {
-  if (!teamStats) return null;
+export function validatedToMatchTeamStats(
+  validated: ValidatedTeamStats
+): MatchTeamStats {
+  const toSide = (s: ValidatedSideStats): TeamSideStats => ({
+    shots: s.shots ?? 0,
+    shotsOnTarget: s.shotsOnTarget ?? 0,
+    dangerousAttacks: s.dangerousAttacks ?? 0,
+    totalAttacks: 0,
+    corners: s.corners ?? 0,
+    possession: s.possession,
+  });
+  return { home: toSide(validated.home), away: toSide(validated.away) };
+}
 
-  const parsed: ParsedTeamStats = {
-    home: { ...emptyParsedSide(), ...teamStats.home },
-    away: { ...emptyParsedSide(), ...teamStats.away },
+function parsedFromMatchTeamStats(teamStats: MatchTeamStats): ParsedTeamStats {
+  return {
+    home: {
+      ...emptyParsedSide(),
+      shots: teamStats.home.shots,
+      shotsOnTarget: teamStats.home.shotsOnTarget,
+      dangerousAttacks: teamStats.home.dangerousAttacks,
+      corners: teamStats.home.corners,
+      possession: teamStats.home.possession,
+    },
+    away: {
+      ...emptyParsedSide(),
+      shots: teamStats.away.shots,
+      shotsOnTarget: teamStats.away.shotsOnTarget,
+      dangerousAttacks: teamStats.away.dangerousAttacks,
+      corners: teamStats.away.corners,
+      possession: teamStats.away.possession,
+    },
   };
-
-  return validateMatchStats(parsed);
 }
 
 export function getSafeTerminalStats(input: {
   fixture?: SportmonksFixture;
   teamStats?: MatchTeamStats | null;
-  stats?: MatchStats | null;
 }): SafeTerminalStatsResult {
   const empty: SafeTerminalStatsResult = {
     teamStats: null,
@@ -368,9 +499,11 @@ export function getSafeTerminalStats(input: {
     possessionHome: null,
   };
 
-  const validated =
-    (input.fixture ? validateMatchStats(parseSportMonksStats(input.fixture)) : null) ??
-    validatedFromLegacyTeamStats(input.teamStats ?? undefined);
+  const validated = input.fixture
+    ? validateMatchStats(parseSportMonksStats(input.fixture))
+    : input.teamStats
+      ? validateMatchStats(parsedFromMatchTeamStats(input.teamStats))
+      : null;
 
   if (!validated) return empty;
 
@@ -406,7 +539,7 @@ export function getSafeTerminalStats(input: {
   };
 }
 
-/** Log de auditoria — apenas em desenvolvimento. */
+/** Log temporário — dev only, prefixo [terminal-stat-debug]. */
 export function logTerminalStatsAuditDev(fixture: SportmonksFixture, fixtureId?: string): void {
   if (process.env.NODE_ENV === "production") return;
 
@@ -415,15 +548,18 @@ export function logTerminalStatsAuditDev(fixture: SportmonksFixture, fixtureId?:
     type_id: s.type_id,
     type_name: s.type?.name ?? null,
     developer_name: s.type?.developer_name ?? null,
+    value: s.data?.value ?? s.value ?? null,
     participant_id: s.participant_id,
     location: s.location ?? null,
     period: s.period ?? s.period_id ?? null,
-    value: s.data?.value ?? s.value ?? null,
+    mapped_field: fieldForSportmonksTypeId(s.type_id),
   }));
 
-  logInfo("terminal-stats-audit", "SportMonks statistics payload", {
+  console.info("[terminal-stat-debug]", {
     fixtureId: fixtureId ?? fixture.id,
     count: rows.length,
-    rows: rows.slice(0, 80),
+    statistics: rows,
+    parsed: parseSportMonksStats(fixture),
+    validated: validateMatchStats(parseSportMonksStats(fixture)),
   });
 }

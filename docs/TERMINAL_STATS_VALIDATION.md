@@ -1,83 +1,56 @@
-# Validação de estatísticas do Terminal
+# Validação de estatísticas do terminal
 
-Este documento descreve como o `/terminal` decide **mostrar ou ocultar** estatísticas vindas da SportMonks.
+Implementação: `lib/terminal/sportmonksStatMap.ts` + `lib/terminal/validatedStats.ts`
 
-Implementação: `lib/terminal/validatedStats.ts`
+## type_id oficiais (fixture team statistics)
 
-## Tipos aceitos (allowlist)
+| Métrica | type_id |
+|---------|---------|
+| Escanteios | 34 |
+| Finalizações | 42 |
+| Ataques perigosos | 44 |
+| Posse | 45 |
+| Cartão vermelho | 83, 85 |
+| Cartão amarelo | 84 |
+| Finalizações no alvo | 86 |
 
-Somente estes tipos entram no parser. Qualquer `type_id` / `type.name` desconhecido é **ignorado** (não somado, não estimado).
+**Não mapeamos** IDs como 47 (pênaltis), 52 (gols), 78 (desarmes), 84 antigo errado (era yellow, não corners), etc.
 
-| Campo | Nomes SportMonks (exemplos) | type_id comuns |
-|-------|-----------------------------|----------------|
-| Posse | Ball Possession | 45 |
-| Finalizações | Shots Total | 42 |
-| Finalizações no alvo | Shots On Target | 86 |
-| Ataques perigosos | Dangerous Attacks | 47, 52, 78 |
-| Escanteios | Corners | 34, 58, 84 |
-| Cartão amarelo | Yellowcards | 83 |
-| Cartão vermelho | Redcards | 87 |
+## Período (sem somar FT + HT)
 
-## Tipos bloqueados
+Para cada `(participant_id, type_id)`:
 
-- Qualquer estatística fora da allowlist
-- Somas genéricas de vários `type_id` no mesmo campo
-- `totalAttacks` inferidos a partir de ataques perigosos
-- Posse derivada de `Math.max(casa, visitante)` (comportamento antigo)
-- Fallback `50%` de posse
-- Odds `1.00` nos cards (já filtradas em `watchCardDisplay`)
+1. Prioridade **FULLTIME** / FT
+2. Senão **CURRENT**
+3. Senão uma única linha fallback (ex. 2º tempo)
 
-## Regras matemáticas
+Nunca `+=` entre períodos.
 
-### Posse
+## Sanitização
 
-- Exige **casa e visitante** com valor entre 0 e 100
-- Soma casa + visitante deve estar entre **98 e 102**
-- Se inválido: **posse oculta** no card e no modal
+- Posse: soma casa+visitante entre 98–102%
+- Finalizações: máx. 60/time, 80 total
+- Escanteios: máx. 25 total (esconde se > 25)
+- Vermelhos: máx. 3 total (esconde se > 3)
+- No alvo ≤ finalizações do mesmo time
 
-**Por que bloquear posse > 100% no total?**  
-Indica mapeamento errado (dois tipos somados, percentual duplicado ou stat agregada). Ex.: 74% + 50% = 124% → bloqueado.
+## `validateStatConsistency()`
 
-### Finalizações
+Remove linhas inteiras se:
 
-- Máximo **60** por time
-- Soma dos dois times máximo **80**
-- Se violar: finalizações ocultas (ambos os lados no modal)
+- `shots_total > 20` e `dangerous_attacks < 5`
+- `corners > shots_total`
+- `red_cards > yellow_cards + 2`
+- Por time: `shots_on_target > shots_total`
 
-### Finalizações no alvo
+## Debug (dev)
 
-- Não pode ser maior que finalizações totais do mesmo time
-- Máximo **60** por time
+`GET /api/terminal/match/[fixtureId]` → console:
 
-### Escanteios
+```
+[terminal-stat-debug] { statistics: [...], parsed, validated }
+```
 
-- Máximo **30** por time
+## Confiança
 
-### Ataques perigosos
-
-- Máximo **150** por time
-
-## Onde é aplicado
-
-- **Cards** (`watchCardDisplay.ts`): chips só com `getSafeTerminalStats()`
-- **Modal** (`TerminalMatchDetail.tsx`): linhas da API `validatedTeamStats`
-- **API** `GET /api/terminal/match/[fixtureId]`: parse direto do fixture + log em dev
-
-## Mensagem quando não há stats válidas
-
-> Estatísticas detalhadas não disponíveis ou ainda não validadas para esta partida.
-
-## Auditoria em desenvolvimento
-
-Com `NODE_ENV=development`, a API de detalhe do jogo registra no log:
-
-- `type_id`, `type.name`, `participant_id`, `value`, `location`, `period`
-
-Escopo: `[GoalPressure] [terminal-stats-audit]`
-
-## Teste manual sugerido
-
-1. Abrir um jogo ao vivo no `/terminal`
-2. Abrir o modal → conferir se posse soma ~100%
-3. Conferir que não aparecem finalizações > 60 por time
-4. Em dev, inspecionar log da API de match para o payload bruto
+Dado suspeito **não aparece** no modal nem nos chips dos cards (via `getSafeTerminalStats`).

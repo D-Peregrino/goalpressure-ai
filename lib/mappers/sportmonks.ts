@@ -13,6 +13,11 @@ import { buildPremiumContext } from "@/lib/mappers/buildPremiumContext";
 import { normalizeFixtureOdds } from "@/lib/mappers/normalizeSportmonksOdds";
 import { detectSportmonksFeedSources } from "@/lib/mappers/sportmonksFeedExtensions";
 import {
+  parseSportMonksStats,
+  validateMatchStats,
+  validatedToMatchTeamStats,
+} from "@/lib/terminal/validatedStats";
+import {
   inferStatsFromEvents,
   inferPressureTrendFromTrends,
   mergeXgIntoStats,
@@ -486,44 +491,9 @@ function addToSide(side: TeamSideStats, field: keyof MatchStats, value: number):
 }
 
 function mapTeamStats(fixture: SportmonksFixture): MatchTeamStats | undefined {
-  const statistics = fixture.statistics ?? [];
-  if (statistics.length === 0) return undefined;
-
-  const { home, away } = resolveParticipants(fixture);
-  const homeId = home?.id;
-  const awayId = away?.id;
-  if (homeId === undefined && awayId === undefined) return undefined;
-
-  const homeSide = emptySideStats();
-  const awaySide = emptySideStats();
-  let hasParticipantStats = false;
-
-  for (const stat of statistics) {
-    const field = resolveStatField(stat);
-    if (!field) continue;
-
-    const value = extractStatValue(stat);
-    const pid = stat.participant_id;
-
-    if (pid === homeId) {
-      addToSide(homeSide, field, value);
-      hasParticipantStats = true;
-    } else if (pid === awayId) {
-      addToSide(awaySide, field, value);
-      hasParticipantStats = true;
-    }
-  }
-
-  if (!hasParticipantStats) return undefined;
-
-  if (homeSide.totalAttacks <= 0 && homeSide.dangerousAttacks > 0) {
-    homeSide.totalAttacks = Math.round(homeSide.dangerousAttacks * 1.45);
-  }
-  if (awaySide.totalAttacks <= 0 && awaySide.dangerousAttacks > 0) {
-    awaySide.totalAttacks = Math.round(awaySide.dangerousAttacks * 1.45);
-  }
-
-  return { home: homeSide, away: awaySide };
+  const validated = validateMatchStats(parseSportMonksStats(fixture));
+  if (!validated) return undefined;
+  return validatedToMatchTeamStats(validated);
 }
 
 function mapStats(fixture: SportmonksFixture): MatchStats {
