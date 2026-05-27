@@ -6,12 +6,12 @@ import TeamBadge from "@/components/matches/TeamBadge";
 import LeagueFlag from "./LeagueFlag";
 import type { EnrichedLiveMatch } from "@/hooks/useLiveMatchCenter";
 import { leagueLine } from "@/lib/terminal/sportsDisplay";
+import { getOperationalCardView } from "@/lib/terminal/matchOperationalState";
 import {
   buildCardMetricChips,
   buildCardOdds,
   cardStatusLabel,
   cardStatusTone,
-  isHighlightMatch,
 } from "@/lib/terminal/watchCardDisplay";
 import {
   resolveTeamLogo,
@@ -52,7 +52,7 @@ export default function MatchWatchCard({
   const statusLabel = cardStatusLabel(match, {
     upcomingSmartDate: upcomingSmartDate && match.isPreMatch,
   });
-  const highlight = isHighlightMatch(match);
+  const operational = useMemo(() => getOperationalCardView(match), [match]);
   const metrics = buildCardMetricChips(match);
   const oddsLine = buildCardOdds(match);
 
@@ -62,7 +62,7 @@ export default function MatchWatchCard({
     match.scoreKnown && match.awayScore != null ? String(match.awayScore) : null;
   const hasScore = scoreHome != null && scoreAway != null;
 
-  const showFooter = metrics.length > 0 || oddsLine != null;
+  const showFooter = metrics.length > 0 || oddsLine != null || operational.microLine != null;
 
   return (
     <article
@@ -70,7 +70,7 @@ export default function MatchWatchCard({
         "gp-watch__card",
         `gp-watch__card--${tone}`,
         featured && "gp-watch__card--featured",
-        highlight && "gp-watch__card--highlight",
+        operational.cssModifier && `gp-watch__card--${operational.cssModifier}`,
         isFavorite && "gp-watch__card--fav"
       )}
       role="button"
@@ -85,6 +85,12 @@ export default function MatchWatchCard({
     >
       {featured ? (
         <span className="gp-watch__card-ribbon">Destaque ao vivo</span>
+      ) : null}
+
+      {operational.chipLabel ? (
+        <span className={cn("gp-watch__op-chip", `gp-watch__op-chip--${operational.state}`)}>
+          {operational.chipLabel}
+        </span>
       ) : null}
 
       <header className="gp-watch__card-top">
@@ -136,6 +142,10 @@ export default function MatchWatchCard({
           <span className="gp-watch__team-name">{match.awayTeam}</span>
         </div>
       </div>
+
+      {operational.microLine ? (
+        <p className="gp-watch__op-line">{operational.microLine}</p>
+      ) : null}
 
       {showFooter ? (
         <footer className="gp-watch__card-foot">

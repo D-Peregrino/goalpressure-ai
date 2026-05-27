@@ -11,6 +11,7 @@ import {
 } from "@/hooks/useLiveMatchCenter";
 import DispatchPushSubscriber from "@/components/terminal/DispatchPushSubscriber";
 import { feedStatusLabel } from "@/lib/terminal/formatDisplay";
+import { sortMatchesByOperationalPriority } from "@/lib/terminal/matchOperationalState";
 import { pickFeaturedMatch } from "@/lib/terminal/watchCardDisplay";
 import { cn } from "@/lib/utils";
 import MatchWatchCard from "./MatchWatchCard";
@@ -83,7 +84,7 @@ export default function GoalPressureSportsTerminal() {
     if (showFavoritesOnly || filter === "favorites") {
       list = list.filter((m) => favorites.has(m.fixtureId));
     }
-    return list;
+    return sortMatchesByOperationalPriority(list);
   }, [matches, showFavoritesOnly, filter, favorites]);
 
   const featured = useMemo(() => pickFeaturedMatch(pool), [pool]);

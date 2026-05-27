@@ -255,11 +255,80 @@
     0 4px 14px rgba(245, 158, 11, 0.12);
 }
 
-.gp-watch__card--highlight {
+/* ─── Estado operacional (hierarquia visual) ─── */
+.gp-watch__op-chip {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+}
+
+.gp-watch__op-chip--high_pressure {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.gp-watch__op-chip--heating_up {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.gp-watch__op-chip--dangerous {
+  background: linear-gradient(90deg, #fef3c7 0%, #fee2e2 100%);
+  color: #92400e;
+}
+
+.gp-watch__op-chip--low_tempo {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.gp-watch__op-line {
+  margin: 0;
+  padding: 0 2px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #475569;
+}
+
+.gp-watch__card--op-high-pressure {
   border-color: #f87171;
   box-shadow:
-    0 0 0 1px rgba(220, 38, 38, 0.2),
-    0 8px 22px rgba(220, 38, 38, 0.12);
+    0 0 0 1px rgba(248, 113, 113, 0.45),
+    0 0 22px rgba(239, 68, 68, 0.18);
+}
+
+.gp-watch__card--op-heating-up {
+  border-color: #fdba74;
+  box-shadow: 0 0 0 1px rgba(251, 146, 60, 0.35);
+}
+
+.gp-watch__card--op-dangerous {
+  border-color: #f59e0b;
+  box-shadow:
+    0 0 0 1px rgba(245, 158, 11, 0.5),
+    0 0 18px rgba(220, 38, 38, 0.14);
+}
+
+.gp-watch__card--op-low-tempo {
+  opacity: 0.72;
+  filter: saturate(0.88);
+}
+
+.gp-watch__card--op-low-tempo:hover {
+  opacity: 0.88;
+}
+
+.gp-watch__card--op-upcoming {
+  border-color: #93c5fd;
+}
+
+.gp-watch__card--op-finished {
+  opacity: 0.9;
 }
 
 .gp-watch__card--featured {
