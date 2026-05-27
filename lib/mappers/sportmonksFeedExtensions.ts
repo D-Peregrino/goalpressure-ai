@@ -11,6 +11,7 @@ import {
   sumXgFromFixture,
   type SportmonksEvent,
 } from "@/lib/mappers/sportmonksPremium";
+import { terminalEventLabel } from "@/lib/terminal/terminalEventLabel";
 import type {
   CommentaryLine,
   MatchPremiumContext,
@@ -90,12 +91,7 @@ function resolveSide(
 }
 
 function eventTypeLabel(ev: SportmonksEvent | SportmonksTimelineEntry): string {
-  return (
-    ev.type?.developer_name ??
-    ev.type?.name ??
-    ev.type?.code ??
-    "EVENT"
-  );
+  return terminalEventLabel(ev);
 }
 
 export function getFixtureComments(fixture: SportmonksFixture): SportmonksComment[] {

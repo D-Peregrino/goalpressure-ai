@@ -11,7 +11,9 @@ import {
   resolveTeamLogo,
   resolveTeamLogoFromEnriched,
 } from "@/lib/teams/teamLogoResolver";
-import type { Match } from "@/types/domain";
+import type { Match, TimelineEventSummary } from "@/types/domain";
+import type { TerminalTimelineEvent } from "@/lib/terminal/parseTerminalMatchTimeline";
+import { terminalEventLabel } from "@/lib/terminal/terminalEventLabel";
 import { cn } from "@/lib/utils";
 
 interface DetailResponse {
@@ -22,7 +24,25 @@ interface DetailResponse {
   standingsAvailable?: boolean;
   venue?: string | null;
   eventsCount?: number;
+  timelineEvents?: TerminalTimelineEvent[];
   error?: string;
+}
+
+function fallbackTimelineLines(
+  events: TimelineEventSummary[],
+  homeTeam: string,
+  awayTeam: string
+): { key: string; displayLine: string }[] {
+  return [...events]
+    .sort((a, b) => a.minute - b.minute)
+    .map((ev, i) => {
+      const label = terminalEventLabel(ev.type);
+      const team =
+        ev.side === "home" ? homeTeam : ev.side === "away" ? awayTeam : null;
+      const head = `${ev.minute}' ${label}`;
+      const displayLine = team ? `${head} — ${team}` : head;
+      return { key: `${ev.minute}-${i}`, displayLine };
+    });
 }
 
 function formatKickoff(match: Match | EnrichedLiveMatch): string | null {
@@ -98,6 +118,7 @@ export default function TerminalMatchDetail({
     standingsAvailable: boolean;
     hasEvents: boolean;
   }>({ venue: null, standingsAvailable: false, hasEvents: false });
+  const [timelineEvents, setTimelineEvents] = useState<TerminalTimelineEvent[]>([]);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -105,6 +126,7 @@ export default function TerminalMatchDetail({
     const run = async () => {
       setLoading(true);
       setFetchError(null);
+      setTimelineEvents([]);
       try {
         const res = await fetch(`/api/terminal/match/${match.fixtureId}`, {
           cache: "no-store",
@@ -113,6 +135,7 @@ export default function TerminalMatchDetail({
         if (cancelled) return;
         if (body.ok && body.match) {
           setDetail(body.match);
+          setTimelineEvents(body.timelineEvents ?? []);
           setMeta({
             venue: body.venue ?? null,
             standingsAvailable: Boolean(body.standingsAvailable),
@@ -198,7 +221,15 @@ export default function TerminalMatchDetail({
     return buildCardOdds(merged);
   }, [display, match]);
 
-  const timeline = display?.premium?.timelineEvents ?? match.sportmonksTimeline ?? [];
+  const fallbackTimeline = useMemo(
+    () =>
+      fallbackTimelineLines(
+        display?.premium?.timelineEvents ?? match.sportmonksTimeline ?? [],
+        homeTeam,
+        awayTeam
+      ),
+    [display?.premium?.timelineEvents, match.sportmonksTimeline, homeTeam, awayTeam]
+  );
 
   const statusLabel = match.isFinished
     ? "Encerrado"
@@ -308,12 +339,19 @@ export default function TerminalMatchDetail({
 
             <section className="gp-match-detail__block">
               <h3>Linha do tempo</h3>
-              {timeline.length > 0 ? (
+              {timelineEvents.length > 0 ? (
                 <ul className="gp-match-detail__events">
-                  {timeline.slice(-12).map((ev, i) => (
-                    <li key={`${ev.minute}-${i}`}>
-                      <span className="gp-match-detail__ev-min">{ev.minute}&apos;</span>
-                      <span>{ev.type}</span>
+                  {timelineEvents.map((ev) => (
+                    <li key={`${ev.sortKey}-${ev.displayLine}`}>
+                      <span className="gp-match-detail__ev-line">{ev.displayLine}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : fallbackTimeline.length > 0 ? (
+                <ul className="gp-match-detail__events">
+                  {fallbackTimeline.map((ev) => (
+                    <li key={ev.key}>
+                      <span className="gp-match-detail__ev-line">{ev.displayLine}</span>
                     </li>
                   ))}
                 </ul>

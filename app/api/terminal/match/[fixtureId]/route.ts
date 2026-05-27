@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { fetchTerminalMatchByFixtureId } from "@/lib/sportmonks/fetchFixtureById";
 import { resolveActiveDataSource } from "@/lib/data-source/config";
+import { parseTerminalMatchTimeline } from "@/lib/terminal/parseTerminalMatchTimeline";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -31,16 +32,25 @@ export async function GET(_request: Request, context: RouteContext) {
     ? [venue.name, venue.city].filter(Boolean).join(" · ")
     : null;
 
+  const timelineEvents = parseTerminalMatchTimeline({
+    fixture: result.fixture,
+    homeTeam: result.match.homeTeam,
+    awayTeam: result.match.awayTeam,
+  });
+
   return NextResponse.json(
     {
       ok: true,
       fixtureId: fixtureId.replace(/^sm-/, ""),
       match: result.match,
       hasStatistics: Boolean(result.match.teamStats),
-      hasEvents: Boolean(result.fixture.events?.length),
+      hasEvents:
+        Boolean(result.fixture.events?.length) ||
+        Boolean(result.fixture.timeline?.length),
       standingsAvailable: Boolean(result.match.premium?.standingsAvailable),
       venue: venueLabel,
       eventsCount: result.fixture.events?.length ?? 0,
+      timelineEvents,
     },
     { headers: { "Cache-Control": "no-store" } }
   );

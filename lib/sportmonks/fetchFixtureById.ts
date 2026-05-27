@@ -20,6 +20,7 @@ export const TERMINAL_FIXTURE_INCLUDES = [
   "state",
   "statistics",
   "events",
+  "timeline",
 ] as const;
 
 function normalizeFixtureId(fixtureId: string): string {

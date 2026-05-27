@@ -16,6 +16,14 @@ export interface SportmonksEvent {
   type_id?: number;
   minute?: number;
   extra_minute?: number | null;
+  player_name?: string | null;
+  related_player_name?: string | null;
+  detail?: string | null;
+  result?: string | null;
+  addition?: string | null;
+  info?: string | null;
+  player?: { name?: string; display_name?: string } | null;
+  related_player?: { name?: string; display_name?: string } | null;
   type?: { id?: number; name?: string; code?: string; developer_name?: string };
 }
 

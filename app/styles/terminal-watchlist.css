@@ -783,6 +783,13 @@
   gap: 10px;
   font-size: 0.875rem;
   color: #334155;
+  line-height: 1.35;
+}
+
+.gp-match-detail__ev-line {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
 }
 
 .gp-match-detail__ev-min {
