@@ -18,7 +18,7 @@ export const TERMINAL_FIXTURE_INCLUDES = [
   "scores",
   "league",
   "state",
-  "statistics",
+  "statistics.type",
   "events",
   "timeline",
 ] as const;

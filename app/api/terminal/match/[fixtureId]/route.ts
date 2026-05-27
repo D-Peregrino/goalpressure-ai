@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { fetchTerminalMatchByFixtureId } from "@/lib/sportmonks/fetchFixtureById";
 import { resolveActiveDataSource } from "@/lib/data-source/config";
 import { parseTerminalMatchTimeline } from "@/lib/terminal/parseTerminalMatchTimeline";
+import {
+  getSafeTerminalStats,
+  logTerminalStatsAuditDev,
+} from "@/lib/terminal/validatedStats";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -38,12 +42,16 @@ export async function GET(_request: Request, context: RouteContext) {
     awayTeam: result.match.awayTeam,
   });
 
+  logTerminalStatsAuditDev(result.fixture, fixtureId);
+  const safeStats = getSafeTerminalStats({ fixture: result.fixture });
+
   return NextResponse.json(
     {
       ok: true,
       fixtureId: fixtureId.replace(/^sm-/, ""),
       match: result.match,
-      hasStatistics: Boolean(result.match.teamStats),
+      validatedTeamStats: safeStats.teamStats,
+      hasStatistics: safeStats.hasAny,
       hasEvents:
         Boolean(result.fixture.events?.length) ||
         Boolean(result.fixture.timeline?.length),

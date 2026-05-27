@@ -161,7 +161,7 @@ export function evaluatePredictiveReading(
     dangerousAttacks: match.dangerousAttacks,
     engineAcceleration: match.engineAccelerationScore,
     territorialScore: match.engineTerritorialScore,
-    possession: match.possession,
+    possession: match.possession ?? undefined,
     pressureSamples: watch?.pressureSamples,
     momentumSamples: watch?.momentumSamples,
     dangerousSamples: watch?.dangerousSamples,

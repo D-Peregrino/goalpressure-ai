@@ -17,8 +17,9 @@ import {
   normalizeFixtureId,
 } from "@/lib/ui/matchFormatting";
 import { resolveTeamLogoFromMatch } from "@/lib/teams/teamLogoResolver";
+import { getSafeTerminalStats } from "@/lib/terminal/validatedStats";
 import { normalizeLiveMatch } from "@/lib/ui/normalizeLiveMatch";
-import type { Match, MatchStatus, Odds } from "@/types/domain";
+import type { Match, MatchStatus, MatchTeamStats, Odds } from "@/types/domain";
 import {
   resolveOperationalState,
   resolveOddPair,
@@ -93,7 +94,8 @@ export interface EnrichedLiveMatch {
   shotsOnTarget: number;
   dangerousAttacks: number;
   corners: number;
-  possession: number;
+  possession: number | null;
+  teamStats?: MatchTeamStats | null;
   steamMove: boolean;
   oddsDrift: number | null;
   fairOdd: number | null;
@@ -398,6 +400,7 @@ export function useLiveMatchCenter() {
       const isPreMatch = isPreMatchStatus(core.status, core.displayStatus);
       const isLive = isLiveStatus(core.status, core.displayStatus);
       const isFinished = isFinishedStatus(core.status, core.displayStatus);
+      const terminalSafeStats = getSafeTerminalStats({ teamStats: match.teamStats });
 
       return {
         fixtureId: core.fixtureId,
@@ -494,11 +497,12 @@ export function useLiveMatchCenter() {
         sportmonksTimeline: match.premium?.timelineEvents,
         advancedOddsCount: match.premium?.advancedOddsCount,
         sportmonksFeedSources: match.premium?.feedSources ?? match.feedMeta?.sportmonksSources,
-        shots: match.stats.shots,
-        shotsOnTarget: match.stats.shotsOnTarget,
-        dangerousAttacks: match.stats.dangerousAttacks,
-        corners: match.stats.corners,
-        possession: match.stats.possession ?? 50,
+        shots: terminalSafeStats.totalShots ?? 0,
+        shotsOnTarget: terminalSafeStats.totalShotsOnTarget ?? 0,
+        dangerousAttacks: terminalSafeStats.totalDangerousAttacks ?? 0,
+        corners: terminalSafeStats.totalCorners ?? 0,
+        possession: terminalSafeStats.possessionHome,
+        teamStats: match.teamStats ?? null,
         steamMove: topEdge?.steamMove ?? false,
         oddsDrift: topEdge?.oddsDrift ?? null,
         fairOdd: topEdge?.fairOdd ?? null,

@@ -14,6 +14,7 @@ import {
 import type { Match, TimelineEventSummary } from "@/types/domain";
 import type { TerminalTimelineEvent } from "@/lib/terminal/parseTerminalMatchTimeline";
 import { terminalEventLabel } from "@/lib/terminal/terminalEventLabel";
+import type { ValidatedTeamStats } from "@/lib/terminal/validatedStats";
 import { cn } from "@/lib/utils";
 
 interface DetailResponse {
@@ -25,6 +26,7 @@ interface DetailResponse {
   venue?: string | null;
   eventsCount?: number;
   timelineEvents?: TerminalTimelineEvent[];
+  validatedTeamStats?: ValidatedTeamStats | null;
   error?: string;
 }
 
@@ -119,6 +121,8 @@ export default function TerminalMatchDetail({
     hasEvents: boolean;
   }>({ venue: null, standingsAvailable: false, hasEvents: false });
   const [timelineEvents, setTimelineEvents] = useState<TerminalTimelineEvent[]>([]);
+  const [validatedTeamStats, setValidatedTeamStats] =
+    useState<ValidatedTeamStats | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -127,6 +131,7 @@ export default function TerminalMatchDetail({
       setLoading(true);
       setFetchError(null);
       setTimelineEvents([]);
+      setValidatedTeamStats(null);
       try {
         const res = await fetch(`/api/terminal/match/${match.fixtureId}`, {
           cache: "no-store",
@@ -136,6 +141,7 @@ export default function TerminalMatchDetail({
         if (body.ok && body.match) {
           setDetail(body.match);
           setTimelineEvents(body.timelineEvents ?? []);
+          setValidatedTeamStats(body.validatedTeamStats ?? null);
           setMeta({
             venue: body.venue ?? null,
             standingsAvailable: Boolean(body.standingsAvailable),
@@ -197,15 +203,27 @@ export default function TerminalMatchDetail({
   const hasScore = scoreHome != null && scoreAway != null;
 
   const kickoff = display ? formatKickoff(display) : formatKickoff(match);
-  const teamStats = display?.teamStats;
-
-  const statsRows = teamStats
+  const statsRows = validatedTeamStats
     ? [
-        statRow("Finalizações", teamStats.home.shots, teamStats.away.shots),
-        statRow("No alvo", teamStats.home.shotsOnTarget, teamStats.away.shotsOnTarget),
-        statRow("Ataques perigosos", teamStats.home.dangerousAttacks, teamStats.away.dangerousAttacks),
-        statRow("Escanteios", teamStats.home.corners, teamStats.away.corners),
-        statRow("Posse %", teamStats.home.possession, teamStats.away.possession),
+        statRow("Finalizações", validatedTeamStats.home.shots, validatedTeamStats.away.shots),
+        statRow("No alvo", validatedTeamStats.home.shotsOnTarget, validatedTeamStats.away.shotsOnTarget),
+        statRow(
+          "Ataques perigosos",
+          validatedTeamStats.home.dangerousAttacks,
+          validatedTeamStats.away.dangerousAttacks
+        ),
+        statRow("Escanteios", validatedTeamStats.home.corners, validatedTeamStats.away.corners),
+        statRow("Posse %", validatedTeamStats.home.possession, validatedTeamStats.away.possession),
+        statRow(
+          "Cartões amarelos",
+          validatedTeamStats.home.yellowCards,
+          validatedTeamStats.away.yellowCards
+        ),
+        statRow(
+          "Cartões vermelhos",
+          validatedTeamStats.home.redCards,
+          validatedTeamStats.away.redCards
+        ),
       ].filter(Boolean)
     : [];
 
@@ -332,7 +350,8 @@ export default function TerminalMatchDetail({
                 <div className="gp-match-detail__stats-grid">{statsRows}</div>
               ) : (
                 <p className="gp-match-detail__notice">
-                  Estatísticas detalhadas não disponíveis para esta partida.
+                  Estatísticas detalhadas não disponíveis ou ainda não validadas para esta
+                  partida.
                 </p>
               )}
             </section>

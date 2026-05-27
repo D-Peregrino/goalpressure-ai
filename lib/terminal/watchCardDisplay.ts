@@ -4,6 +4,7 @@
 
 import type { EnrichedLiveMatch } from "@/hooks/useLiveMatchCenter";
 import { formatUpcomingCardKickoffLabel } from "@/lib/terminal/upcomingKickoffLabel";
+import { getSafeTerminalStats } from "@/lib/terminal/validatedStats";
 
 export type CardStatusTone = "live" | "scheduled" | "finished" | "default";
 
@@ -117,6 +118,7 @@ export function buildCardOdds(match: EnrichedLiveMatch): CardOddsLine | null {
 
 export function buildCardMetricChips(match: EnrichedLiveMatch): CardMetricChip[] {
   const chips: CardMetricChip[] = [];
+  const safe = getSafeTerminalStats({ teamStats: match.teamStats ?? null });
 
   if (match.isLive && match.pressureScore > 0) {
     chips.push({
@@ -126,40 +128,39 @@ export function buildCardMetricChips(match: EnrichedLiveMatch): CardMetricChip[]
     });
   }
 
-  if (match.isLive && match.dangerousAttacks > 0) {
+  if (
+    match.isLive &&
+    safe.totalDangerousAttacks != null &&
+    safe.totalDangerousAttacks > 0
+  ) {
     chips.push({
       id: "da",
       label: "Ataq. perig.",
-      value: String(Math.round(match.dangerousAttacks)),
+      value: String(Math.round(safe.totalDangerousAttacks)),
     });
   }
 
-  if (match.corners > 0) {
+  if (safe.totalCorners != null && safe.totalCorners > 0) {
     chips.push({
       id: "corners",
       label: "Escanteios",
-      value: String(Math.round(match.corners)),
+      value: String(Math.round(safe.totalCorners)),
     });
   }
 
-  if (match.shots > 0) {
+  if (safe.totalShots != null && safe.totalShots > 0) {
     chips.push({
       id: "shots",
       label: "Finaliz.",
-      value: String(Math.round(match.shots)),
+      value: String(Math.round(safe.totalShots)),
     });
   }
 
-  if (
-    match.possession != null &&
-    Number.isFinite(match.possession) &&
-    match.possession > 0 &&
-    match.possession < 100
-  ) {
+  if (safe.possessionHome != null) {
     chips.push({
       id: "pos",
       label: "Posse",
-      value: `${Math.round(match.possession)}%`,
+      value: `${Math.round(safe.possessionHome)}%`,
     });
   }
 
