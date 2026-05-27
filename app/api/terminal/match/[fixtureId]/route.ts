@@ -26,6 +26,11 @@ export async function GET(_request: Request, context: RouteContext) {
     );
   }
 
+  const venue = result.fixture.venue;
+  const venueLabel = venue?.name
+    ? [venue.name, venue.city].filter(Boolean).join(" · ")
+    : null;
+
   return NextResponse.json(
     {
       ok: true,
@@ -33,6 +38,9 @@ export async function GET(_request: Request, context: RouteContext) {
       match: result.match,
       hasStatistics: Boolean(result.match.teamStats),
       hasEvents: Boolean(result.fixture.events?.length),
+      standingsAvailable: Boolean(result.match.premium?.standingsAvailable),
+      venue: venueLabel,
+      eventsCount: result.fixture.events?.length ?? 0,
     },
     { headers: { "Cache-Control": "no-store" } }
   );

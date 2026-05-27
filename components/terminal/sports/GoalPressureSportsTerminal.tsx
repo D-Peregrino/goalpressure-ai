@@ -1,21 +1,28 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Star } from "lucide-react";
 import {
   useLiveMatchCenter,
+  type EnrichedLiveMatch,
   type MatchCenterFilter,
 } from "@/hooks/useLiveMatchCenter";
 import DispatchPushSubscriber from "@/components/terminal/DispatchPushSubscriber";
 import { feedStatusLabel } from "@/lib/terminal/formatDisplay";
+import { pickFeaturedMatch } from "@/lib/terminal/watchCardDisplay";
 import { cn } from "@/lib/utils";
-import MatchDetailModal from "./MatchDetailModal";
 import MatchWatchCard from "./MatchWatchCard";
 import SportsToast from "./SportsToast";
 import type { MatchTabId } from "./LiveMatchTabs";
 import { evaluateMatchContext } from "@/components/terminal/intelligence/ContextEngine";
 import { consumeTerminalCommand } from "@/lib/command/readPendingCommand";
+
+const MatchDetailModal = dynamic(() => import("./MatchDetailModal"), {
+  ssr: false,
+  loading: () => null,
+});
 
 type TerminalSegment = "live" | "upcoming" | "finished";
 
@@ -79,6 +86,13 @@ export default function GoalPressureSportsTerminal() {
     return list;
   }, [matches, showFavoritesOnly, filter, favorites]);
 
+  const featured = useMemo(() => pickFeaturedMatch(pool), [pool]);
+
+  const gridMatches = useMemo(() => {
+    if (!featured) return pool;
+    return pool.filter((m) => m.fixtureId !== featured.fixtureId);
+  }, [pool, featured]);
+
   const expanded = useMemo(
     () => (expandedMatch ? pool.find((m) => m.fixtureId === expandedMatch) ?? null : null),
     [expandedMatch, pool]
@@ -112,7 +126,22 @@ export default function GoalPressureSportsTerminal() {
     return kpis.finished;
   };
 
-  const skeletonCount = typeof window !== "undefined" && window.innerWidth >= 1440 ? 8 : 6;
+  const skeletonCount = typeof window !== "undefined" && window.innerWidth >= 1280 ? 8 : 6;
+
+  const renderCard = (m: EnrichedLiveMatch, isFeatured = false) => (
+    <MatchWatchCard
+      key={m.fixtureId}
+      match={m}
+      featured={isFeatured}
+      isFavorite={favorites.has(m.fixtureId)}
+      onOpen={() => setExpandedMatch(m.fixtureId)}
+      onToggleFavorite={() => {
+        const was = favorites.has(m.fixtureId);
+        toggleFavorite(m.fixtureId);
+        showToast(was ? "Removido dos favoritos" : "Adicionado aos favoritos");
+      }}
+    />
+  );
 
   return (
     <div className="gp-watch">
@@ -196,19 +225,10 @@ export default function GoalPressureSportsTerminal() {
               </p>
             </div>
           ) : (
-            pool.map((m) => (
-              <MatchWatchCard
-                key={m.fixtureId}
-                match={m}
-                isFavorite={favorites.has(m.fixtureId)}
-                onOpen={() => setExpandedMatch(m.fixtureId)}
-                onToggleFavorite={() => {
-                  const was = favorites.has(m.fixtureId);
-                  toggleFavorite(m.fixtureId);
-                  showToast(was ? "Removido dos favoritos" : "Adicionado aos favoritos");
-                }}
-              />
-            ))
+            <>
+              {featured ? renderCard(featured, true) : null}
+              {gridMatches.map((m) => renderCard(m))}
+            </>
           )}
         </div>
       </main>

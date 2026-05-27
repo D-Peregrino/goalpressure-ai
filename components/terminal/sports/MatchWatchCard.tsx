@@ -7,43 +7,28 @@ import LeagueFlag from "./LeagueFlag";
 import type { EnrichedLiveMatch } from "@/hooks/useLiveMatchCenter";
 import { leagueLine } from "@/lib/terminal/sportsDisplay";
 import {
+  buildCardMetricChips,
+  buildCardOdds,
+  cardStatusLabel,
+  cardStatusTone,
+  isHighlightMatch,
+} from "@/lib/terminal/watchCardDisplay";
+import {
   resolveTeamLogo,
   resolveTeamLogoFromEnriched,
 } from "@/lib/teams/teamLogoResolver";
 import { cn } from "@/lib/utils";
 
-function matchStatus(match: EnrichedLiveMatch): {
-  label: string;
-  variant: "live" | "scheduled" | "finished" | "default";
-} {
-  if (match.isLive) {
-    return { label: match.minuteLabel || "Ao vivo", variant: "live" };
-  }
-  if (match.isPreMatch) {
-    return {
-      label: match.kickoffLabel ? `Hoje ${match.kickoffLabel}` : "Agendado",
-      variant: "scheduled",
-    };
-  }
-  if (match.isFinished) {
-    return { label: "Encerrado", variant: "finished" };
-  }
-  return { label: match.minuteLabel || "—", variant: "default" };
-}
-
-function formatOdd(value: number | null | undefined): string | null {
-  if (value == null || !Number.isFinite(value) || value <= 1.01) return null;
-  return value.toFixed(2);
-}
-
 export default function MatchWatchCard({
   match,
   isFavorite,
+  featured = false,
   onOpen,
   onToggleFavorite,
 }: {
   match: EnrichedLiveMatch;
   isFavorite: boolean;
+  featured?: boolean;
   onOpen: () => void;
   onToggleFavorite: () => void;
 }) {
@@ -59,7 +44,12 @@ export default function MatchWatchCard({
       resolveTeamLogo({ side: "away", teamName: match.awayTeam, enriched: match }),
     [match]
   );
-  const status = matchStatus(match);
+
+  const tone = cardStatusTone(match);
+  const statusLabel = cardStatusLabel(match);
+  const highlight = isHighlightMatch(match);
+  const metrics = buildCardMetricChips(match);
+  const oddsLine = buildCardOdds(match);
 
   const scoreHome =
     match.scoreKnown && match.homeScore != null ? String(match.homeScore) : null;
@@ -67,17 +57,17 @@ export default function MatchWatchCard({
     match.scoreKnown && match.awayScore != null ? String(match.awayScore) : null;
   const hasScore = scoreHome != null && scoreAway != null;
 
-  const mainOdd =
-    formatOdd(match.odds.primary) ??
-    formatOdd(match.odds.over15) ??
-    formatOdd(match.odds.fullTimeResult);
-
-  const showPressure =
-    match.isLive && match.pressureScore > 0 && Number.isFinite(match.pressureScore);
+  const showFooter = metrics.length > 0 || oddsLine != null;
 
   return (
     <article
-      className={cn("gp-watch__card", match.isLive && "gp-watch__card--live")}
+      className={cn(
+        "gp-watch__card",
+        `gp-watch__card--${tone}`,
+        featured && "gp-watch__card--featured",
+        highlight && "gp-watch__card--highlight",
+        isFavorite && "gp-watch__card--fav"
+      )}
       role="button"
       tabIndex={0}
       onClick={onOpen}
@@ -88,25 +78,22 @@ export default function MatchWatchCard({
         }
       }}
     >
-      <div className="gp-watch__card-head">
+      {featured ? (
+        <span className="gp-watch__card-ribbon">Destaque ao vivo</span>
+      ) : null}
+
+      <header className="gp-watch__card-top">
         <div className="gp-watch__league">
           <LeagueFlag league={match.league} />
           <span className="gp-watch__league-name">{leagueLine(match)}</span>
         </div>
-        <div className="gp-watch__card-actions">
-          <span
-            className={cn(
-              "gp-watch__status",
-              status.variant === "live" && "gp-watch__status--live",
-              status.variant === "scheduled" && "gp-watch__status--scheduled",
-              status.variant === "finished" && "gp-watch__status--finished"
-            )}
-          >
-            {status.variant === "live" ? (
-              <span className="gp-watch__live-dot" aria-hidden />
-            ) : null}
-            {status.label}
-          </span>
+        <div className="gp-watch__card-top-right">
+          {statusLabel ? (
+            <span className={cn("gp-watch__status", `gp-watch__status--${tone}`)}>
+              {tone === "live" ? <span className="gp-watch__live-dot" aria-hidden /> : null}
+              {statusLabel}
+            </span>
+          ) : null}
           <button
             type="button"
             className={cn("gp-watch__fav", isFavorite && "gp-watch__fav--on")}
@@ -119,11 +106,11 @@ export default function MatchWatchCard({
             <Star className="h-4 w-4" strokeWidth={2} fill={isFavorite ? "currentColor" : "none"} />
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="gp-watch__matchup">
+      <div className="gp-watch__card-center">
         <div className="gp-watch__team gp-watch__team--home">
-          <TeamBadge teamName={match.homeTeam} logoUrl={homeLogo} size="lg" />
+          <TeamBadge teamName={match.homeTeam} logoUrl={homeLogo} size={featured ? "2xl" : "xl"} />
           <span className="gp-watch__team-name">{match.homeTeam}</span>
         </div>
 
@@ -134,29 +121,52 @@ export default function MatchWatchCard({
               <span className="gp-watch__score-sep">:</span>
               <span>{scoreAway}</span>
             </span>
-          ) : match.isPreMatch ? (
-            <span className="gp-watch__vs">vs</span>
           ) : (
-            <span className="gp-watch__vs">—</span>
+            <span className="gp-watch__vs">vs</span>
           )}
-          {mainOdd ? <span className="gp-watch__odd">{mainOdd}</span> : null}
         </div>
 
         <div className="gp-watch__team gp-watch__team--away">
-          <TeamBadge teamName={match.awayTeam} logoUrl={awayLogo} size="lg" />
+          <TeamBadge teamName={match.awayTeam} logoUrl={awayLogo} size={featured ? "2xl" : "xl"} />
           <span className="gp-watch__team-name">{match.awayTeam}</span>
         </div>
       </div>
 
-      {showPressure || (match.isLive && match.cardInsight) ? (
+      {showFooter ? (
         <footer className="gp-watch__card-foot">
-          {showPressure ? (
-            <span className="gp-watch__gpi" title="Pressão ofensiva">
-              Pressão <strong>{Math.round(match.pressureScore)}</strong>
-            </span>
+          {oddsLine ? (
+            <div className="gp-watch__odds-row">
+              {oddsLine.home ? (
+                <span
+                  className={cn(
+                    "gp-watch__odd-pill",
+                    oddsLine.marketFavorite === "home" && "gp-watch__odd-pill--fav"
+                  )}
+                >
+                  <em>1</em> {oddsLine.home}
+                </span>
+              ) : null}
+              {oddsLine.away ? (
+                <span
+                  className={cn(
+                    "gp-watch__odd-pill",
+                    oddsLine.marketFavorite === "away" && "gp-watch__odd-pill--fav"
+                  )}
+                >
+                  <em>2</em> {oddsLine.away}
+                </span>
+              ) : null}
+            </div>
           ) : null}
-          {match.isLive && match.cardInsight ? (
-            <span className="gp-watch__insight">{match.displayInsight || match.cardInsight}</span>
+          {metrics.length > 0 ? (
+            <div className="gp-watch__metrics-row">
+              {metrics.map((chip) => (
+                <span key={chip.id} className="gp-watch__metric-chip">
+                  <span className="gp-watch__metric-label">{chip.label}</span>
+                  <strong>{chip.value}</strong>
+                </span>
+              ))}
+            </div>
           ) : null}
         </footer>
       ) : null}

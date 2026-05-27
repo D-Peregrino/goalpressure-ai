@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { X } from "lucide-react";
 import TeamBadge from "@/components/matches/TeamBadge";
 import LeagueFlag from "./LeagueFlag";
 import type { EnrichedLiveMatch } from "@/hooks/useLiveMatchCenter";
 import { leagueLine } from "@/lib/terminal/sportsDisplay";
-import { resolveTeamLogoFromEnriched, resolveTeamLogo } from "@/lib/teams/teamLogoResolver";
+import { buildCardOdds } from "@/lib/terminal/watchCardDisplay";
+import {
+  resolveTeamLogo,
+  resolveTeamLogoFromEnriched,
+} from "@/lib/teams/teamLogoResolver";
 import type { Match } from "@/types/domain";
 import { cn } from "@/lib/utils";
 
@@ -14,18 +18,25 @@ interface DetailResponse {
   ok: boolean;
   match?: Match;
   hasStatistics?: boolean;
+  hasEvents?: boolean;
+  standingsAvailable?: boolean;
+  venue?: string | null;
+  eventsCount?: number;
   error?: string;
 }
 
 function formatKickoff(match: Match | EnrichedLiveMatch): string | null {
-  const ts = "startingAtTimestamp" in match ? match.startingAtTimestamp : undefined;
+  const ts =
+    "startingAtTimestamp" in match && match.startingAtTimestamp != null
+      ? match.startingAtTimestamp
+      : undefined;
   const at = "startingAt" in match ? match.startingAt : undefined;
   if (ts != null && ts > 0) {
     try {
       return new Intl.DateTimeFormat("pt-BR", {
-        weekday: "short",
+        weekday: "long",
         day: "2-digit",
-        month: "short",
+        month: "long",
         hour: "2-digit",
         minute: "2-digit",
         timeZone: "America/Sao_Paulo",
@@ -38,9 +49,9 @@ function formatKickoff(match: Match | EnrichedLiveMatch): string | null {
     const d = new Date(at);
     if (!Number.isNaN(d.getTime())) {
       return new Intl.DateTimeFormat("pt-BR", {
-        weekday: "short",
+        weekday: "long",
         day: "2-digit",
-        month: "short",
+        month: "long",
         hour: "2-digit",
         minute: "2-digit",
         timeZone: "America/Sao_Paulo",
@@ -53,13 +64,18 @@ function formatKickoff(match: Match | EnrichedLiveMatch): string | null {
   return null;
 }
 
-function statRow(label: string, home: number | undefined, away: number | undefined) {
+function statRow(
+  label: string,
+  home: number | undefined,
+  away: number | undefined
+): ReactNode | null {
   if (home == null && away == null) return null;
+  if ((home ?? 0) <= 0 && (away ?? 0) <= 0) return null;
   return (
-    <div className="gp-match-detail__stat-row" key={label}>
-      <span className="gp-match-detail__stat-home">{home ?? "—"}</span>
+    <div className="gp-match-detail__stat-row">
+      <span className="gp-match-detail__stat-home">{home ?? 0}</span>
       <span className="gp-match-detail__stat-label">{label}</span>
-      <span className="gp-match-detail__stat-away">{away ?? "—"}</span>
+      <span className="gp-match-detail__stat-away">{away ?? 0}</span>
     </div>
   );
 }
@@ -75,17 +91,16 @@ export default function TerminalMatchDetail({
   onToggleFavorite: () => void;
   onClose: () => void;
 }) {
-  const [loading, setLoading] = useState(match.isFinished || match.isPreMatch);
+  const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState<Match | null>(null);
-  const [hasStatistics, setHasStatistics] = useState(false);
+  const [meta, setMeta] = useState<{
+    venue: string | null;
+    standingsAvailable: boolean;
+    hasEvents: boolean;
+  }>({ venue: null, standingsAvailable: false, hasEvents: false });
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!match.isFinished && !match.isPreMatch) {
-      setLoading(false);
-      return;
-    }
-
     let cancelled = false;
     const run = async () => {
       setLoading(true);
@@ -98,7 +113,11 @@ export default function TerminalMatchDetail({
         if (cancelled) return;
         if (body.ok && body.match) {
           setDetail(body.match);
-          setHasStatistics(Boolean(body.hasStatistics && body.match.teamStats));
+          setMeta({
+            venue: body.venue ?? null,
+            standingsAvailable: Boolean(body.standingsAvailable),
+            hasEvents: Boolean(body.hasEvents),
+          });
         } else {
           setFetchError(body.error ?? "Detalhe indisponível");
         }
@@ -113,10 +132,9 @@ export default function TerminalMatchDetail({
     return () => {
       cancelled = true;
     };
-  }, [match.fixtureId, match.isFinished, match.isPreMatch]);
+  }, [match.fixtureId]);
 
-  const display = detail ?? null;
-
+  const display = detail;
   const homeTeam = display?.homeTeam ?? match.homeTeam;
   const awayTeam = display?.awayTeam ?? match.awayTeam;
   const league = display?.league ?? match.league;
@@ -161,39 +179,40 @@ export default function TerminalMatchDetail({
   const statsRows = teamStats
     ? [
         statRow("Finalizações", teamStats.home.shots, teamStats.away.shots),
-        statRow(
-          "No alvo",
-          teamStats.home.shotsOnTarget,
-          teamStats.away.shotsOnTarget
-        ),
-        statRow(
-          "Ataques perigosos",
-          teamStats.home.dangerousAttacks,
-          teamStats.away.dangerousAttacks
-        ),
+        statRow("No alvo", teamStats.home.shotsOnTarget, teamStats.away.shotsOnTarget),
+        statRow("Ataques perigosos", teamStats.home.dangerousAttacks, teamStats.away.dangerousAttacks),
         statRow("Escanteios", teamStats.home.corners, teamStats.away.corners),
-        statRow(
-          "Posse %",
-          teamStats.home.possession,
-          teamStats.away.possession
-        ),
+        statRow("Posse %", teamStats.home.possession, teamStats.away.possession),
       ].filter(Boolean)
     : [];
+
+  const oddsForModal = useMemo(() => {
+    const enrichedOdds = match.odds;
+    const m = display ?? match;
+    const merged: EnrichedLiveMatch = {
+      ...match,
+      odds: display?.odds ?? enrichedOdds,
+      homeTeam: m.homeTeam ?? match.homeTeam,
+      awayTeam: m.awayTeam ?? match.awayTeam,
+    };
+    return buildCardOdds(merged);
+  }, [display, match]);
+
+  const timeline = display?.premium?.timelineEvents ?? match.sportmonksTimeline ?? [];
 
   const statusLabel = match.isFinished
     ? "Encerrado"
     : match.isPreMatch
       ? "Agendado"
-      : match.minuteLabel;
+      : match.isLive
+        ? match.minuteLabel || "Ao vivo"
+        : match.minuteLabel;
+
+  const tone = match.isLive ? "live" : match.isFinished ? "finished" : "scheduled";
 
   return (
     <div className="gp-match-detail" role="dialog" aria-modal="true" aria-label="Detalhe do jogo">
-      <button
-        type="button"
-        className="gp-match-detail__backdrop"
-        aria-label="Fechar"
-        onClick={onClose}
-      />
+      <button type="button" className="gp-match-detail__backdrop" aria-label="Fechar" onClick={onClose} />
       <div className="gp-match-detail__panel">
         <header className="gp-match-detail__header">
           <div className="gp-match-detail__league">
@@ -201,13 +220,8 @@ export default function TerminalMatchDetail({
             <span>{leagueLine({ ...match, league })}</span>
           </div>
           <div className="gp-match-detail__header-actions">
-            <span
-              className={cn(
-                "gp-match-detail__status",
-                match.isFinished && "gp-match-detail__status--ft",
-                match.isLive && "gp-match-detail__status--live"
-              )}
-            >
+            <span className={cn("gp-match-detail__status", `gp-match-detail__status--${tone}`)}>
+              {match.isLive ? <span className="gp-watch__live-dot" aria-hidden /> : null}
               {statusLabel}
             </span>
             <button
@@ -225,6 +239,7 @@ export default function TerminalMatchDetail({
         </header>
 
         {kickoff ? <p className="gp-match-detail__kickoff">{kickoff}</p> : null}
+        {meta.venue ? <p className="gp-match-detail__venue">{meta.venue}</p> : null}
 
         {loading ? (
           <p className="gp-match-detail__loading">Carregando detalhes…</p>
@@ -232,7 +247,7 @@ export default function TerminalMatchDetail({
           <>
             <div className="gp-match-detail__scoreboard">
               <div className="gp-match-detail__team">
-                <TeamBadge teamName={homeTeam} logoUrl={homeLogo} size="xl" />
+                <TeamBadge teamName={homeTeam} logoUrl={homeLogo} size="2xl" />
                 <span className="gp-match-detail__team-name">{homeTeam}</span>
               </div>
               <div className="gp-match-detail__score-center">
@@ -245,12 +260,9 @@ export default function TerminalMatchDetail({
                 ) : (
                   <span className="gp-match-detail__vs">vs</span>
                 )}
-                {match.isFinished ? (
-                  <span className="gp-match-detail__ft-label">Placar final</span>
-                ) : null}
               </div>
               <div className="gp-match-detail__team gp-match-detail__team--away">
-                <TeamBadge teamName={awayTeam} logoUrl={awayLogo} size="xl" />
+                <TeamBadge teamName={awayTeam} logoUrl={awayLogo} size="2xl" />
                 <span className="gp-match-detail__team-name">{awayTeam}</span>
               </div>
             </div>
@@ -259,7 +271,31 @@ export default function TerminalMatchDetail({
               <p className="gp-match-detail__notice gp-match-detail__notice--warn">{fetchError}</p>
             ) : null}
 
-            <section className="gp-match-detail__stats">
+            {oddsForModal ? (
+              <section className="gp-match-detail__block">
+                <h3>Cotações</h3>
+                <div className="gp-watch__odds-row gp-match-detail__odds">
+                  {oddsForModal.home ? (
+                    <span className="gp-watch__odd-pill">
+                      <em>1</em> {oddsForModal.home}
+                    </span>
+                  ) : null}
+                  {oddsForModal.away ? (
+                    <span className="gp-watch__odd-pill">
+                      <em>2</em> {oddsForModal.away}
+                    </span>
+                  ) : null}
+                </div>
+              </section>
+            ) : null}
+
+            {meta.standingsAvailable ? (
+              <p className="gp-match-detail__notice">
+                Classificação disponível no feed SportMonks para esta competição.
+              </p>
+            ) : null}
+
+            <section className="gp-match-detail__block">
               <h3>Estatísticas</h3>
               {statsRows.length > 0 ? (
                 <div className="gp-match-detail__stats-grid">{statsRows}</div>
@@ -269,6 +305,34 @@ export default function TerminalMatchDetail({
                 </p>
               )}
             </section>
+
+            <section className="gp-match-detail__block">
+              <h3>Linha do tempo</h3>
+              {timeline.length > 0 ? (
+                <ul className="gp-match-detail__events">
+                  {timeline.slice(-12).map((ev, i) => (
+                    <li key={`${ev.minute}-${i}`}>
+                      <span className="gp-match-detail__ev-min">{ev.minute}&apos;</span>
+                      <span>{ev.type}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : meta.hasEvents ? (
+                <p className="gp-match-detail__notice">
+                  Eventos registrados — detalhe por minuto indisponível neste feed.
+                </p>
+              ) : (
+                <p className="gp-match-detail__notice">
+                  Linha do tempo não disponível para esta partida.
+                </p>
+              )}
+            </section>
+
+            {match.isLive && match.pressureScore > 0 ? (
+              <p className="gp-match-detail__pressure">
+                Pressão ofensiva atual: <strong>{Math.round(match.pressureScore)}</strong>
+              </p>
+            ) : null}
           </>
         )}
       </div>
