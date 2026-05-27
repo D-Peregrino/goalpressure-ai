@@ -1,55 +1,38 @@
 import { NextResponse } from "next/server";
-import { bootstrapGoalPressureRuntime } from "@/lib/runtime/runtimeBootstrap";
-import { getSystemHealthReport } from "@/lib/system/systemStatus";
-import { logOps } from "@/lib/utils/logger";
+import { runProductionHealthCheck } from "@/lib/system/healthEndpoint";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const ROUTE_SCOPE = "api/health";
-
+/**
+ * Liveness probe — must never return an opaque 500.
+ * Railway/Docker hit this frequently; keep imports minimal (no live runtime bootstrap).
+ */
 export async function GET(): Promise<NextResponse> {
   try {
-    bootstrapGoalPressureRuntime();
-    const report = await getSystemHealthReport();
+    const payload = await runProductionHealthCheck();
 
-    const httpStatus =
-      report.status === "unhealthy"
-        ? 503
-        : report.status === "degraded"
-          ? 200
-          : 200;
-
-    if (process.env.NODE_ENV === "production") {
-      logOps(ROUTE_SCOPE, "Health check", {
-        status: report.status,
-        database: report.database.mode,
-        telegram: report.telegram.status,
-      });
-    }
-
-    return NextResponse.json(
-      {
-        status: report.status,
-        uptime: report.uptime,
-        database: report.database,
-        telegram: report.telegram,
-        liveFeed: report.liveFeed,
-        storage: report.storage,
-        environment: report.environment,
-        timestamp: report.timestamp,
-      },
-      { status: httpStatus }
-    );
+    return NextResponse.json(payload, {
+      status: 200,
+      headers: { "Cache-Control": "no-store" },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "health_check_failed";
+
     return NextResponse.json(
       {
+        ok: false,
         status: "unhealthy",
-        error: message,
+        checks: {},
+        errors: [message],
         timestamp: new Date().toISOString(),
+        uptime: 0,
+        environment: process.env.NODE_ENV ?? "unknown",
       },
-      { status: 503 }
+      {
+        status: 200,
+        headers: { "Cache-Control": "no-store" },
+      }
     );
   }
 }
