@@ -3,6 +3,7 @@
  */
 
 import type { EnrichedLiveMatch } from "@/hooks/useLiveMatchCenter";
+import { formatUpcomingCardKickoffLabel } from "@/lib/terminal/upcomingKickoffLabel";
 
 export type CardStatusTone = "live" | "scheduled" | "finished" | "default";
 
@@ -30,9 +31,19 @@ export function cardStatusTone(match: EnrichedLiveMatch): CardStatusTone {
   return "default";
 }
 
-export function cardStatusLabel(match: EnrichedLiveMatch): string {
+export function cardStatusLabel(
+  match: EnrichedLiveMatch,
+  options?: { upcomingSmartDate?: boolean }
+): string {
   if (match.isLive) return match.minuteLabel || "Ao vivo";
   if (match.isPreMatch) {
+    if (options?.upcomingSmartDate) {
+      const smart = formatUpcomingCardKickoffLabel(
+        match.startingAt,
+        match.startingAtTimestamp
+      );
+      if (smart) return smart;
+    }
     return match.kickoffLabel ? match.kickoffLabel : "Agendado";
   }
   if (match.isFinished) return "Encerrado";

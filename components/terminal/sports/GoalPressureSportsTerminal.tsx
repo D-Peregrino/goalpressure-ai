@@ -128,11 +128,14 @@ export default function GoalPressureSportsTerminal() {
 
   const skeletonCount = typeof window !== "undefined" && window.innerWidth >= 1280 ? 8 : 6;
 
+  const upcomingSmartDate = filter === "upcoming";
+
   const renderCard = (m: EnrichedLiveMatch, isFeatured = false) => (
     <MatchWatchCard
       key={m.fixtureId}
       match={m}
       featured={isFeatured}
+      upcomingSmartDate={upcomingSmartDate}
       isFavorite={favorites.has(m.fixtureId)}
       onOpen={() => setExpandedMatch(m.fixtureId)}
       onToggleFavorite={() => {

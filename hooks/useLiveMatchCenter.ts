@@ -125,6 +125,8 @@ export interface EnrichedLiveMatch {
   isLive: boolean;
   isFinished: boolean;
   kickoffLabel: string | null;
+  startingAt?: string | null;
+  startingAtTimestamp?: number | null;
   /** Narrativa principal do card (contextual por fixture). */
   cardInsight: string;
   cardInsightSecondary: string | null;
@@ -408,6 +410,8 @@ export function useLiveMatchCenter() {
           match.startingAt,
           match.startingAtTimestamp
         ),
+        startingAt: match.startingAt ?? null,
+        startingAtTimestamp: match.startingAtTimestamp ?? null,
         homeTeam: core.homeTeam,
         awayTeam: core.awayTeam,
         homeScore: core.homeScore,

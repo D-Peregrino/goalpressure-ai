@@ -23,12 +23,15 @@ export default function MatchWatchCard({
   match,
   isFavorite,
   featured = false,
+  upcomingSmartDate = false,
   onOpen,
   onToggleFavorite,
 }: {
   match: EnrichedLiveMatch;
   isFavorite: boolean;
   featured?: boolean;
+  /** Data contextual (Hoje/Amanhã/…) — só aba Futuros */
+  upcomingSmartDate?: boolean;
   onOpen: () => void;
   onToggleFavorite: () => void;
 }) {
@@ -46,7 +49,9 @@ export default function MatchWatchCard({
   );
 
   const tone = cardStatusTone(match);
-  const statusLabel = cardStatusLabel(match);
+  const statusLabel = cardStatusLabel(match, {
+    upcomingSmartDate: upcomingSmartDate && match.isPreMatch,
+  });
   const highlight = isHighlightMatch(match);
   const metrics = buildCardMetricChips(match);
   const oddsLine = buildCardOdds(match);
